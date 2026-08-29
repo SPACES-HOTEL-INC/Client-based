@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <!-- Background Squircle -->
+  <rect width="512" height="512" rx="112" fill="#0A0F1D" />
+
+  <!-- Main White Arch Form -->
+  <path 
+    fill="#FFFFFF" 
+    fill-rule="evenodd" 
+    d="M 136 368 
+       L 136 248 
+       C 136 181.7 189.7 128 256 128 
+       C 322.3 128 376 181.7 376 248 
+       L 376 368 
+       L 304 368 
+       L 304 248 
+       C 304 221.5 282.5 200 256 200 
+       C 229.5 200 208 221.5 208 248 
+       L 208 368 
+       Z
+       M 256 100 
+       A 32 32 0 0 1 256 164 
+       A 32 32 0 0 1 256 100 
+       Z" 
+  />
+
+  <!-- Teal Top Dot -->
+  <circle cx="256" cy="132" r="30" fill="#60C3AD" />
+</svg>
