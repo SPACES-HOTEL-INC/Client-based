@@ -11,6 +11,10 @@ import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
+import { SpacesProvider } from "@/lib/spaces-store";
+import { Splash } from "@/components/spaces/Splash";
+import { BottomNav } from "@/components/spaces/BottomNav";
+import { Toaster } from "@/components/ui/sonner";
 
 function NotFoundComponent() {
   return (
