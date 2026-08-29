@@ -6,7 +6,6 @@ import { formatMoney, useSpaces } from "@/lib/spaces-store";
 import { PropertyCard, PropertyCardSkeleton } from "@/components/spaces/PropertyCard";
 import { CurrencyToggle } from "@/components/spaces/CurrencyToggle";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -40,9 +39,6 @@ function SearchPage() {
   const { currency } = useSpaces();
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState("");
-  const [checkIn, setCheckIn] = useState("");
-  const [checkOut, setCheckOut] = useState("");
-  const [guests, setGuests] = useState(2);
   const [price, setPrice] = useState<number[]>([MAX_PRICE]);
   const [types, setTypes] = useState<string[]>(type ? [type] : []);
   const [minRating, setMinRating] = useState(0);
@@ -157,9 +153,9 @@ function SearchPage() {
   );
 
   return (
-    <div className="mx-auto max-w-5xl px-5 pt-6">
-      <div className="card-elevated space-y-3 p-4">
-        <div className="flex items-center gap-2 rounded-xl bg-secondary px-3.5 py-3">
+    <div className="mx-auto max-w-6xl px-5 pt-6 md:px-6">
+      <div className="flex items-center gap-2">
+        <div className="flex flex-1 items-center gap-2 rounded-full border border-border bg-card px-4 py-3 shadow-sm">
           <SearchIcon className="size-4.5 shrink-0 text-muted-foreground" />
           <input
             value={query}
@@ -173,18 +169,52 @@ function SearchPage() {
             </button>
           )}
         </div>
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-          <Input type="date" value={checkIn} onChange={(e) => setCheckIn(e.target.value)} className="h-11 rounded-xl" />
-          <Input type="date" value={checkOut} onChange={(e) => setCheckOut(e.target.value)} className="h-11 rounded-xl" />
-          <Input
-            type="number"
-            min={1}
-            value={guests}
-            onChange={(e) => setGuests(Number(e.target.value))}
-            className="h-11 rounded-xl"
-            aria-label="Guests"
-          />
-        </div>
+        <Sheet>
+          <SheetTrigger asChild>
+            <Button
+              variant="outline"
+              aria-label="Filters"
+              className="relative size-12 shrink-0 rounded-full lg:hidden"
+            >
+              <SlidersHorizontal className="size-4" />
+              {activeFilters > 0 && (
+                <span className="absolute -right-0.5 -top-0.5 grid size-5 place-items-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground">
+                  {activeFilters}
+                </span>
+              )}
+            </Button>
+          </SheetTrigger>
+          <SheetContent side="bottom" className="max-h-[85vh] overflow-y-auto rounded-t-3xl">
+            <SheetHeader>
+              <SheetTitle>Filters</SheetTitle>
+            </SheetHeader>
+            <div className="px-4 pb-8">{Filters}</div>
+          </SheetContent>
+        </Sheet>
+      </div>
+
+      <div className="no-scrollbar -mx-5 mt-4 flex gap-2 overflow-x-auto px-5 md:mx-0 md:px-0">
+        <button
+          type="button"
+          onClick={() => setTypes([])}
+          className={`shrink-0 rounded-full border px-4 py-2 text-sm font-medium transition-colors ${
+            types.length === 0 ? "border-primary bg-primary text-primary-foreground" : "border-border bg-card"
+          }`}
+        >
+          All
+        </button>
+        {PROPERTY_TYPES.map((t) => (
+          <button
+            key={t}
+            type="button"
+            onClick={() => setTypes([t])}
+            className={`shrink-0 rounded-full border px-4 py-2 text-sm font-medium transition-colors ${
+              types.includes(t) ? "border-primary bg-primary text-primary-foreground" : "border-border bg-card"
+            }`}
+          >
+            {t}
+          </button>
+        ))}
       </div>
 
       <div className="mt-4 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 sm:flex sm:justify-between">
@@ -192,7 +222,7 @@ function SearchPage() {
           {loading ? "Searching…" : `${results.length} space${results.length === 1 ? "" : "s"} found`}
         </p>
         <div className="flex shrink-0 items-center gap-2">
-          <CurrencyToggle className="hidden sm:inline-flex" />
+          <CurrencyToggle className="hidden sm:inline-flex lg:hidden" />
           <div className="inline-flex rounded-full bg-secondary p-1">
             <button
               type="button"
@@ -211,20 +241,6 @@ function SearchPage() {
               <MapIcon className="size-4" />
             </button>
           </div>
-          <Sheet>
-            <SheetTrigger asChild>
-              <Button variant="outline" className="h-11 rounded-full lg:hidden">
-                <SlidersHorizontal className="size-4" />
-                {activeFilters > 0 && <span className="ml-1 text-xs font-semibold">{activeFilters}</span>}
-              </Button>
-            </SheetTrigger>
-            <SheetContent side="bottom" className="max-h-[85vh] overflow-y-auto rounded-t-3xl">
-              <SheetHeader>
-                <SheetTitle>Filters</SheetTitle>
-              </SheetHeader>
-              <div className="px-4 pb-8">{Filters}</div>
-            </SheetContent>
-          </Sheet>
         </div>
       </div>
 

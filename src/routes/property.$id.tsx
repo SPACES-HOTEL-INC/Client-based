@@ -128,7 +128,7 @@ function PropertyPage() {
                 {property.type}
               </Badge>
               <span className="flex items-center gap-1 text-sm font-semibold">
-                <Star className="size-4 fill-teal text-teal" /> {property.rating}
+                <Star className="size-4 fill-gold text-gold" /> {property.rating}
                 <span className="font-normal text-muted-foreground">({property.reviews} reviews)</span>
               </span>
             </div>
