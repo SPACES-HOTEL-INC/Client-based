@@ -81,7 +81,7 @@ function HomePage() {
         </button>
       </header>
 
-      <div className="mx-auto -mt-10 max-w-3xl space-y-8 px-5">
+      <div className="relative z-10 mx-auto mt-6 max-w-3xl space-y-8 px-5">
         <section className="animate-rise-in">
           <h2 className="mb-3 font-display text-base font-semibold">What are you looking for?</h2>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
