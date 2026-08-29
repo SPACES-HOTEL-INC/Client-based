@@ -22,7 +22,7 @@ export function PropertyCard({ property }: { property: Property }) {
           className="size-full object-cover transition-transform duration-500 group-hover:scale-105"
         />
         <div className="absolute left-3 top-3 flex items-center gap-1 rounded-full bg-card/90 px-2.5 py-1 text-xs font-semibold">
-          <Star className="size-3.5 fill-teal text-teal" />
+          <Star className="size-3.5 fill-gold text-gold" />
           {property.rating}
         </div>
         <button

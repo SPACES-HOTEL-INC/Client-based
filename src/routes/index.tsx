@@ -40,18 +40,24 @@ function HomePage() {
   const featured = properties.slice(0, 4);
 
   return (
-    <div className="pb-6">
-      <header className="brand-surface rounded-b-[2rem] px-5 pt-6 pb-16">
-        <div className="mx-auto flex max-w-3xl items-start justify-between gap-4">
+    <div className="overflow-x-hidden pb-6">
+      <header className="brand-surface rounded-b-[2rem] px-5 pt-6 pb-16 md:mx-6 md:mt-6 md:rounded-[2rem] md:px-12 md:py-16">
+        <div className="mx-auto flex max-w-3xl items-start justify-between gap-4 md:max-w-5xl">
           <div className="min-w-0">
-            <p className="text-sm text-brand-foreground/70">Hello, {user.firstName}!</p>
-            <h1 className="mt-1 font-display text-2xl font-bold leading-tight text-brand-foreground">
+            <p className="text-sm text-brand-foreground/70 md:text-base">
+              Hello, {user.firstName}!
+            </p>
+            <h1 className="mt-1 font-display text-2xl font-bold leading-tight text-brand-foreground md:mt-3 md:text-5xl md:leading-[1.1]">
               Find your next
               <br />
               elite escape.
             </h1>
+            <p className="mt-3 hidden max-w-lg text-brand-foreground/70 md:block">
+              Hand-picked hotels, shortlets, villas and event spaces across Nigeria — booked in
+              seconds, priced in Naira or Dollars.
+            </p>
           </div>
-          <div className="flex shrink-0 items-center gap-2">
+          <div className="flex shrink-0 items-center gap-2 md:hidden">
             <button
               type="button"
               aria-label="Notifications"
@@ -74,14 +80,16 @@ function HomePage() {
         <button
           type="button"
           onClick={() => navigate({ to: "/search" })}
-          className="mx-auto mt-6 flex w-full max-w-3xl items-center gap-3 rounded-2xl bg-card px-4 py-3.5 text-left text-muted-foreground shadow-sm"
+          className="mx-auto mt-6 flex w-full max-w-3xl items-center gap-3 rounded-2xl bg-card px-4 py-3.5 text-left text-muted-foreground shadow-sm md:mt-8 md:max-w-5xl md:rounded-full md:px-6 md:py-5"
         >
           <Search className="size-5 shrink-0" />
-          <span className="truncate text-sm">Search stays, shortlets, venues &amp; dining</span>
+          <span className="truncate text-sm md:text-base">
+            Search stays, shortlets, venues &amp; dining
+          </span>
         </button>
       </header>
 
-      <div className="relative z-10 mx-auto mt-6 max-w-3xl space-y-8 px-5">
+      <div className="relative z-10 mx-auto mt-6 max-w-3xl space-y-8 px-5 md:mt-10 md:max-w-6xl md:space-y-12 md:px-6">
         <section className="animate-rise-in">
           <h2 className="mb-3 font-display text-base font-semibold">What are you looking for?</h2>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
@@ -109,7 +117,7 @@ function HomePage() {
               See all
             </Link>
           </div>
-          <div className="no-scrollbar -mx-5 flex snap-x snap-mandatory gap-4 overflow-x-auto px-5 pb-2">
+          <div className="no-scrollbar -mx-5 flex snap-x snap-mandatory gap-4 overflow-x-auto px-5 pb-2 md:mx-0 md:px-0">
             {featured.map((p) => (
               <Link
                 key={p.id}
@@ -134,7 +142,7 @@ function HomePage() {
                 <div className="space-y-1 p-3">
                   <p className="line-clamp-1 text-sm font-semibold">{p.title}</p>
                   <p className="flex items-center gap-1 text-xs text-muted-foreground">
-                    <Star className="size-3 fill-teal text-teal" /> {p.rating} · {p.city}
+                    <Star className="size-3 fill-gold text-gold" /> {p.rating} · {p.city}
                   </p>
                 </div>
               </Link>
@@ -144,7 +152,7 @@ function HomePage() {
 
         <section>
           <h2 className="mb-3 font-display text-base font-semibold">Trending in Lagos</h2>
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {properties.slice(2, 6).map((p) => (
               <PropertyCard key={p.id} property={p} />
             ))}
