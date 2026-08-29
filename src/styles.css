@@ -159,5 +159,56 @@
   body {
     background-color: var(--color-background);
     color: var(--color-foreground);
+    font-family: var(--font-sans);
+    -webkit-tap-highlight-color: transparent;
   }
 }
+
+@utility brand-surface {
+  background-image: var(--gradient-brand);
+  color: var(--color-brand-foreground);
+}
+
+@utility card-elevated {
+  background-color: var(--color-card);
+  border-radius: var(--radius-2xl);
+  box-shadow: var(--shadow-card);
+}
+
+@utility no-scrollbar {
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+@keyframes splash-in {
+  0% {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes rise-in {
+  0% {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@utility animate-splash-in {
+  animation: splash-in 0.6s cubic-bezier(0.22, 1.2, 0.36, 1) both;
+}
+
+@utility animate-rise-in {
+  animation: rise-in 0.45s ease-out both;
+}
+
