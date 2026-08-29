@@ -30,8 +30,14 @@ export function AuthDialog({ open, onOpenChange }: { open: boolean; onOpenChange
 
   const submitCredentials = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email.includes("@")) return toast.error("Enter a valid email address");
-    if (password.length < 6) return toast.error("Password must be at least 6 characters");
+    if (!email.includes("@")) {
+      toast.error("Enter a valid email address");
+      return;
+    }
+    if (password.length < 6) {
+      toast.error("Password must be at least 6 characters");
+      return;
+    }
     setBusy(true);
     setTimeout(() => {
       setBusy(false);
@@ -41,13 +47,17 @@ export function AuthDialog({ open, onOpenChange }: { open: boolean; onOpenChange
   };
 
   const verify = () => {
-    if (otp.length !== 6) return toast.error("Enter the 6-digit code");
-    const name = firstName.trim() || email.split("@")[0].replace(/[^a-zA-Z]/g, "") || "Guest";
+    if (otp.length !== 6) {
+      toast.error("Enter the 6-digit code");
+      return;
+    }
+    const name = firstName.trim() || (email.split("@")[0] ?? "").replace(/[^a-zA-Z]/g, "") || "Guest";
     const pretty = name.charAt(0).toUpperCase() + name.slice(1);
     signIn(pretty, email);
     toast.success(`Welcome, ${pretty}!`);
     close();
   };
+
 
   return (
     <Dialog open={open} onOpenChange={(v) => (v ? onOpenChange(true) : close())}>
