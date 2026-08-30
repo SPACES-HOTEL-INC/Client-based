@@ -120,7 +120,7 @@ function PropertyPage() {
         </Dialog>
       </div>
 
-      <div className="mx-auto max-w-5xl px-5 pt-6 lg:flex lg:gap-10">
+      <div className="mx-auto w-full max-w-7xl px-5 pt-6 md:px-10 lg:flex lg:gap-10">
         <div className="min-w-0 flex-1 space-y-8">
           <section className="space-y-3">
             <div className="flex flex-wrap items-center gap-2">
