@@ -1,11 +1,12 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
-import { Bell, Building2, ChefHat, KeyRound, PartyPopper, Search, Star } from "lucide-react";
+import { ArrowRight, Building2, ChefHat, KeyRound, PartyPopper, Search, Star } from "lucide-react";
 import { properties } from "@/lib/data";
 import { formatMoney, useSpaces } from "@/lib/spaces-store";
 import { PropertyCard } from "@/components/spaces/PropertyCard";
+import { HomeHeader } from "@/components/spaces/HomeHeader";
 import { AuthDialog } from "@/components/spaces/AuthDialog";
-import { Button } from "@/components/ui/button";
+
 
 export const Route = createFileRoute("/")({
   head: () => ({
