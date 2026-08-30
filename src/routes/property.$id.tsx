@@ -177,9 +177,37 @@ function PropertyPage() {
               {property.address}
             </p>
             <p className="flex items-center gap-2 text-sm font-medium text-primary">
-              <ShieldCheck className="size-4" /> Verified host · Spaces assured
-            </p>
+            <div className="flex flex-wrap gap-2.5 pt-1">
+              {property.beds > 0 && (
+                <span className="flex items-center gap-2 rounded-full border border-border px-4 py-2 text-sm font-medium">
+                  <BedDouble className="size-4 text-muted-foreground" /> {property.beds} beds
+                </span>
+              )}
+              <span className="flex items-center gap-2 rounded-full border border-border px-4 py-2 text-sm font-medium">
+                <Bath className="size-4 text-muted-foreground" /> {property.baths} baths
+              </span>
+              <span className="flex items-center gap-2 rounded-full border border-border px-4 py-2 text-sm font-medium">
+                <Users className="size-4 text-muted-foreground" /> up to {property.capacity} guests
+              </span>
+            </div>
+
+            <div className="card-elevated flex items-center justify-between gap-4 rounded-2xl p-4">
+              <div className="flex min-w-0 items-center gap-4">
+                <span className="grid size-12 shrink-0 place-items-center rounded-full bg-primary font-display text-lg font-bold text-primary-foreground">
+                  {property.host.charAt(0)}
+                </span>
+                <div className="min-w-0">
+                  <p className="text-sm text-muted-foreground">Managed by</p>
+                  <p className="truncate font-display text-base font-bold">{property.host}</p>
+                </div>
+              </div>
+              <span className="flex shrink-0 items-center gap-1.5 rounded-full bg-success/10 px-3 py-1.5 text-sm font-semibold text-success">
+                <ShieldCheck className="size-4" /> Verified
+              </span>
+            </div>
+
             <p className="text-sm leading-relaxed text-muted-foreground">{property.description}</p>
+
           </section>
 
           <section>
