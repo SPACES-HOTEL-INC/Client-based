@@ -50,9 +50,11 @@ function ProfilePage() {
           <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-4">
             <div className="min-w-0">
               <p className="font-semibold">Display currency</p>
-              <p className="text-sm text-muted-foreground">Applies to all rates and totals</p>
+              <p className="text-sm text-muted-foreground">Synced from the home page toggle</p>
             </div>
-            <CurrencyToggle />
+            <span className="rounded-full bg-secondary px-4 py-1.5 text-sm font-semibold">
+              {currency === "NGN" ? "₦ NGN" : "$ USD"}
+            </span>
           </div>
         </section>
 
