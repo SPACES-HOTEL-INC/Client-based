@@ -12,13 +12,13 @@ export function HomeHeader() {
   const { user } = useSpaces();
 
   return (
-    <header className="border-b border-border bg-background">
-      <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-5 py-5 md:px-8 md:py-7">
+    <header className="bg-background">
+      <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-5 pt-6 pb-2 md:px-8 md:pt-8 md:pb-3">
         <div className="min-w-0">
-          <p className="text-sm text-muted-foreground md:text-base">
+          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground md:text-sm">
             {greeting()} · {user.guest ? "Guest" : "Member"}
           </p>
-          <p className="mt-0.5 truncate font-display text-2xl font-bold tracking-tight md:text-3xl">
+          <p className="mt-1 truncate font-display text-2xl font-bold tracking-tight md:text-4xl">
             Hello, {user.firstName}!
           </p>
         </div>
