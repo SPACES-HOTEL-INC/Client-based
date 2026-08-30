@@ -176,7 +176,7 @@ function PropertyPage() {
               <MapPin className="mt-0.5 size-4 shrink-0" />
               {property.address}
             </p>
-            <p className="flex items-center gap-2 text-sm font-medium text-primary">
+            
             <div className="flex flex-wrap gap-2.5 pt-1">
               {property.beds > 0 && (
                 <span className="flex items-center gap-2 rounded-full border border-border px-4 py-2 text-sm font-medium">
