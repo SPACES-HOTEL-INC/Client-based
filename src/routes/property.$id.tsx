@@ -3,6 +3,9 @@ import { useState } from "react";
 import {
   ArrowLeft,
   BedDouble,
+  Bath,
+  ChevronLeft,
+  ChevronRight,
   Heart,
   Images,
   MapPin,
@@ -18,6 +21,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { BookingDialog } from "@/components/spaces/BookingDialog";
 import { cn } from "@/lib/utils";
+
 
 export const Route = createFileRoute("/property/$id")({
   loader: ({ params }) => {
