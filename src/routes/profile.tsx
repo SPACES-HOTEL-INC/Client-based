@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Bell, ChevronRight, Heart, LogOut, ShieldCheck, Ticket, UserRound } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import { CurrencyToggle } from "@/components/spaces/CurrencyToggle";
+
 import { AuthDialog } from "@/components/spaces/AuthDialog";
 import { useSpaces } from "@/lib/spaces-store";
 import { toast } from "sonner";
@@ -21,7 +21,7 @@ export const Route = createFileRoute("/profile")({
 });
 
 function ProfilePage() {
-  const { user, bookings, favorites, signOut } = useSpaces();
+  const { user, currency, bookings, favorites, signOut } = useSpaces();
   const [authOpen, setAuthOpen] = useState(false);
 
   return (
