@@ -3,6 +3,9 @@ import { useState } from "react";
 import {
   ArrowLeft,
   BedDouble,
+  Bath,
+  ChevronLeft,
+  ChevronRight,
   Heart,
   Images,
   MapPin,
@@ -18,6 +21,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { BookingDialog } from "@/components/spaces/BookingDialog";
 import { cn } from "@/lib/utils";
+
 
 export const Route = createFileRoute("/property/$id")({
   loader: ({ params }) => {
@@ -48,34 +52,69 @@ function PropertyPage() {
   const { property } = Route.useLoaderData();
   const { currency, favorites, toggleFavorite } = useSpaces();
   const [selected, setSelected] = useState<Room | null>(null);
+  const [slide, setSlide] = useState(0);
   const saved = favorites.includes(property.id);
   const cheapest = property.rooms.reduce((a, b) => (a.rate < b.rate ? a : b));
+  const shots = property.images.slice(0, 7);
+  const go = (dir: number) => setSlide((s) => (s + dir + shots.length) % shots.length);
 
   return (
     <div className="pb-28 lg:pb-10">
       <div className="relative">
-        <div className="grid h-64 grid-cols-3 gap-1 overflow-hidden sm:h-96 lg:rounded-b-3xl">
-          <img
-            src={property.images[0]}
-            alt={property.title}
-            width={1200}
-            height={800}
-            className="col-span-2 size-full object-cover"
-          />
-          <div className="grid grid-rows-2 gap-1">
-            {property.images.slice(1, 3).map((src, i) => (
-              <img
-                key={i}
-                src={src}
-                alt={`${property.title} photo ${i + 2}`}
-                loading="lazy"
-                width={1200}
-                height={800}
-                className="size-full object-cover"
-              />
-            ))}
-          </div>
+        <div className="relative h-72 overflow-hidden sm:h-[26rem] lg:rounded-b-3xl">
+          {shots.map((src, i) => (
+            <img
+              key={i}
+              src={src}
+              alt={`${property.title} photo ${i + 1}`}
+              loading={i === 0 ? "eager" : "lazy"}
+              width={1600}
+              height={900}
+              className={cn(
+                "absolute inset-0 size-full object-cover transition-opacity duration-500",
+                i === slide ? "opacity-100" : "opacity-0",
+              )}
+            />
+          ))}
+          {shots.length > 1 && (
+            <>
+              <button
+                type="button"
+                aria-label="Previous photo"
+                onClick={() => go(-1)}
+                className="absolute left-4 top-1/2 grid size-10 -translate-y-1/2 place-items-center rounded-full bg-card/90 backdrop-blur transition-transform active:scale-90"
+              >
+                <ChevronLeft className="size-5" />
+              </button>
+              <button
+                type="button"
+                aria-label="Next photo"
+                onClick={() => go(1)}
+                className="absolute right-4 top-1/2 grid size-10 -translate-y-1/2 place-items-center rounded-full bg-card/90 backdrop-blur transition-transform active:scale-90"
+              >
+                <ChevronRight className="size-5" />
+              </button>
+              <div className="absolute bottom-4 left-1/2 flex -translate-x-1/2 gap-1.5">
+                {shots.map((_, i) => (
+                  <button
+                    key={i}
+                    type="button"
+                    aria-label={`Go to photo ${i + 1}`}
+                    onClick={() => setSlide(i)}
+                    className={cn(
+                      "h-1.5 rounded-full transition-all",
+                      i === slide ? "w-6 bg-card" : "w-1.5 bg-card/60",
+                    )}
+                  />
+                ))}
+              </div>
+              <div className="absolute bottom-4 left-4 rounded-full bg-ink/70 px-3 py-1 text-xs font-semibold text-brand-foreground">
+                {slide + 1} / {shots.length}
+              </div>
+            </>
+          )}
         </div>
+
 
         <Link
           to="/search"
@@ -137,10 +176,38 @@ function PropertyPage() {
               <MapPin className="mt-0.5 size-4 shrink-0" />
               {property.address}
             </p>
-            <p className="flex items-center gap-2 text-sm font-medium text-primary">
-              <ShieldCheck className="size-4" /> Verified host · Spaces assured
-            </p>
+            
+            <div className="flex flex-wrap gap-2.5 pt-1">
+              {property.beds > 0 && (
+                <span className="flex items-center gap-2 rounded-full border border-border px-4 py-2 text-sm font-medium">
+                  <BedDouble className="size-4 text-muted-foreground" /> {property.beds} beds
+                </span>
+              )}
+              <span className="flex items-center gap-2 rounded-full border border-border px-4 py-2 text-sm font-medium">
+                <Bath className="size-4 text-muted-foreground" /> {property.baths} baths
+              </span>
+              <span className="flex items-center gap-2 rounded-full border border-border px-4 py-2 text-sm font-medium">
+                <Users className="size-4 text-muted-foreground" /> up to {property.capacity} guests
+              </span>
+            </div>
+
+            <div className="card-elevated flex items-center justify-between gap-4 rounded-2xl p-4">
+              <div className="flex min-w-0 items-center gap-4">
+                <span className="grid size-12 shrink-0 place-items-center rounded-full bg-primary font-display text-lg font-bold text-primary-foreground">
+                  {property.host.charAt(0)}
+                </span>
+                <div className="min-w-0">
+                  <p className="text-sm text-muted-foreground">Managed by</p>
+                  <p className="truncate font-display text-base font-bold">{property.host}</p>
+                </div>
+              </div>
+              <span className="flex shrink-0 items-center gap-1.5 rounded-full bg-success/10 px-3 py-1.5 text-sm font-semibold text-success">
+                <ShieldCheck className="size-4" /> Verified
+              </span>
+            </div>
+
             <p className="text-sm leading-relaxed text-muted-foreground">{property.description}</p>
+
           </section>
 
           <section>
