@@ -28,6 +28,9 @@ export type Property = {
   reviews: number;
   price: number; // NGN from-price per night
   capacity: number;
+  beds: number;
+  baths: number;
+  host: string;
   images: string[];
   description: string;
   amenities: string[];
@@ -55,6 +58,9 @@ export const properties: Property[] = [
     reviews: 214,
     price: 205000,
     capacity: 4,
+    beds: 2,
+    baths: 2,
+    host: "Adaeze Luxe Homes",
     images: [p1, p2, p5],
     description:
       "A serene waterfront residence with panoramic lagoon views, private terrace lounge and concierge service on call around the clock. Designed for slow mornings and long, golden evenings.",
@@ -77,6 +83,9 @@ export const properties: Property[] = [
     reviews: 168,
     price: 320000,
     capacity: 6,
+    beds: 3,
+    baths: 3,
+    host: "Skyline Residences NG",
     images: [p2, p1, p6],
     description:
       "Floor-to-ceiling glass, a wraparound skyline and a chef-ready kitchen. The penthouse sits on the 24th floor with private lift access and dedicated parking.",
@@ -99,6 +108,9 @@ export const properties: Property[] = [
     reviews: 92,
     price: 950000,
     capacity: 600,
+    beds: 0,
+    baths: 6,
+    host: "GRA Events Collective",
     images: [p3, p4, p1],
     description:
       "A 600-guest ballroom with crystal chandeliers, in-house sound, staging and a dedicated events manager. Catering partners available on request.",
@@ -121,6 +133,9 @@ export const properties: Property[] = [
     reviews: 340,
     price: 45000,
     capacity: 8,
+    beds: 0,
+    baths: 2,
+    host: "Nkoyo Hospitality",
     images: [p4, p3, p2],
     description:
       "A seven-course tasting menu rooted in West African produce, served in a candlelit dining room. Wine pairing optional, reservations essential.",
@@ -143,6 +158,9 @@ export const properties: Property[] = [
     reviews: 121,
     price: 96000,
     capacity: 4,
+    beds: 2,
+    baths: 2,
+    host: "Chevron Loft Studios",
     images: [p5, p1, p6],
     description:
       "A light-filled duplex loft with a mezzanine bedroom, indoor greenery and a quiet workspace. Perfect for a work trip that doesn't feel like one.",
@@ -165,6 +183,9 @@ export const properties: Property[] = [
     reviews: 187,
     price: 132000,
     capacity: 5,
+    beds: 2,
+    baths: 2,
+    host: "Obudu Ridge Retreats",
     images: [p6, p5, p3],
     description:
       "A timber chalet perched on the ridge, waking up above the clouds. Guided hikes, cable car access and a fireplace for cold mountain nights.",
