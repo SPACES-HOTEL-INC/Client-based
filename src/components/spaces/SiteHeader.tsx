@@ -17,9 +17,13 @@ const links = [
 export function SiteHeader() {
   const { user } = useSpaces();
   const [authOpen, setAuthOpen] = useState(false);
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+
+  if (pathname === "/") return null;
 
   return (
     <header className="hidden border-b border-border bg-card md:block">
+
       <div className="mx-auto flex h-18 max-w-6xl items-center gap-4 px-6 lg:gap-8 py-3">
         <Link to="/" className="flex shrink-0 items-center gap-2.5">
           <ArchMark className="h-9 w-9" />
