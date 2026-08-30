@@ -4,7 +4,7 @@ import { Map as MapIcon, LayoutGrid, SlidersHorizontal, Search as SearchIcon, X 
 import { AMENITIES, PROPERTY_TYPES, properties } from "@/lib/data";
 import { formatMoney, useSpaces } from "@/lib/spaces-store";
 import { PropertyCard, PropertyCardSkeleton } from "@/components/spaces/PropertyCard";
-import { CurrencyToggle } from "@/components/spaces/CurrencyToggle";
+
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
@@ -222,7 +222,7 @@ function SearchPage() {
           {loading ? "Searching…" : `${results.length} space${results.length === 1 ? "" : "s"} found`}
         </p>
         <div className="flex shrink-0 items-center gap-2">
-          <CurrencyToggle className="hidden sm:inline-flex lg:hidden" />
+
           <div className="inline-flex rounded-full bg-secondary p-1">
             <button
               type="button"
