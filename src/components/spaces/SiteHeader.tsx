@@ -1,7 +1,7 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import { useState } from "react";
 import { ArchMark } from "@/components/spaces/Logo";
-import { CurrencyToggle } from "@/components/spaces/CurrencyToggle";
+
 import { AuthDialog } from "@/components/spaces/AuthDialog";
 import { Button } from "@/components/ui/button";
 import { useSpaces } from "@/lib/spaces-store";
@@ -46,7 +46,6 @@ export function SiteHeader() {
         </nav>
 
         <div className="flex shrink-0 items-center gap-3">
-          <CurrencyToggle className="hidden lg:inline-flex" />
           {user.guest ? (
             <Button className="h-10 rounded-full px-5" onClick={() => setAuthOpen(true)}>
               Sign in

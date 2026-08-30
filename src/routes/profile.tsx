@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Bell, ChevronRight, Heart, LogOut, ShieldCheck, Ticket, UserRound } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import { CurrencyToggle } from "@/components/spaces/CurrencyToggle";
+
 import { AuthDialog } from "@/components/spaces/AuthDialog";
 import { useSpaces } from "@/lib/spaces-store";
 import { toast } from "sonner";
@@ -21,7 +21,7 @@ export const Route = createFileRoute("/profile")({
 });
 
 function ProfilePage() {
-  const { user, bookings, favorites, signOut } = useSpaces();
+  const { user, currency, bookings, favorites, signOut } = useSpaces();
   const [authOpen, setAuthOpen] = useState(false);
 
   return (
@@ -50,9 +50,11 @@ function ProfilePage() {
           <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-4">
             <div className="min-w-0">
               <p className="font-semibold">Display currency</p>
-              <p className="text-sm text-muted-foreground">Applies to all rates and totals</p>
+              <p className="text-sm text-muted-foreground">Synced from the home page toggle</p>
             </div>
-            <CurrencyToggle />
+            <span className="rounded-full bg-secondary px-4 py-1.5 text-sm font-semibold">
+              {currency === "NGN" ? "₦ NGN" : "$ USD"}
+            </span>
           </div>
         </section>
 
