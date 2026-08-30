@@ -14,7 +14,7 @@ import { reportLovableError } from "../lib/lovable-error-reporting";
 import { SpacesProvider } from "@/lib/spaces-store";
 import { Splash } from "@/components/spaces/Splash";
 import { BottomNav } from "@/components/spaces/BottomNav";
-import { SiteHeader } from "@/components/spaces/SiteHeader";
+
 import { Toaster } from "@/components/ui/sonner";
 
 function NotFoundComponent() {
@@ -138,8 +138,7 @@ function RootComponent() {
     <QueryClientProvider client={queryClient}>
       <SpacesProvider>
         <Splash />
-        <SiteHeader />
-        <div className="min-h-screen pb-24 md:pb-8">
+        <div className="min-h-screen pb-24 md:pb-28">
           {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
           <Outlet />
         </div>

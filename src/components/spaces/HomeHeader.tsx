@@ -13,7 +13,7 @@ export function HomeHeader() {
 
   return (
     <header className="bg-background">
-      <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-5 pt-6 pb-2 md:px-8 md:pt-8 md:pb-3">
+      <div className="mx-auto flex w-full items-center justify-between gap-4 px-5 pt-6 pb-2 md:px-10 md:pt-8 md:pb-3">
         <div className="min-w-0">
           <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground md:text-sm">
             {greeting()} · {user.guest ? "Guest" : "Member"}

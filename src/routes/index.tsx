@@ -44,7 +44,7 @@ function HomePage() {
     <div className="overflow-x-hidden pb-6">
       <HomeHeader />
 
-      <div className="mx-auto max-w-6xl px-5 pt-5 md:px-8 md:pt-8">
+      <div className="mx-auto w-full px-5 pt-6 md:px-10 md:pt-8">
         <section className="brand-surface rounded-3xl px-6 py-8 md:px-12 md:py-14">
           <h1 className="font-display text-3xl font-extrabold leading-[1.15] text-brand-foreground md:text-5xl">
             Find your next
@@ -65,7 +65,7 @@ function HomePage() {
         </section>
       </div>
 
-      <div className="relative z-10 mx-auto mt-8 max-w-6xl space-y-10 px-5 md:mt-12 md:space-y-14 md:px-8">
+      <div className="relative z-10 mx-auto mt-8 w-full space-y-10 px-5 md:mt-12 md:space-y-14 md:px-10">
         <section className="animate-rise-in">
           <h2 className="mb-4 font-display text-xl font-bold md:text-2xl">
             What are you looking for?
