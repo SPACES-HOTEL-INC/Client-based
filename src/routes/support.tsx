@@ -70,7 +70,7 @@ function SupportPage() {
   };
 
   return (
-    <div className="mx-auto max-w-3xl space-y-6 px-5 pt-6">
+    <div className="mx-auto max-w-5xl space-y-6 px-5 pt-6 md:px-10">
       <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-4">
         <div className="min-w-0">
           <h1 className="font-display text-2xl font-bold">Support</h1>

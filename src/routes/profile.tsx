@@ -27,7 +27,7 @@ function ProfilePage() {
   return (
     <div className="pb-6">
       <header className="brand-surface rounded-b-[2rem] px-5 pt-8 pb-14">
-        <div className="mx-auto flex max-w-3xl items-center gap-4">
+        <div className="mx-auto flex max-w-5xl items-center gap-4 md:px-5">
           <span className="grid size-16 shrink-0 place-items-center rounded-full bg-brand-foreground/15 font-display text-2xl font-bold text-brand-foreground">
             {user.firstName.charAt(0)}
           </span>
@@ -40,7 +40,7 @@ function ProfilePage() {
         </div>
       </header>
 
-      <div className="mx-auto -mt-8 max-w-3xl space-y-5 px-5">
+      <div className="mx-auto -mt-8 max-w-5xl space-y-5 px-5 md:px-10">
         <div className="card-elevated grid grid-cols-2 divide-x divide-border">
           <Stat label="Bookings" value={String(bookings.length)} icon={<Ticket className="size-4" />} />
           <Stat label="Saved spaces" value={String(favorites.length)} icon={<Heart className="size-4" />} />

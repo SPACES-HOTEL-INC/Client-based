@@ -29,7 +29,7 @@ function BookingsPage() {
   };
 
   return (
-    <div className="mx-auto max-w-3xl px-5 pt-6">
+    <div className="mx-auto max-w-5xl px-5 pt-6 md:px-10">
       <h1 className="font-display text-2xl font-bold">Your bookings</h1>
 
       <Tabs value={tab} onValueChange={setTab} className="mt-4">

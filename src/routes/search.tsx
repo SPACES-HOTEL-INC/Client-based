@@ -153,7 +153,7 @@ function SearchPage() {
   );
 
   return (
-    <div className="mx-auto max-w-6xl px-5 pt-6 md:px-6">
+    <div className="mx-auto w-full px-5 pt-6 md:px-10">
       <div className="flex items-center gap-2">
         <div className="flex flex-1 items-center gap-2 rounded-full border border-border bg-card px-4 py-3 shadow-sm">
           <SearchIcon className="size-4.5 shrink-0 text-muted-foreground" />
