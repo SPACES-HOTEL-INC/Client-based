@@ -2,7 +2,6 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { Map as MapIcon, LayoutGrid, SlidersHorizontal, Search as SearchIcon, X } from "lucide-react";
 import { AMENITIES, PROPERTY_TYPES, properties } from "@/lib/data";
-import { fetchProperties } from "@/lib/api";
 import { formatMoney, useSpaces } from "@/lib/spaces-store";
 import { PropertyCard, PropertyCardSkeleton } from "@/components/spaces/PropertyCard";
 
@@ -38,7 +37,6 @@ const MAX_PRICE = 1000000;
 function SearchPage() {
   const { type } = Route.useSearch();
   const { currency } = useSpaces();
-  const [propertiesState, setPropertiesState] = useState(properties);
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState("");
   const [price, setPrice] = useState<number[]>([MAX_PRICE]);
@@ -53,28 +51,13 @@ function SearchPage() {
     return () => clearTimeout(t);
   }, [query, types, minRating, amenities, price]);
 
-  // fetch live properties once on mount
-  useEffect(() => {
-    let mounted = true;
-    fetchProperties()
-      .then((res) => {
-        if (mounted && Array.isArray(res) && res.length > 0) setPropertiesState(res);
-      })
-      .catch(() => {
-        // keep local static data on error
-      });
-    return () => {
-      mounted = false;
-    };
-  }, []);
-
   useEffect(() => {
     if (type) setTypes([type]);
   }, [type]);
 
   const results = useMemo(
     () =>
-      propertiesState.filter((p) => {
+      properties.filter((p) => {
         const q = query.trim().toLowerCase();
         const matchQuery =
           !q ||
