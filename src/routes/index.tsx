@@ -1,7 +1,8 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ArrowRight, Building2, ChefHat, KeyRound, PartyPopper, Search, Star } from "lucide-react";
 import { properties } from "@/lib/data";
+import { fetchProperties } from "@/lib/api";
 import { formatMoney, useSpaces } from "@/lib/spaces-store";
 import { PropertyCard } from "@/components/spaces/PropertyCard";
 import { HomeHeader } from "@/components/spaces/HomeHeader";
@@ -38,7 +39,24 @@ function HomePage() {
   const { user, currency } = useSpaces();
   const navigate = useNavigate();
   const [authOpen, setAuthOpen] = useState(false);
-  const featured = properties.slice(0, 4);
+  const [propertiesState, setPropertiesState] = useState(properties);
+
+  const featured = propertiesState.slice(0, 4);
+
+  // fetch live properties once on mount and map into the same shape as `properties`
+  useEffect(() => {
+    let mounted = true;
+    fetchProperties()
+      .then((res) => {
+        if (mounted && Array.isArray(res) && res.length > 0) setPropertiesState(res);
+      })
+      .catch(() => {
+        // keep local static data on error
+      });
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   return (
     <div className="overflow-x-hidden pb-6">

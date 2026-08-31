@@ -14,7 +14,8 @@ import {
   Star,
   Users,
 } from "lucide-react";
-import { getProperty, type Room } from "@/lib/data";
+import { type Room, type Property } from "@/lib/data";
+import { fetchProperty } from "@/lib/api";
 import { formatMoney, useSpaces } from "@/lib/spaces-store";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -24,10 +25,10 @@ import { cn } from "@/lib/utils";
 
 
 export const Route = createFileRoute("/property/$id")({
-  loader: ({ params }) => {
-    const property = getProperty(params.id);
+  loader: async ({ params }) => {
+    const property = await fetchProperty(params.id);
     if (!property) throw notFound();
-    return { property };
+    return { property } as { property: Property };
   },
   head: ({ loaderData }) => {
     if (!loaderData) {
