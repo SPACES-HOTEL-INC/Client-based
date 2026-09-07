@@ -198,13 +198,14 @@ function mapPublicRoomsToProperties(data: any[]): FrontProperty[] {
 
     return {
       id: String(r.property_id ?? ""),
-      title: r.hotel_name ?? r.title ?? "",
+      // Prefer room title for display
+      title: r.title ?? r.hotel_name ?? "",
       city: r.city ?? "",
       state: r.state ?? "",
       address: r.address ?? "",
       type: r.property_type ? r.property_type.toString() : "Hotel",
       rating: Number(r.avg_rating ?? 0) || 0,
-      reviews: 0,
+      reviews: Number(r.total_reviews ?? 0) || 0,
       price: roomRate,
       capacity: rooms[0].occupancy ?? 1,
       beds: 1,
