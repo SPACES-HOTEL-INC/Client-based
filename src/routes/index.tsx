@@ -46,7 +46,8 @@ function HomePage() {
     let mounted = true;
     (async () => {
       try {
-        const [f, t] = await Promise.all([fetchFeaturedStays(4), fetchTrendingInLagos(4)]);
+        // fetch both featured and trending concurrently; api enforces Home limits
+        const [f, t] = await Promise.all([fetchFeaturedStays(), fetchTrendingInLagos()]);
         if (!mounted) return;
         if (Array.isArray(f) && f.length) setFeatured(f);
         if (Array.isArray(t) && t.length) setTrending(t);

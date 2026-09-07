@@ -45,6 +45,8 @@ function SearchPage() {
   const [types, setTypes] = useState<string[]>(type ? [type] : []);
   const [minRating, setMinRating] = useState(0);
   const [amenities, setAmenities] = useState<string[]>([]);
+  // Debounced filter state to avoid firing API on every change
+  const [debouncedFilters, setDebouncedFilters] = useState({ query: "", price: [MAX_PRICE] as number[], types: [] as string[] });
   const [view, setView] = useState<"grid" | "map">("grid");
 
   useEffect(() => {
@@ -53,17 +55,25 @@ function SearchPage() {
     return () => clearTimeout(t);
   }, [query, types, minRating, amenities, price]);
 
+  // debounce filters (query, price, types) before hitting API
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedFilters({ query, price, types });
+    }, 350);
+    return () => clearTimeout(handler);
+  }, [query, price, types]);
+
   useEffect(() => {
     let mounted = true;
     (async () => {
       setLoading(true);
       try {
         const filters: Record<string, any> = {};
-        if (query) filters.city = query;
-        if (price?.[0]) filters.max_price = price[0];
-        if (types && types.length === 1) filters.property_type = types[0];
+        if (debouncedFilters.query) filters.city = debouncedFilters.query;
+        if (debouncedFilters.price?.[0]) filters.max_price = debouncedFilters.price[0];
+        if (debouncedFilters.types && debouncedFilters.types.length === 1) filters.property_type = debouncedFilters.types[0];
         // backend will handle city, max_price, property_type and limit
-        const res = await searchRooms({ city: filters.city, max_price: filters.max_price, property_type: filters.property_type, limit: 40 });
+        const res = await searchRooms({ city: filters.city, max_price: filters.max_price, property_type: filters.property_type });
         if (!mounted) return;
         setProperties(res ?? []);
       } catch (e) {
@@ -75,7 +85,7 @@ function SearchPage() {
     return () => {
       mounted = false;
     };
-  }, [query, types, price]);
+  }, [debouncedFilters]);
 
   useEffect(() => {
     if (type) setTypes([type]);

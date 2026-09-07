@@ -2,6 +2,14 @@ import type { Property as FrontProperty, Room as FrontRoom } from "./data";
 
 const API_BASE = import.meta.env.VITE_API_BASE ?? "https://backend-nq9s.onrender.com";
 
+// Simple in-memory cache for GET results (stale-while-revalidate)
+const CACHE_TTL = 30 * 1000; // 30s
+const cache = new Map<string, { ts: number; data: any }>();
+
+function getCacheKey(path: string, qs?: URLSearchParams) {
+  return qs && qs.toString() ? `${path}?${qs.toString()}` : path;
+}
+
 type BackendProperty = Record<string, any>;
 type BackendRoom = Record<string, any>;
 
@@ -111,20 +119,8 @@ export async function fetchProperty(propertyId: string) {
 
 export async function fetchTrendingInLagos(limit = 6) {
   try {
-    const res = await fetch(`${API_BASE}/api/v1/properties?city=Lagos&limit=${limit}`);
-    if (!res.ok) return [];
-    const data = await res.json();
-    if (!Array.isArray(data)) return [];
-    const out: FrontProperty[] = [];
-    for (const p of data) {
-      try {
-        const rooms = await fetchRoomsForProperty(String(p.id));
-        out.push(mapProperty(p, rooms));
-      } catch (e) {
-        out.push(mapProperty(p, []));
-      }
-    }
-    return out;
+    // use public rooms mapping for trending (mapped to property cards)
+    return await fetchPublicRooms({ city: "Lagos", limit });
   } catch (err) {
     console.error("fetchTrendingInLagos error:", err);
     return [];
@@ -133,20 +129,8 @@ export async function fetchTrendingInLagos(limit = 6) {
 
 export async function fetchFeaturedStays(limit = 4) {
   try {
-    const res = await fetch(`${API_BASE}/api/v1/properties/featured?limit=${limit}`);
-    if (!res.ok) return [];
-    const data = await res.json();
-    if (!Array.isArray(data)) return [];
-    const out: FrontProperty[] = [];
-    for (const p of data) {
-      try {
-        const rooms = await fetchRoomsForProperty(String(p.id));
-        out.push(mapProperty(p, rooms));
-      } catch (e) {
-        out.push(mapProperty(p, []));
-      }
-    }
-    return out;
+    // Use public rooms endpoint for featured stays as well (mapped to property cards)
+    return await fetchPublicRooms({ limit });
   } catch (err) {
     console.error("fetchFeaturedStays error:", err);
     return [];
@@ -155,60 +139,85 @@ export async function fetchFeaturedStays(limit = 4) {
 
 export async function fetchPublicRooms(opts?: { city?: string; limit?: number }) {
   const city = opts?.city;
-  const limit = opts?.limit ?? 6;
+  // Enforce sensible Home limit (default 8)
+  const limit = Math.min(opts?.limit ?? 8, 50);
   try {
     const qs = new URLSearchParams();
     if (city) qs.set("city", city);
     if (limit) qs.set("limit", String(limit));
-    const res = await fetch(`${API_BASE}/api/v1/rooms/public?${qs.toString()}`);
+    const path = `/api/v1/rooms/public`;
+    const key = getCacheKey(path, qs);
+
+    // Serve cached data immediately if available
+    const cached = cache.get(key);
+    if (cached && Date.now() - cached.ts < CACHE_TTL) {
+      // refresh in background
+      (async () => {
+        try {
+          const r = await fetch(`${API_BASE}${path}?${qs.toString()}`);
+          if (r.ok) {
+            const d = await r.json();
+            cache.set(key, { ts: Date.now(), data: d });
+          }
+        } catch (e) {
+          /* ignore background fetch errors */
+        }
+      })();
+      const data = cached.data;
+      if (!Array.isArray(data)) return [];
+      return mapPublicRoomsToProperties(data);
+    }
+
+    const res = await fetch(`${API_BASE}${path}?${qs.toString()}`);
     if (!res.ok) return [];
     const data = await res.json();
     if (!Array.isArray(data)) return [];
-
-    // Map each room + parent property metadata into a FrontProperty-shaped object
-    const out: FrontProperty[] = data.map((r: any) => {
-      const roomRate = Math.round(r.price_per_night ?? 0);
-      const images = Array.isArray(r.images) ? r.images : r.images ? [r.images] : [];
-      const rooms = [
-        {
-          id: String(r.id ?? ""),
-          name: r.title ?? r.hotel_name ?? "",
-          occupancy: r.occupancy ?? 2,
-          bed: r.bed ?? "",
-          size: r.size ?? 0,
-          amenities: r.amenities ?? [],
-          rate: roomRate,
-        },
-      ];
-
-      return {
-        id: String(r.property_id ?? ""),
-        title: r.hotel_name ?? r.title ?? "",
-        city: r.city ?? "",
-        state: r.state ?? "",
-        address: r.address ?? "",
-        type: "Hotel",
-        rating: Number(r.avg_rating ?? 0) || 0,
-        reviews: 0,
-        price: roomRate,
-        capacity: rooms[0].occupancy ?? 1,
-        beds: 1,
-        baths: 1,
-        host: r.hotel_name ?? "",
-        images,
-        description: r.description ?? "",
-        amenities: r.amenities ?? [],
-        facilities: [{ group: "Amenities", items: Array.isArray(r.amenities) ? r.amenities : [] }],
-        rooms,
-        coords: { x: 0, y: 0 },
-      };
-    });
-
-    return out;
+    cache.set(key, { ts: Date.now(), data });
+    return mapPublicRoomsToProperties(data);
   } catch (err) {
     console.error("fetchPublicRooms error:", err);
     return [];
   }
+}
+
+function mapPublicRoomsToProperties(data: any[]): FrontProperty[] {
+  return data.map((r: any) => {
+    const roomRate = Math.round(r.price_per_night ?? 0);
+    const images = Array.isArray(r.images) ? r.images : r.images ? [r.images] : [];
+    const rooms = [
+      {
+        id: String(r.id ?? ""),
+        name: r.title ?? r.hotel_name ?? "",
+        occupancy: r.occupancy ?? 2,
+        bed: r.bed ?? "",
+        size: r.size ?? 0,
+        amenities: r.amenities ?? [],
+        rate: roomRate,
+      },
+    ];
+
+    return {
+      id: String(r.property_id ?? ""),
+      title: r.hotel_name ?? r.title ?? "",
+      city: r.city ?? "",
+      state: r.state ?? "",
+      address: r.address ?? "",
+      type: r.property_type ? r.property_type.toString() : "Hotel",
+      rating: Number(r.avg_rating ?? 0) || 0,
+      reviews: 0,
+      price: roomRate,
+      capacity: rooms[0].occupancy ?? 1,
+      beds: 1,
+      baths: 1,
+      host: r.hotel_name ?? "",
+      images,
+      description: r.description ?? "",
+      amenities: r.amenities ?? [],
+      facilities: [{ group: "Amenities", items: Array.isArray(r.amenities) ? r.amenities : [] }],
+      rooms,
+      coords: { x: 0, y: 0 },
+    };
+  });
 }
 
 export async function searchRooms(filters?: { city?: string; min_price?: number; max_price?: number; property_type?: string; limit?: number }) {
@@ -218,53 +227,40 @@ export async function searchRooms(filters?: { city?: string; min_price?: number;
     if (filters?.min_price != null) qs.set("min_price", String(filters.min_price));
     if (filters?.max_price != null) qs.set("max_price", String(filters.max_price));
     if (filters?.property_type) qs.set("property_type", filters.property_type);
-    qs.set("limit", String(filters?.limit ?? 20));
+    // Enforce per-page limit for search (default 12)
+    const limit = Math.min(filters?.limit ?? 12, 100);
+    qs.set("limit", String(limit));
 
-    const res = await fetch(`${API_BASE}/api/v1/rooms/search?${qs.toString()}`);
+    const path = `/api/v1/rooms/search`;
+    const key = getCacheKey(path, qs);
+
+    // Serve cached results immediately if fresh (stale-while-revalidate)
+    const cached = cache.get(key);
+    if (cached && Date.now() - cached.ts < CACHE_TTL) {
+      // background refresh
+      (async () => {
+        try {
+          const r = await fetch(`${API_BASE}${path}?${qs.toString()}`);
+          if (r.ok) {
+            const d = await r.json();
+            cache.set(key, { ts: Date.now(), data: d });
+          }
+        } catch (e) {
+          /* ignore */
+        }
+      })();
+      const data = cached.data;
+      if (!Array.isArray(data)) return [];
+      return mapPublicRoomsToProperties(data);
+    }
+
+    const res = await fetch(`${API_BASE}${path}?${qs.toString()}`);
     if (!res.ok) return [];
     const data = await res.json();
     if (!Array.isArray(data)) return [];
+    cache.set(key, { ts: Date.now(), data });
 
-    // Map room+property metadata into FrontProperty shape (single-room per property card)
-    const out: FrontProperty[] = data.map((r: any) => {
-      const roomRate = Math.round(r.price_per_night ?? 0);
-      const images = Array.isArray(r.images) ? r.images : r.images ? [r.images] : [];
-      const rooms = [
-        {
-          id: String(r.id ?? ""),
-          name: r.title ?? r.hotel_name ?? "",
-          occupancy: r.occupancy ?? 2,
-          bed: r.bed ?? "",
-          size: r.size ?? 0,
-          amenities: r.amenities ?? [],
-          rate: roomRate,
-        },
-      ];
-
-      return {
-        id: String(r.property_id ?? ""),
-        title: r.hotel_name ?? r.title ?? "",
-        city: r.city ?? "",
-        state: r.state ?? "",
-        address: r.address ?? "",
-        type: (r.property_type ?? "hotel").toString(),
-        rating: Number(r.avg_rating ?? 0) || 0,
-        reviews: 0,
-        price: roomRate,
-        capacity: rooms[0].occupancy ?? 1,
-        beds: 1,
-        baths: 1,
-        host: r.hotel_name ?? "",
-        images,
-        description: r.description ?? "",
-        amenities: r.amenities ?? [],
-        facilities: [{ group: "Amenities", items: Array.isArray(r.amenities) ? r.amenities : [] }],
-        rooms,
-        coords: { x: 0, y: 0 },
-      };
-    });
-
-    return out;
+    return mapPublicRoomsToProperties(data);
   } catch (err) {
     console.error("searchRooms error:", err);
     return [];
