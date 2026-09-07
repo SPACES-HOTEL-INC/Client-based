@@ -1,7 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { Map as MapIcon, LayoutGrid, SlidersHorizontal, Search as SearchIcon, X } from "lucide-react";
-import { AMENITIES, PROPERTY_TYPES, properties } from "@/lib/data";
+import { AMENITIES, PROPERTY_TYPES, type Property } from "@/lib/data";
+import { fetchProperties } from "@/lib/api";
 import { formatMoney, useSpaces } from "@/lib/spaces-store";
 import { PropertyCard, PropertyCardSkeleton } from "@/components/spaces/PropertyCard";
 
@@ -38,6 +39,7 @@ function SearchPage() {
   const { type } = Route.useSearch();
   const { currency } = useSpaces();
   const [loading, setLoading] = useState(true);
+  const [properties, setProperties] = useState<Property[]>([]);
   const [query, setQuery] = useState("");
   const [price, setPrice] = useState<number[]>([MAX_PRICE]);
   const [types, setTypes] = useState<string[]>(type ? [type] : []);
@@ -50,6 +52,21 @@ function SearchPage() {
     const t = setTimeout(() => setLoading(false), 650);
     return () => clearTimeout(t);
   }, [query, types, minRating, amenities, price]);
+
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        const ps = await fetchProperties();
+        if (mounted) setProperties(ps);
+      } catch {
+        /* ignore */
+      }
+    })();
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   useEffect(() => {
     if (type) setTypes([type]);
