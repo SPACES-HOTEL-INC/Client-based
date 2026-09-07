@@ -93,3 +93,37 @@ export async function fetchProperty(propertyId: string) {
   const rooms = await fetchRoomsForProperty(propertyId);
   return mapProperty(p, rooms);
 }
+
+export async function fetchTrendingInLagos(limit = 6) {
+  const res = await fetch(`${API_BASE}/api/v1/properties?city=Lagos&limit=${limit}`);
+  if (!res.ok) return [];
+  const data = await res.json();
+  if (!Array.isArray(data)) return [];
+  const out: FrontProperty[] = [];
+  for (const p of data) {
+    try {
+      const rooms = await fetchRoomsForProperty(String(p.id));
+      out.push(mapProperty(p, rooms));
+    } catch {
+      out.push(mapProperty(p, []));
+    }
+  }
+  return out;
+}
+
+export async function fetchFeaturedStays(limit = 4) {
+  const res = await fetch(`${API_BASE}/api/v1/properties/featured?limit=${limit}`);
+  if (!res.ok) return [];
+  const data = await res.json();
+  if (!Array.isArray(data)) return [];
+  const out: FrontProperty[] = [];
+  for (const p of data) {
+    try {
+      const rooms = await fetchRoomsForProperty(String(p.id));
+      out.push(mapProperty(p, rooms));
+    } catch {
+      out.push(mapProperty(p, []));
+    }
+  }
+  return out;
+}

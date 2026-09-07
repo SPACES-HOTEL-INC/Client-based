@@ -2,6 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { ArrowRight, Building2, ChefHat, KeyRound, PartyPopper, Search, Star } from "lucide-react";
 import { properties } from "@/lib/data";
+import { fetchTrendingInLagos, fetchFeaturedStays } from "@/lib/api";
 import { formatMoney, useSpaces } from "@/lib/spaces-store";
 import { PropertyCard } from "@/components/spaces/PropertyCard";
 import { HomeHeader } from "@/components/spaces/HomeHeader";
@@ -38,7 +39,25 @@ function HomePage() {
   const { user, currency } = useSpaces();
   const navigate = useNavigate();
   const [authOpen, setAuthOpen] = useState(false);
-  const featured = properties.slice(0, 4);
+  const [featured, setFeatured] = useState(() => properties.slice(0, 4));
+  const [trending, setTrending] = useState(() => properties.slice(2, 6));
+
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        const [f, t] = await Promise.all([fetchFeaturedStays(4), fetchTrendingInLagos(4)]);
+        if (!mounted) return;
+        if (Array.isArray(f) && f.length) setFeatured(f);
+        if (Array.isArray(t) && t.length) setTrending(t);
+      } catch (e) {
+        /* ignore - fall back to static */
+      }
+    })();
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   return (
     <div className="overflow-x-hidden pb-6">
@@ -136,7 +155,7 @@ function HomePage() {
         <section>
           <h2 className="mb-4 font-display text-xl font-bold md:text-2xl">Trending in Lagos</h2>
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            {properties.slice(2, 6).map((p) => (
+            {trending.map((p) => (
               <PropertyCard key={p.id} property={p} />
             ))}
           </div>
