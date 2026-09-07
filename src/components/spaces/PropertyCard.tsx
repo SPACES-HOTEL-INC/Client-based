@@ -14,8 +14,8 @@ export function PropertyCard({ property }: { property: Property }) {
     <article className="card-elevated group overflow-hidden">
       <div className="relative aspect-[4/3] overflow-hidden">
         <img
-          src={property.images[index]}
-          alt={property.title}
+          src={property.images?.[index] ?? ""}
+          alt={property.title ?? ""}
           loading="lazy"
           width={1200}
           height={800}
@@ -23,7 +23,7 @@ export function PropertyCard({ property }: { property: Property }) {
         />
         <div className="absolute left-3 top-3 flex items-center gap-1 rounded-full bg-card/90 px-2.5 py-1 text-xs font-semibold">
           <Star className="size-3.5 fill-gold text-gold" />
-          {property.rating}
+          {property.rating ?? 0}
         </div>
         <button
           type="button"
@@ -34,11 +34,11 @@ export function PropertyCard({ property }: { property: Property }) {
           <Heart className={cn("size-4.5", saved ? "fill-destructive text-destructive" : "text-foreground")} />
         </button>
         <div className="absolute bottom-3 right-3 rounded-full bg-ink/80 px-3 py-1.5 text-xs font-semibold text-brand-foreground">
-          {formatMoney(property.price, currency)}
+          {formatMoney(property.price ?? 0, currency)}
           <span className="font-normal opacity-70">/night</span>
         </div>
         <div className="absolute bottom-3 left-3 flex gap-1.5">
-          {property.images.map((_, i) => (
+          {(property.images ?? []).map((_, i) => (
             <button
               key={i}
               type="button"
@@ -68,7 +68,7 @@ export function PropertyCard({ property }: { property: Property }) {
         </p>
         <div className="flex items-center justify-between pt-1">
           <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
-            <Users className="size-3.5" /> Up to {property.capacity}
+            <Users className="size-3.5" /> Up to {property.capacity ?? 1}
           </span>
           <Link
             to="/property/$id"

@@ -1,6 +1,6 @@
 import type { Property as FrontProperty, Room as FrontRoom } from "./data";
 
-const API_BASE = import.meta.env.VITE_API_BASE || "";
+const API_BASE = import.meta.env.VITE_API_BASE ?? "https://backend-nq9s.onrender.com";
 
 type BackendProperty = Record<string, any>;
 type BackendRoom = Record<string, any>;
@@ -61,69 +61,94 @@ function mapProperty(b: BackendProperty, rooms: FrontRoom[]): FrontProperty {
 }
 
 export async function fetchRoomsForProperty(propertyId: string) {
-  const res = await fetch(`${API_BASE}/api/v1/properties/${propertyId}/rooms`);
-  if (!res.ok) return [];
-  const data = await res.json();
-  return Array.isArray(data) ? data.map(mapRoom) : [];
+  try {
+    const res = await fetch(`${API_BASE}/api/v1/properties/${propertyId}/rooms`);
+    if (!res.ok) return [];
+    const data = await res.json();
+    return Array.isArray(data) ? data.map(mapRoom) : [];
+  } catch (err) {
+    console.error("fetchRoomsForProperty error:", err);
+    return [];
+  }
 }
 
 export async function fetchProperties() {
-  const res = await fetch(`${API_BASE}/api/v1/properties`);
-  if (!res.ok) return [];
-  const data = await res.json();
-  if (!Array.isArray(data)) return [];
+  try {
+    const res = await fetch(`${API_BASE}/api/v1/properties`);
+    if (!res.ok) return [];
+    const data = await res.json();
+    if (!Array.isArray(data)) return [];
 
-  // For each property fetch rooms to compute price and rooms list
-  const out: FrontProperty[] = [];
-  for (const p of data) {
-    try {
-      const rooms = await fetchRoomsForProperty(String(p.id));
-      out.push(mapProperty(p, rooms));
-    } catch (e) {
-      out.push(mapProperty(p, []));
+    // For each property fetch rooms to compute price and rooms list
+    const out: FrontProperty[] = [];
+    for (const p of data) {
+      try {
+        const rooms = await fetchRoomsForProperty(String(p.id));
+        out.push(mapProperty(p, rooms));
+      } catch (e) {
+        out.push(mapProperty(p, []));
+      }
     }
+    return out;
+  } catch (err) {
+    console.error("fetchProperties error:", err);
+    return [];
   }
-  return out;
 }
 
 export async function fetchProperty(propertyId: string) {
-  const res = await fetch(`${API_BASE}/api/v1/properties/${propertyId}`);
-  if (!res.ok) return null;
-  const p = await res.json();
-  const rooms = await fetchRoomsForProperty(propertyId);
-  return mapProperty(p, rooms);
+  try {
+    const res = await fetch(`${API_BASE}/api/v1/properties/${propertyId}`);
+    if (!res.ok) return null;
+    const p = await res.json();
+    const rooms = await fetchRoomsForProperty(propertyId);
+    return mapProperty(p, rooms);
+  } catch (err) {
+    console.error("fetchProperty error:", err);
+    return null;
+  }
 }
 
 export async function fetchTrendingInLagos(limit = 6) {
-  const res = await fetch(`${API_BASE}/api/v1/properties?city=Lagos&limit=${limit}`);
-  if (!res.ok) return [];
-  const data = await res.json();
-  if (!Array.isArray(data)) return [];
-  const out: FrontProperty[] = [];
-  for (const p of data) {
-    try {
-      const rooms = await fetchRoomsForProperty(String(p.id));
-      out.push(mapProperty(p, rooms));
-    } catch {
-      out.push(mapProperty(p, []));
+  try {
+    const res = await fetch(`${API_BASE}/api/v1/properties?city=Lagos&limit=${limit}`);
+    if (!res.ok) return [];
+    const data = await res.json();
+    if (!Array.isArray(data)) return [];
+    const out: FrontProperty[] = [];
+    for (const p of data) {
+      try {
+        const rooms = await fetchRoomsForProperty(String(p.id));
+        out.push(mapProperty(p, rooms));
+      } catch (e) {
+        out.push(mapProperty(p, []));
+      }
     }
+    return out;
+  } catch (err) {
+    console.error("fetchTrendingInLagos error:", err);
+    return [];
   }
-  return out;
 }
 
 export async function fetchFeaturedStays(limit = 4) {
-  const res = await fetch(`${API_BASE}/api/v1/properties/featured?limit=${limit}`);
-  if (!res.ok) return [];
-  const data = await res.json();
-  if (!Array.isArray(data)) return [];
-  const out: FrontProperty[] = [];
-  for (const p of data) {
-    try {
-      const rooms = await fetchRoomsForProperty(String(p.id));
-      out.push(mapProperty(p, rooms));
-    } catch {
-      out.push(mapProperty(p, []));
+  try {
+    const res = await fetch(`${API_BASE}/api/v1/properties/featured?limit=${limit}`);
+    if (!res.ok) return [];
+    const data = await res.json();
+    if (!Array.isArray(data)) return [];
+    const out: FrontProperty[] = [];
+    for (const p of data) {
+      try {
+        const rooms = await fetchRoomsForProperty(String(p.id));
+        out.push(mapProperty(p, rooms));
+      } catch (e) {
+        out.push(mapProperty(p, []));
+      }
     }
+    return out;
+  } catch (err) {
+    console.error("fetchFeaturedStays error:", err);
+    return [];
   }
-  return out;
 }

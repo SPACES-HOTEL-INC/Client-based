@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ArrowRight, Building2, ChefHat, KeyRound, PartyPopper, Search, Star } from "lucide-react";
 import { properties } from "@/lib/data";
 import { fetchTrendingInLagos, fetchFeaturedStays } from "@/lib/api";
@@ -39,8 +39,8 @@ function HomePage() {
   const { user, currency } = useSpaces();
   const navigate = useNavigate();
   const [authOpen, setAuthOpen] = useState(false);
-  const [featured, setFeatured] = useState(() => properties.slice(0, 4));
-  const [trending, setTrending] = useState(() => properties.slice(2, 6));
+  const [featured, setFeatured] = useState<Property[]>([]);
+  const [trending, setTrending] = useState<Property[]>([]);
 
   useEffect(() => {
     let mounted = true;
@@ -117,7 +117,7 @@ function HomePage() {
             </Link>
           </div>
           <div className="no-scrollbar -mx-5 flex snap-x snap-mandatory gap-5 overflow-x-auto px-5 pb-2 md:mx-0 md:px-0">
-            {featured.map((p) => (
+            { (featured ?? []).map((p) => (
               <Link
                 key={p.id}
                 to="/property/$id"
@@ -126,25 +126,25 @@ function HomePage() {
               >
                 <div className="relative aspect-[4/3]">
                   <img
-                    src={p.images[0]}
-                    alt={p.title}
+                    src={p.images?.[0] ?? ""}
+                    alt={p.title ?? ""}
                     loading="lazy"
                     width={1200}
                     height={800}
                     className="size-full object-cover"
                   />
                   <span className="absolute left-3 top-3 flex items-center gap-1.5 rounded-full bg-ink/80 px-3 py-1.5 text-sm font-semibold text-brand-foreground">
-                    <Star className="size-4 fill-gold text-gold" /> {p.rating}
+                    <Star className="size-4 fill-gold text-gold" /> {p.rating ?? 0}
                   </span>
                   <span className="absolute right-3 top-3 rounded-full bg-ink/80 px-3 py-1.5 text-sm font-semibold text-brand-foreground">
-                    {formatMoney(p.price, currency)}
+                    {formatMoney(p.price ?? 0, currency)}
                     <span className="font-normal opacity-70">/night</span>
                   </span>
                 </div>
                 <div className="space-y-1 p-4">
-                  <p className="line-clamp-1 font-display text-base font-semibold">{p.title}</p>
+                  <p className="line-clamp-1 font-display text-base font-semibold">{p.title ?? ""}</p>
                   <p className="text-sm text-muted-foreground">
-                    {p.city} · {p.state}
+                    {p.city ?? ""} · {p.state ?? ""}
                   </p>
                 </div>
               </Link>
@@ -155,7 +155,7 @@ function HomePage() {
         <section>
           <h2 className="mb-4 font-display text-xl font-bold md:text-2xl">Trending in Lagos</h2>
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            {trending.map((p) => (
+            {(trending ?? []).map((p) => (
               <PropertyCard key={p.id} property={p} />
             ))}
           </div>
