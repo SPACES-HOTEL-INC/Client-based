@@ -117,28 +117,10 @@ export async function fetchProperty(propertyId: string) {
   }
 }
 
-export async function fetchTrendingInLagos(limit = 6) {
-  try {
-    // use public rooms mapping for trending (mapped to property cards)
-    return await fetchPublicRooms({ city: "Lagos", limit });
-  } catch (err) {
-    console.error("fetchTrendingInLagos error:", err);
-    return [];
-  }
-}
 
-export async function fetchFeaturedStays(limit = 4) {
-  try {
-    // Use public rooms endpoint for featured stays as well (mapped to property cards)
-    return await fetchPublicRooms({ limit });
-  } catch (err) {
-    console.error("fetchFeaturedStays error:", err);
-    return [];
-  }
-}
 
 export async function fetchPublicRooms(opts?: { city?: string; limit?: number }) {
-  const city = opts?.city;
+  const city = opts?.city ? String(opts.city).toLowerCase() : undefined;
   // Enforce sensible Home limit (default 8)
   const limit = Math.min(opts?.limit ?? 8, 50);
   try {
@@ -166,7 +148,8 @@ export async function fetchPublicRooms(opts?: { city?: string; limit?: number })
       const data = cached.data;
       console.log("API Room Data (cache):", data);
       if (!Array.isArray(data)) return [];
-      return mapPublicRoomsToProperties(data);
+      // Return raw room objects (frontend will map needed fields)
+      return data;
     }
 
     const res = await fetch(`${API_BASE}${path}?${qs.toString()}`);
@@ -175,7 +158,8 @@ export async function fetchPublicRooms(opts?: { city?: string; limit?: number })
     if (!Array.isArray(data)) return [];
     console.log("API Room Data (fetch):", data);
     cache.set(key, { ts: Date.now(), data });
-    return mapPublicRoomsToProperties(data);
+    // Return raw room objects (frontend will map needed fields)
+    return data;
   } catch (err) {
     console.error("fetchPublicRooms error:", err);
     return [];
@@ -284,7 +268,7 @@ export async function fetchFeaturedStays(limit = 4) {
 
 export async function fetchTrendingInLagos(limit = 6) {
   try {
-    return await fetchPublicRooms({ city: "Lagos", limit });
+    return await fetchPublicRooms({ city: "lagos", limit });
   } catch (err) {
     console.error("fetchTrendingInLagos error:", err);
     return [];

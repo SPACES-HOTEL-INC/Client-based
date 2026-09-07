@@ -38,8 +38,8 @@ function HomePage() {
   const { user, currency } = useSpaces();
   const navigate = useNavigate();
   const [authOpen, setAuthOpen] = useState(false);
-  const [featured, setFeatured] = useState<Property[]>([]);
-  const [trending, setTrending] = useState<Property[]>([]);
+  const [featured, setFeatured] = useState<any[]>([]);
+  const [trending, setTrending] = useState<any[]>([]);
   const [loadingHome, setLoadingHome] = useState(true);
 
   useEffect(() => {
@@ -144,38 +144,44 @@ function HomePage() {
                 </div>
               </div>
             ) : (
-              (featured ?? []).map((p) => (
-                <Link
-                  key={p.id}
-                  to="/property/$id"
-                  params={{ id: p.id }}
-                  className="card-elevated w-72 shrink-0 snap-start overflow-hidden md:w-96"
-                >
-                  <div className="relative aspect-[4/3]">
-                    <img
-                      src={p.images?.[0] ?? ""}
-                      alt={p.title ?? ""}
-                      loading="lazy"
-                      width={1200}
-                      height={800}
-                      className="size-full object-cover"
-                    />
-                    <span className="absolute left-3 top-3 flex items-center gap-1.5 rounded-full bg-ink/80 px-3 py-1.5 text-sm font-semibold text-brand-foreground">
-                      <Star className="size-4 fill-gold text-gold" /> {p.rating ?? 0}
-                    </span>
-                    <span className="absolute right-3 top-3 rounded-full bg-ink/80 px-3 py-1.5 text-sm font-semibold text-brand-foreground">
-                      {formatMoney(p.price ?? 0, currency)}
-                      <span className="font-normal opacity-70">/night</span>
-                    </span>
-                  </div>
-                  <div className="space-y-1 p-4">
-                    <p className="line-clamp-1 font-display text-base font-semibold">{p.title ?? ""}</p>
-                    <p className="text-sm text-muted-foreground">
-                      {p.city ?? ""} · {p.state ?? ""}
-                    </p>
-                  </div>
-                </Link>
-              ))
+              (featured ?? []).map((p) => {
+                const propId = String(p.property_id ?? p.id ?? "");
+                const img = Array.isArray(p.images) ? p.images[0] : p.images ?? "";
+                const price = p.price_per_night ?? p.price ?? 0;
+                const ratingVal = p.avg_rating ?? p.rating ?? 0;
+                return (
+                  <Link
+                    key={propId}
+                    to="/property/$id"
+                    params={{ id: propId }}
+                    className="card-elevated w-72 shrink-0 snap-start overflow-hidden md:w-96"
+                  >
+                    <div className="relative aspect-[4/3]">
+                      <img
+                        src={img}
+                        alt={p.title ?? ""}
+                        loading="lazy"
+                        width={1200}
+                        height={800}
+                        className="size-full object-cover"
+                      />
+                      <span className="absolute left-3 top-3 flex items-center gap-1.5 rounded-full bg-ink/80 px-3 py-1.5 text-sm font-semibold text-brand-foreground">
+                        <Star className="size-4 fill-gold text-gold" /> {ratingVal}
+                      </span>
+                      <span className="absolute right-3 top-3 rounded-full bg-ink/80 px-3 py-1.5 text-sm font-semibold text-brand-foreground">
+                        {formatMoney(price ?? 0, currency)}
+                        <span className="font-normal opacity-70">/night</span>
+                      </span>
+                    </div>
+                    <div className="space-y-1 p-4">
+                      <p className="line-clamp-1 font-display text-base font-semibold">{p.title ?? ""}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {p.hotel_name ? `${p.hotel_name} · ` : ""}{p.city ?? ""} · {p.state ?? ""}
+                      </p>
+                    </div>
+                  </Link>
+                );
+              })
             )}
           </div>
         </section>
