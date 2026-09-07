@@ -164,6 +164,7 @@ export async function fetchPublicRooms(opts?: { city?: string; limit?: number })
         }
       })();
       const data = cached.data;
+      console.log("API Room Data (cache):", data);
       if (!Array.isArray(data)) return [];
       return mapPublicRoomsToProperties(data);
     }
@@ -172,6 +173,7 @@ export async function fetchPublicRooms(opts?: { city?: string; limit?: number })
     if (!res.ok) return [];
     const data = await res.json();
     if (!Array.isArray(data)) return [];
+    console.log("API Room Data (fetch):", data);
     cache.set(key, { ts: Date.now(), data });
     return mapPublicRoomsToProperties(data);
   } catch (err) {
@@ -251,6 +253,7 @@ export async function searchRooms(filters?: { city?: string; min_price?: number;
         }
       })();
       const data = cached.data;
+      console.log("API Room Data (cache):", data);
       if (!Array.isArray(data)) return [];
       return mapPublicRoomsToProperties(data);
     }
@@ -259,6 +262,7 @@ export async function searchRooms(filters?: { city?: string; min_price?: number;
     if (!res.ok) return [];
     const data = await res.json();
     if (!Array.isArray(data)) return [];
+    console.log("API Room Data (fetch):", data);
     cache.set(key, { ts: Date.now(), data });
 
     return mapPublicRoomsToProperties(data);

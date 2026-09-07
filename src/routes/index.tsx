@@ -1,10 +1,9 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { ArrowRight, Building2, ChefHat, KeyRound, PartyPopper, Search, Star } from "lucide-react";
-import { properties } from "@/lib/data";
 import { fetchTrendingInLagos, fetchFeaturedStays } from "@/lib/api";
 import { formatMoney, useSpaces } from "@/lib/spaces-store";
-import { PropertyCard } from "@/components/spaces/PropertyCard";
+import { PropertyCard, PropertyCardSkeleton } from "@/components/spaces/PropertyCard";
 import { HomeHeader } from "@/components/spaces/HomeHeader";
 import { AuthDialog } from "@/components/spaces/AuthDialog";
 
@@ -41,18 +40,25 @@ function HomePage() {
   const [authOpen, setAuthOpen] = useState(false);
   const [featured, setFeatured] = useState<Property[]>([]);
   const [trending, setTrending] = useState<Property[]>([]);
+  const [loadingHome, setLoadingHome] = useState(true);
 
   useEffect(() => {
     let mounted = true;
     (async () => {
       try {
+        setLoadingHome(true);
         // fetch both featured and trending concurrently; api enforces Home limits
         const [f, t] = await Promise.all([fetchFeaturedStays(), fetchTrendingInLagos()]);
         if (!mounted) return;
-        if (Array.isArray(f) && f.length) setFeatured(f);
-        if (Array.isArray(t) && t.length) setTrending(t);
+        setFeatured(Array.isArray(f) ? f : []);
+        setTrending(Array.isArray(t) ? t : []);
       } catch (e) {
-        /* ignore - fall back to static */
+        if (mounted) {
+          setFeatured([]);
+          setTrending([]);
+        }
+      } finally {
+        if (mounted) setLoadingHome(false);
       }
     })();
     return () => {
@@ -118,47 +124,80 @@ function HomePage() {
             </Link>
           </div>
           <div className="no-scrollbar -mx-5 flex snap-x snap-mandatory gap-5 overflow-x-auto px-5 pb-2 md:mx-0 md:px-0">
-            { (featured ?? []).map((p) => (
-              <Link
-                key={p.id}
-                to="/property/$id"
-                params={{ id: p.id }}
-                className="card-elevated w-72 shrink-0 snap-start overflow-hidden md:w-96"
-              >
-                <div className="relative aspect-[4/3]">
-                  <img
-                    src={p.images?.[0] ?? ""}
-                    alt={p.title ?? ""}
-                    loading="lazy"
-                    width={1200}
-                    height={800}
-                    className="size-full object-cover"
-                  />
-                  <span className="absolute left-3 top-3 flex items-center gap-1.5 rounded-full bg-ink/80 px-3 py-1.5 text-sm font-semibold text-brand-foreground">
-                    <Star className="size-4 fill-gold text-gold" /> {p.rating ?? 0}
-                  </span>
-                  <span className="absolute right-3 top-3 rounded-full bg-ink/80 px-3 py-1.5 text-sm font-semibold text-brand-foreground">
-                    {formatMoney(p.price ?? 0, currency)}
-                    <span className="font-normal opacity-70">/night</span>
-                  </span>
+            {loadingHome ? (
+              // show lightweight skeletons to avoid layout shift
+              [0, 1, 2, 3].map((i) => (
+                <div key={i} className="w-72 shrink-0 snap-start md:w-96">
+                  <div className="card-elevated overflow-hidden">
+                    <div className="aspect-[4/3] animate-pulse bg-muted" />
+                    <div className="space-y-3 p-4">
+                      <div className="h-4 w-3/4 animate-pulse rounded bg-muted" />
+                      <div className="h-3 w-1/2 animate-pulse rounded bg-muted" />
+                    </div>
+                  </div>
                 </div>
-                <div className="space-y-1 p-4">
-                  <p className="line-clamp-1 font-display text-base font-semibold">{p.title ?? ""}</p>
-                  <p className="text-sm text-muted-foreground">
-                    {p.city ?? ""} · {p.state ?? ""}
-                  </p>
+              ))
+            ) : (featured ?? []).length === 0 ? (
+              <div className="w-full">
+                <div className="card-elevated flex items-center justify-center p-8 text-center">
+                  <p className="font-display text-base font-semibold">No rooms available</p>
                 </div>
-              </Link>
-            ))}
+              </div>
+            ) : (
+              (featured ?? []).map((p) => (
+                <Link
+                  key={p.id}
+                  to="/property/$id"
+                  params={{ id: p.id }}
+                  className="card-elevated w-72 shrink-0 snap-start overflow-hidden md:w-96"
+                >
+                  <div className="relative aspect-[4/3]">
+                    <img
+                      src={p.images?.[0] ?? ""}
+                      alt={p.title ?? ""}
+                      loading="lazy"
+                      width={1200}
+                      height={800}
+                      className="size-full object-cover"
+                    />
+                    <span className="absolute left-3 top-3 flex items-center gap-1.5 rounded-full bg-ink/80 px-3 py-1.5 text-sm font-semibold text-brand-foreground">
+                      <Star className="size-4 fill-gold text-gold" /> {p.rating ?? 0}
+                    </span>
+                    <span className="absolute right-3 top-3 rounded-full bg-ink/80 px-3 py-1.5 text-sm font-semibold text-brand-foreground">
+                      {formatMoney(p.price ?? 0, currency)}
+                      <span className="font-normal opacity-70">/night</span>
+                    </span>
+                  </div>
+                  <div className="space-y-1 p-4">
+                    <p className="line-clamp-1 font-display text-base font-semibold">{p.title ?? ""}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {p.city ?? ""} · {p.state ?? ""}
+                    </p>
+                  </div>
+                </Link>
+              ))
+            )}
           </div>
         </section>
 
         <section>
           <h2 className="mb-4 font-display text-xl font-bold md:text-2xl">Trending in Lagos</h2>
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            {(trending ?? []).map((p) => (
-              <PropertyCard key={p.id} property={p} />
-            ))}
+            {loadingHome ? (
+              [0, 1, 2].map((i) => (
+                <PropertyCardSkeleton key={i} />
+              ))
+            ) : (trending ?? []).length === 0 ? (
+              <div className="col-span-full">
+                <div className="card-elevated flex items-center justify-center p-8 text-center">
+                  <p className="font-display text-base font-semibold">No rooms available</p>
+                </div>
+              </div>
+            ) : (
+              (trending ?? []).map((p) => (
+                <PropertyCard key={p.id} property={p} />
+              ))
+            )}
           </div>
         </section>
       </div>

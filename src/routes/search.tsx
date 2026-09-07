@@ -49,11 +49,7 @@ function SearchPage() {
   const [debouncedFilters, setDebouncedFilters] = useState({ query: "", price: [MAX_PRICE] as number[], types: [] as string[] });
   const [view, setView] = useState<"grid" | "map">("grid");
 
-  useEffect(() => {
-    setLoading(true);
-    const t = setTimeout(() => setLoading(false), 650);
-    return () => clearTimeout(t);
-  }, [query, types, minRating, amenities, price]);
+  // remove artificial loading delay; loading is controlled by fetch lifecycle
 
   // debounce filters (query, price, types) before hitting API
   useEffect(() => {
@@ -315,7 +311,7 @@ function SearchPage() {
               <span className="grid size-14 place-items-center rounded-2xl bg-accent text-primary">
                 <SearchIcon className="size-6" />
               </span>
-              <p className="font-display text-lg font-semibold">No spaces match those filters</p>
+              <p className="font-display text-lg font-semibold">No rooms available</p>
               <p className="max-w-xs text-sm text-muted-foreground">
                 Try widening your price range or clearing a few amenities.
               </p>
