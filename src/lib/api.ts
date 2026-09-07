@@ -152,3 +152,80 @@ export async function fetchFeaturedStays(limit = 4) {
     return [];
   }
 }
+
+export async function fetchPublicRooms(opts?: { city?: string; limit?: number }) {
+  const city = opts?.city;
+  const limit = opts?.limit ?? 6;
+  try {
+    const qs = new URLSearchParams();
+    if (city) qs.set("city", city);
+    if (limit) qs.set("limit", String(limit));
+    const res = await fetch(`${API_BASE}/api/v1/rooms/public?${qs.toString()}`);
+    if (!res.ok) return [];
+    const data = await res.json();
+    if (!Array.isArray(data)) return [];
+
+    // Map each room + parent property metadata into a FrontProperty-shaped object
+    const out: FrontProperty[] = data.map((r: any) => {
+      const roomRate = Math.round(r.price_per_night ?? 0);
+      const images = Array.isArray(r.images) ? r.images : r.images ? [r.images] : [];
+      const rooms = [
+        {
+          id: String(r.id ?? ""),
+          name: r.title ?? r.hotel_name ?? "",
+          occupancy: r.occupancy ?? 2,
+          bed: r.bed ?? "",
+          size: r.size ?? 0,
+          amenities: r.amenities ?? [],
+          rate: roomRate,
+        },
+      ];
+
+      return {
+        id: String(r.property_id ?? ""),
+        title: r.hotel_name ?? r.title ?? "",
+        city: r.city ?? "",
+        state: r.state ?? "",
+        address: r.address ?? "",
+        type: "Hotel",
+        rating: Number(r.avg_rating ?? 0) || 0,
+        reviews: 0,
+        price: roomRate,
+        capacity: rooms[0].occupancy ?? 1,
+        beds: 1,
+        baths: 1,
+        host: r.hotel_name ?? "",
+        images,
+        description: r.description ?? "",
+        amenities: r.amenities ?? [],
+        facilities: [{ group: "Amenities", items: Array.isArray(r.amenities) ? r.amenities : [] }],
+        rooms,
+        coords: { x: 0, y: 0 },
+      };
+    });
+
+    return out;
+  } catch (err) {
+    console.error("fetchPublicRooms error:", err);
+    return [];
+  }
+}
+
+// Replace featured/trending to use public rooms (rooms mapped to property-like cards)
+export async function fetchFeaturedStays(limit = 4) {
+  try {
+    return await fetchPublicRooms({ limit });
+  } catch (err) {
+    console.error("fetchFeaturedStays error:", err);
+    return [];
+  }
+}
+
+export async function fetchTrendingInLagos(limit = 6) {
+  try {
+    return await fetchPublicRooms({ city: "Lagos", limit });
+  } catch (err) {
+    console.error("fetchTrendingInLagos error:", err);
+    return [];
+  }
+}
