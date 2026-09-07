@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { Map as MapIcon, LayoutGrid, SlidersHorizontal, Search as SearchIcon, X } from "lucide-react";
 import { AMENITIES, PROPERTY_TYPES, type Property } from "@/lib/data";
-import { fetchProperties } from "@/lib/api";
+import { searchRooms } from "@/lib/api";
 import { formatMoney, useSpaces } from "@/lib/spaces-store";
 import { PropertyCard, PropertyCardSkeleton } from "@/components/spaces/PropertyCard";
 
@@ -56,17 +56,26 @@ function SearchPage() {
   useEffect(() => {
     let mounted = true;
     (async () => {
+      setLoading(true);
       try {
-        const ps = await fetchProperties();
-        if (mounted) setProperties(ps);
-      } catch {
-        /* ignore */
+        const filters: Record<string, any> = {};
+        if (query) filters.city = query;
+        if (price?.[0]) filters.max_price = price[0];
+        if (types && types.length === 1) filters.property_type = types[0];
+        // backend will handle city, max_price, property_type and limit
+        const res = await searchRooms({ city: filters.city, max_price: filters.max_price, property_type: filters.property_type, limit: 40 });
+        if (!mounted) return;
+        setProperties(res ?? []);
+      } catch (e) {
+        if (mounted) setProperties([]);
+      } finally {
+        if (mounted) setLoading(false);
       }
     })();
     return () => {
       mounted = false;
     };
-  }, []);
+  }, [query, types, price]);
 
   useEffect(() => {
     if (type) setTypes([type]);

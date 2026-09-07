@@ -211,6 +211,66 @@ export async function fetchPublicRooms(opts?: { city?: string; limit?: number })
   }
 }
 
+export async function searchRooms(filters?: { city?: string; min_price?: number; max_price?: number; property_type?: string; limit?: number }) {
+  try {
+    const qs = new URLSearchParams();
+    if (filters?.city) qs.set("city", filters.city);
+    if (filters?.min_price != null) qs.set("min_price", String(filters.min_price));
+    if (filters?.max_price != null) qs.set("max_price", String(filters.max_price));
+    if (filters?.property_type) qs.set("property_type", filters.property_type);
+    qs.set("limit", String(filters?.limit ?? 20));
+
+    const res = await fetch(`${API_BASE}/api/v1/rooms/search?${qs.toString()}`);
+    if (!res.ok) return [];
+    const data = await res.json();
+    if (!Array.isArray(data)) return [];
+
+    // Map room+property metadata into FrontProperty shape (single-room per property card)
+    const out: FrontProperty[] = data.map((r: any) => {
+      const roomRate = Math.round(r.price_per_night ?? 0);
+      const images = Array.isArray(r.images) ? r.images : r.images ? [r.images] : [];
+      const rooms = [
+        {
+          id: String(r.id ?? ""),
+          name: r.title ?? r.hotel_name ?? "",
+          occupancy: r.occupancy ?? 2,
+          bed: r.bed ?? "",
+          size: r.size ?? 0,
+          amenities: r.amenities ?? [],
+          rate: roomRate,
+        },
+      ];
+
+      return {
+        id: String(r.property_id ?? ""),
+        title: r.hotel_name ?? r.title ?? "",
+        city: r.city ?? "",
+        state: r.state ?? "",
+        address: r.address ?? "",
+        type: (r.property_type ?? "hotel").toString(),
+        rating: Number(r.avg_rating ?? 0) || 0,
+        reviews: 0,
+        price: roomRate,
+        capacity: rooms[0].occupancy ?? 1,
+        beds: 1,
+        baths: 1,
+        host: r.hotel_name ?? "",
+        images,
+        description: r.description ?? "",
+        amenities: r.amenities ?? [],
+        facilities: [{ group: "Amenities", items: Array.isArray(r.amenities) ? r.amenities : [] }],
+        rooms,
+        coords: { x: 0, y: 0 },
+      };
+    });
+
+    return out;
+  } catch (err) {
+    console.error("searchRooms error:", err);
+    return [];
+  }
+}
+
 // Replace featured/trending to use public rooms (rooms mapped to property-like cards)
 export async function fetchFeaturedStays(limit = 4) {
   try {
