@@ -1,150 +1,77 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
-import { ArrowRight, Building2, ChefHat, KeyRound, PartyPopper, Search, Star } from "lucide-react";
-import { properties } from "@/lib/data";
-import { formatMoney, useSpaces } from "@/lib/spaces-store";
-import { PropertyCard } from "@/components/spaces/PropertyCard";
-import { HomeHeader } from "@/components/spaces/HomeHeader";
-import { AuthDialog } from "@/components/spaces/AuthDialog";
+import { useEffect } from 'react'
+import { createFileRoute } from '@tanstack/react-router'
+import { RefreshCw } from 'lucide-react'
 
+export const Route = createFileRoute('/')({
+  component: MaintenancePage,
+})
 
-export const Route = createFileRoute("/")({
-  head: () => ({
-    meta: [
-      { title: "Spaces — Elite stays, shortlets & experiences" },
-      {
-        name: "description",
-        content:
-          "Book elite stays, shortlets, event spaces and dining experiences across Nigeria with Spaces. Pay in Naira or USD.",
-      },
-      { property: "og:title", content: "Spaces — Elite stays, shortlets & experiences" },
-      {
-        property: "og:description",
-        content: "Discover and book luxury shortlets, hotels, villas and event spaces across Nigeria.",
-      },
-    ],
-  }),
-  component: HomePage,
-});
+function MaintenancePage() {
+  // Lock background scrolling on document body when mounted
+  useEffect(() => {
+    document.body.style.overflow = 'hidden'
+    document.body.style.height = '100vh'
+    
+    return () => {
+      document.body.style.overflow = ''
+      document.body.style.height = ''
+    }
+  }, [])
 
-const services = [
-  { label: "Stays", sub: "Hotels & luxury stays", icon: Building2, type: "Hotel" },
-  { label: "Event Spaces", sub: "Halls & premium venues", icon: PartyPopper, type: "Event Space" },
-  { label: "Shortlets", sub: "Serviced apartments", icon: KeyRound, type: "Shortlet" },
-  { label: "Dining", sub: "Curated experiences", icon: ChefHat, type: "Dining" },
-];
-
-function HomePage() {
-  const { user, currency } = useSpaces();
-  const navigate = useNavigate();
-  const [authOpen, setAuthOpen] = useState(false);
-  const featured = properties.slice(0, 4);
+  const handleRefresh = () => {
+    window.location.reload()
+  }
 
   return (
-    <div className="overflow-x-hidden pb-6">
-      <HomeHeader />
+    <div className="fixed inset-0 h-screen w-screen bg-slate-950 text-slate-100 flex flex-col items-center justify-between p-6 overflow-hidden select-none z-[9999]">
+      {/* Background Radial Glow Effect */}
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-teal-500/10 rounded-full blur-3xl pointer-events-none" />
 
-      <div className="mx-auto w-full px-5 pt-6 md:px-10 md:pt-8">
-        <section className="brand-surface rounded-3xl px-6 py-8 md:px-12 md:py-14">
-          <h1 className="font-display text-3xl font-extrabold leading-[1.15] text-brand-foreground md:text-5xl">
-            Find your next
-            <br />
-            elite escape, {user.firstName}.
+      {/* Brand Header using public/favicon.svg */}
+      <header className="pt-8 z-10 flex items-center gap-3">
+        <img 
+          src="/favicon.svg" 
+          alt="SPACES Logo" 
+          className="h-10 w-auto object-contain" 
+        />
+        <span className="text-2xl font-black tracking-tight text-white uppercase">
+          SPACES
+        </span>
+      </header>
+
+      {/* Main Maintenance Card */}
+      <main className="max-w-md w-full text-center space-y-6 z-10 my-auto py-6">
+        {/* Status Badge */}
+        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs font-semibold tracking-wide uppercase">
+          <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping" />
+          Scheduled Upgrade
+        </div>
+
+        {/* Headings */}
+        <div className="space-y-3">
+          <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-white">
+            We’re Enhancing Your Experience
           </h1>
+          <p className="text-sm text-slate-400 leading-relaxed">
+            SPACES is currently undergoing brief scheduled maintenance to improve platform performance and bring you new stays. We will be back online shortly.
+          </p>
+        </div>
 
+        {/* Action Button: Check Status Only */}
+        <div className="pt-2 flex justify-center">
           <button
-            type="button"
-            onClick={() => navigate({ to: "/search" })}
-            className="mt-6 flex w-full items-center gap-3 rounded-2xl bg-card px-4 py-4 text-left text-muted-foreground shadow-sm md:mt-10 md:px-6 md:py-5"
+            onClick={handleRefresh}
+            className="w-full sm:w-auto px-8 py-3.5 rounded-xl bg-teal-600 hover:bg-teal-500 text-white font-semibold text-sm transition-all flex items-center justify-center gap-2 shadow-lg shadow-teal-900/20 active:scale-95 cursor-pointer"
           >
-            <Search className="size-5 shrink-0" />
-            <span className="truncate text-sm md:text-lg">
-              Search stays, shortlets, venues &amp; dining
-            </span>
+            <RefreshCw className="w-4 h-4" /> Check Status
           </button>
-        </section>
-      </div>
+        </div>
+      </main>
 
-      <div className="relative z-10 mx-auto mt-8 w-full space-y-10 px-5 md:mt-12 md:space-y-14 md:px-10">
-        <section className="animate-rise-in">
-          <h2 className="mb-4 font-display text-xl font-bold md:text-2xl">
-            What are you looking for?
-          </h2>
-          <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-            {services.map(({ label, sub, icon: Icon, type }) => (
-              <button
-                key={label}
-                type="button"
-                onClick={() => navigate({ to: "/search", search: { type } })}
-                className="flex min-h-32 flex-col items-start justify-between gap-4 rounded-3xl border border-border bg-card p-5 text-left transition-all hover:shadow-md active:scale-[0.98] md:min-h-44 md:p-6"
-              >
-                <Icon className="size-7 text-primary md:size-8" strokeWidth={1.75} />
-                <span>
-                  <span className="block font-display text-base font-bold md:text-xl">{label}</span>
-                  <span className="mt-0.5 block truncate text-xs text-muted-foreground md:text-base">
-                    {sub}
-                  </span>
-                </span>
-              </button>
-            ))}
-          </div>
-        </section>
-
-        <section>
-          <div className="mb-4 flex items-end justify-between">
-            <h2 className="font-display text-xl font-bold md:text-2xl">Featured stays</h2>
-            <Link to="/search" className="flex items-center gap-1.5 text-sm font-semibold text-teal">
-              See all <ArrowRight className="size-4" />
-            </Link>
-          </div>
-          <div className="no-scrollbar -mx-5 flex snap-x snap-mandatory gap-5 overflow-x-auto px-5 pb-2 md:mx-0 md:px-0">
-            {featured.map((p) => (
-              <Link
-                key={p.id}
-                to="/property/$id"
-                params={{ id: p.id }}
-                className="card-elevated w-72 shrink-0 snap-start overflow-hidden md:w-96"
-              >
-                <div className="relative aspect-[4/3]">
-                  <img
-                    src={p.images[0]}
-                    alt={p.title}
-                    loading="lazy"
-                    width={1200}
-                    height={800}
-                    className="size-full object-cover"
-                  />
-                  <span className="absolute left-3 top-3 flex items-center gap-1.5 rounded-full bg-ink/80 px-3 py-1.5 text-sm font-semibold text-brand-foreground">
-                    <Star className="size-4 fill-gold text-gold" /> {p.rating}
-                  </span>
-                  <span className="absolute right-3 top-3 rounded-full bg-ink/80 px-3 py-1.5 text-sm font-semibold text-brand-foreground">
-                    {formatMoney(p.price, currency)}
-                    <span className="font-normal opacity-70">/night</span>
-                  </span>
-                </div>
-                <div className="space-y-1 p-4">
-                  <p className="line-clamp-1 font-display text-base font-semibold">{p.title}</p>
-                  <p className="text-sm text-muted-foreground">
-                    {p.city} · {p.state}
-                  </p>
-                </div>
-              </Link>
-            ))}
-          </div>
-        </section>
-
-        <section>
-          <h2 className="mb-4 font-display text-xl font-bold md:text-2xl">Trending in Lagos</h2>
-          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            {properties.slice(2, 6).map((p) => (
-              <PropertyCard key={p.id} property={p} />
-            ))}
-          </div>
-        </section>
-      </div>
-
-
-      <AuthDialog open={authOpen} onOpenChange={setAuthOpen} />
+      {/* Footer */}
+      <footer className="pb-6 text-xs text-slate-500 z-10">
+        &copy; {new Date().getFullYear()} SPACES Hospitality Inc. All rights reserved.
+      </footer>
     </div>
-  );
+  )
 }
