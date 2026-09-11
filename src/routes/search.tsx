@@ -58,7 +58,53 @@ function SearchPage() {
     }, 350);
     return () => clearTimeout(handler);
   }, [query, price, types]);
+  // reusable search runner
+  const runSearch = async (opts?: { city?: string; max_price?: number; property_type?: string }) => {
+    let mounted = true;
+    try {
+      setLoading(true);
+      const res = await searchRooms({ city: opts?.city, max_price: opts?.max_price, property_type: opts?.property_type });
+      if (!mounted) return [];
+      setProperties(res ?? []);
+      return res ?? [];
+    } catch (e) {
+      setProperties([]);
+      return [];
+    } finally {
+      if (mounted) setLoading(false);
+    }
+  };
 
+  // Immediate initial fetch on mount: read URL params and fire a request
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      const qs = new URLSearchParams(window.location.search);
+      const city = qs.get("city") ?? qs.get("query") ?? (query || undefined);
+      const maxPriceParam = qs.get("max_price") ?? qs.get("maxPrice") ?? undefined;
+      const max_price = maxPriceParam ? Number(maxPriceParam) : price?.[0];
+      const property_type = qs.get("property_type") ?? undefined;
+
+      // run immediate search with initial/URL values
+      try {
+        setLoading(true);
+        const res = await searchRooms({ city: city ?? undefined, max_price: max_price ?? undefined, property_type: property_type ?? undefined });
+        if (!mounted) return;
+        setProperties(res ?? []);
+      } catch (e) {
+        if (mounted) setProperties([]);
+      } finally {
+        if (mounted) setLoading(false);
+      }
+    })();
+    return () => {
+      mounted = false;
+    };
+    // run only once on mount
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Update results when debounced filters change (user interactions)
   useEffect(() => {
     let mounted = true;
     (async () => {
