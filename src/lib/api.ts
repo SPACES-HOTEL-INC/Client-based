@@ -44,6 +44,11 @@ function mapProperty(b: BackendProperty, rooms: FrontRoom[]): FrontProperty {
   const amenities = b.amenities ?? [];
   const facilities = [{ group: "Amenities", items: Array.isArray(amenities) ? amenities : [] }];
   const coords = { x: 0, y: 0 };
+  // Expose some backend-original keys used by the UI
+  const hotel_name = b.hotel_name ?? title;
+  const avg_rating = rating;
+  const total_reviews = reviews;
+  const price_per_night = price;
 
   return {
     id,
@@ -54,6 +59,10 @@ function mapProperty(b: BackendProperty, rooms: FrontRoom[]): FrontProperty {
     type,
     rating,
     reviews,
+    hotel_name,
+    avg_rating,
+    total_reviews,
+    price_per_night,
     price,
     capacity,
     beds,
@@ -87,16 +96,17 @@ export async function fetchProperties() {
     const data = await res.json();
     if (!Array.isArray(data)) return [];
 
-    // For each property fetch rooms to compute price and rooms list
-    const out: FrontProperty[] = [];
-    for (const p of data) {
-      try {
-        const rooms = await fetchRoomsForProperty(String(p.id));
-        out.push(mapProperty(p, rooms));
-      } catch (e) {
-        out.push(mapProperty(p, []));
-      }
-    }
+    // Fetch rooms for all properties concurrently to improve performance
+    const out = await Promise.all(
+      data.map(async (p: any) => {
+        try {
+          const rooms = await fetchRoomsForProperty(String(p.id ?? p._id ?? ""));
+          return mapProperty(p, rooms);
+        } catch (e) {
+          return mapProperty(p, []);
+        }
+      })
+    );
     return out;
   } catch (err) {
     console.error("fetchProperties error:", err);
@@ -259,7 +269,10 @@ export async function searchRooms(filters?: { city?: string; min_price?: number;
 // Replace featured/trending to use public rooms (rooms mapped to property-like cards)
 export async function fetchFeaturedStays(limit = 4) {
   try {
-    return await fetchPublicRooms({ limit });
+    // Fetch featured properties from the properties endpoint
+    const props = await fetchProperties();
+    if (!Array.isArray(props)) return [];
+    return props.slice(0, limit);
   } catch (err) {
     console.error("fetchFeaturedStays error:", err);
     return [];
@@ -268,7 +281,10 @@ export async function fetchFeaturedStays(limit = 4) {
 
 export async function fetchTrendingInLagos(limit = 6) {
   try {
-    return await fetchPublicRooms({ city: "lagos", limit });
+    const data = await fetchPublicRooms({ city: "lagos", limit });
+    if (!Array.isArray(data)) return [];
+    // Map public room entries to property-like cards so PropertyCard can render them
+    return mapPublicRoomsToProperties(data.slice(0, limit));
   } catch (err) {
     console.error("fetchTrendingInLagos error:", err);
     return [];
