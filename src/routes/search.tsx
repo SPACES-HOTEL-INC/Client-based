@@ -40,13 +40,29 @@ function SearchPage() {
   const { currency } = useSpaces();
   const [loading, setLoading] = useState(true);
   const [properties, setProperties] = useState<Property[]>([]);
-  const [query, setQuery] = useState("");
-  const [price, setPrice] = useState<number[]>([MAX_PRICE]);
-  const [types, setTypes] = useState<string[]>(type ? [type] : []);
+  const initialSearchParams = (() => {
+    try {
+      const qs = new URLSearchParams(window.location.search);
+      const q = qs.get("city") ?? qs.get("query") ?? "";
+      const maxPrice = qs.get("max_price") ?? qs.get("maxPrice") ?? null;
+      const pt = qs.get("property_type") ?? undefined;
+      return { q: q as string, maxPrice: maxPrice ? Number(maxPrice) : null, pt };
+    } catch (e) {
+      return { q: "", maxPrice: null, pt: undefined };
+    }
+  })();
+
+  const [query, setQuery] = useState(initialSearchParams.q ?? "");
+  const [price, setPrice] = useState<number[]>([initialSearchParams.maxPrice ?? MAX_PRICE]);
+  const [types, setTypes] = useState<string[]>(type ? [type] : initialSearchParams.pt ? [initialSearchParams.pt] : []);
   const [minRating, setMinRating] = useState(0);
   const [amenities, setAmenities] = useState<string[]>([]);
   // Debounced filter state to avoid firing API on every change
-  const [debouncedFilters, setDebouncedFilters] = useState({ query: "", price: [MAX_PRICE] as number[], types: [] as string[] });
+  const [debouncedFilters, setDebouncedFilters] = useState(() => ({
+    query: initialSearchParams.q ?? "",
+    price: [initialSearchParams.maxPrice ?? MAX_PRICE] as number[],
+    types: type ? [type] : initialSearchParams.pt ? [initialSearchParams.pt] : ([] as string[]),
+  }));
   const [view, setView] = useState<"grid" | "map">("grid");
 
   // remove artificial loading delay; loading is controlled by fetch lifecycle
@@ -58,53 +74,7 @@ function SearchPage() {
     }, 350);
     return () => clearTimeout(handler);
   }, [query, price, types]);
-  // reusable search runner
-  const runSearch = async (opts?: { city?: string; max_price?: number; property_type?: string }) => {
-    let mounted = true;
-    try {
-      setLoading(true);
-      const res = await searchRooms({ city: opts?.city, max_price: opts?.max_price, property_type: opts?.property_type });
-      if (!mounted) return [];
-      setProperties(res ?? []);
-      return res ?? [];
-    } catch (e) {
-      setProperties([]);
-      return [];
-    } finally {
-      if (mounted) setLoading(false);
-    }
-  };
-
-  // Immediate initial fetch on mount: read URL params and fire a request
-  useEffect(() => {
-    let mounted = true;
-    (async () => {
-      const qs = new URLSearchParams(window.location.search);
-      const city = qs.get("city") ?? qs.get("query") ?? (query || undefined);
-      const maxPriceParam = qs.get("max_price") ?? qs.get("maxPrice") ?? undefined;
-      const max_price = maxPriceParam ? Number(maxPriceParam) : price?.[0];
-      const property_type = qs.get("property_type") ?? undefined;
-
-      // run immediate search with initial/URL values
-      try {
-        setLoading(true);
-        const res = await searchRooms({ city: city ?? undefined, max_price: max_price ?? undefined, property_type: property_type ?? undefined });
-        if (!mounted) return;
-        setProperties(res ?? []);
-      } catch (e) {
-        if (mounted) setProperties([]);
-      } finally {
-        if (mounted) setLoading(false);
-      }
-    })();
-    return () => {
-      mounted = false;
-    };
-    // run only once on mount
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  // Update results when debounced filters change (user interactions)
+  // Update results when debounced filters change (user interactions and initial mount)
   useEffect(() => {
     let mounted = true;
     (async () => {
@@ -137,18 +107,26 @@ function SearchPage() {
     () =>
       properties.filter((p) => {
         const q = query.trim().toLowerCase();
-        const matchQuery =
-          !q ||
-          p.title.toLowerCase().includes(q) ||
-          p.city.toLowerCase().includes(q) ||
-          p.state.toLowerCase().includes(q);
-        const matchType = types.length === 0 || types.includes(p.type);
-        const matchPrice = p.price <= (price[0] ?? MAX_PRICE);
-        const matchRating = p.rating >= minRating;
-        const matchAmenities = amenities.every((a) => p.amenities.includes(a));
+        const title = (p.title ?? "").toString().toLowerCase();
+        const city = (p.city ?? "").toString().toLowerCase();
+        const stateVal = (p.state ?? "").toString().toLowerCase();
+        const matchQuery = !q || title.includes(q) || city.includes(q) || stateVal.includes(q);
+
+        const pType = (p.type ?? (p as any).property_type ?? "").toString();
+        const matchType = types.length === 0 || types.includes(pType);
+
+        const pPrice = Number((p.price ?? (p as any).price_per_night ?? 0) as number) || 0;
+        const matchPrice = pPrice <= (price[0] ?? MAX_PRICE);
+
+        const pRating = Number((p.rating ?? (p as any).avg_rating ?? 0) as number) || 0;
+        const matchRating = pRating >= minRating;
+
+        const pAmenities = Array.isArray(p.amenities) ? p.amenities : [];
+        const matchAmenities = amenities.every((a) => pAmenities.includes(a));
+
         return matchQuery && matchType && matchPrice && matchRating && matchAmenities;
       }),
-    [query, types, price, minRating, amenities],
+    [query, types, price, minRating, amenities, properties],
   );
 
   const toggle = (list: string[], set: (v: string[]) => void, value: string) =>
