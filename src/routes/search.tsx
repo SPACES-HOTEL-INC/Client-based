@@ -26,8 +26,6 @@ export const Route = createFileRoute("/search")({
         name: "description",
         content: "Filter luxury stays, shortlets, villas, resorts and event spaces by price, rating and amenities.",
       },
-      { property: "og:title", content: "Search stays & spaces — Spaces" },
-      { property: "og:description", content: "Find the perfect stay with price, type, rating and amenity filters." },
     ],
   }),
   component: SearchPage,
@@ -40,6 +38,7 @@ function SearchPage() {
   const { currency } = useSpaces();
   const [loading, setLoading] = useState(true);
   const [properties, setProperties] = useState<Property[]>([]);
+
   const initialSearchParams = (() => {
     try {
       const qs = new URLSearchParams(window.location.search);
@@ -57,7 +56,7 @@ function SearchPage() {
   const [types, setTypes] = useState<string[]>(type ? [type] : initialSearchParams.pt ? [initialSearchParams.pt] : []);
   const [minRating, setMinRating] = useState(0);
   const [amenities, setAmenities] = useState<string[]>([]);
-  // Debounced filter state to avoid firing API on every change
+  
   const [debouncedFilters, setDebouncedFilters] = useState(() => ({
     query: initialSearchParams.q ?? "",
     price: [initialSearchParams.maxPrice ?? MAX_PRICE] as number[],
@@ -65,35 +64,34 @@ function SearchPage() {
   }));
   const [view, setView] = useState<"grid" | "map">("grid");
 
-  // remove artificial loading delay; loading is controlled by fetch lifecycle
-
-  // debounce filters (query, price, types) before hitting API
   useEffect(() => {
     const handler = setTimeout(() => {
       setDebouncedFilters({ query, price, types });
     }, 350);
     return () => clearTimeout(handler);
   }, [query, price, types]);
-  // Update results when debounced filters change (user interactions and initial mount)
+
   useEffect(() => {
     let mounted = true;
     (async () => {
       setLoading(true);
       try {
-        const filters: Record<string, any> = {};
-        if (debouncedFilters.query) filters.city = debouncedFilters.query;
-        if (debouncedFilters.price?.[0]) filters.max_price = debouncedFilters.price[0];
-        if (debouncedFilters.types && debouncedFilters.types.length === 1) filters.property_type = debouncedFilters.types[0];
-        // backend will handle city, max_price, property_type and limit
-        const res = await searchRooms({ city: filters.city, max_price: filters.max_price, property_type: filters.property_type });
+        const fetchedProperties = await searchRooms({
+          city: debouncedFilters.query || undefined,
+          max_price: debouncedFilters.price?.[0],
+          property_type: debouncedFilters.types.length === 1 ? debouncedFilters.types[0] : undefined,
+          limit: 100,
+        });
         if (!mounted) return;
-        setProperties(res ?? []);
+        setProperties(fetchedProperties);
       } catch (e) {
+        console.error("Failed to fetch spaces from API:", e);
         if (mounted) setProperties([]);
       } finally {
         if (mounted) setLoading(false);
       }
     })();
+
     return () => {
       mounted = false;
     };
@@ -105,20 +103,19 @@ function SearchPage() {
 
   const results = useMemo(
     () =>
-      properties.filter((p) => {
+      properties.filter((p: any) => {
         const q = query.trim().toLowerCase();
         const title = (p.title ?? "").toString().toLowerCase();
-        const city = (p.city ?? "").toString().toLowerCase();
-        const stateVal = (p.state ?? "").toString().toLowerCase();
-        const matchQuery = !q || title.includes(q) || city.includes(q) || stateVal.includes(q);
+        const location = (p.location ?? "").toString().toLowerCase();
+        const matchQuery = !q || title.includes(q) || location.includes(q);
 
-        const pType = (p.type ?? (p as any).property_type ?? "").toString();
+        const pType = (p.type ?? p.property_type ?? "").toString();
         const matchType = types.length === 0 || types.includes(pType);
 
-        const pPrice = Number((p.price ?? (p as any).price_per_night ?? 0) as number) || 0;
+        const pPrice = Number(p.price || 0);
         const matchPrice = pPrice <= (price[0] ?? MAX_PRICE);
 
-        const pRating = Number((p.rating ?? (p as any).avg_rating ?? 0) as number) || 0;
+        const pRating = Number(p.rating || 0);
         const matchRating = pRating >= minRating;
 
         const pAmenities = Array.isArray(p.amenities) ? p.amenities : [];
@@ -278,7 +275,6 @@ function SearchPage() {
           {loading ? "Searching…" : `${results.length} space${results.length === 1 ? "" : "s"} found`}
         </p>
         <div className="flex shrink-0 items-center gap-2">
-
           <div className="inline-flex rounded-full bg-secondary p-1">
             <button
               type="button"
@@ -307,15 +303,15 @@ function SearchPage() {
           {view === "map" ? (
             <div className="relative aspect-[4/5] overflow-hidden rounded-3xl border border-border bg-accent/40 sm:aspect-[16/10]">
               <div className="absolute inset-0 opacity-40 [background-image:linear-gradient(var(--color-border)_1px,transparent_1px),linear-gradient(90deg,var(--color-border)_1px,transparent_1px)] [background-size:36px_36px]" />
-              {results.map((p) => (
+              {results.map((p: any) => (
                 <Link
                   key={p.id}
                   to="/property/$id"
                   params={{ id: p.id }}
-                  style={{ left: `${p.coords.x}%`, top: `${p.coords.y}%` }}
+                  style={{ left: `${p.coords?.x ?? 50}%`, top: `${p.coords?.y ?? 50}%` }}
                   className="absolute -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground shadow-md transition-transform hover:scale-105"
                 >
-                  {formatMoney(p.price, currency)}
+                  {formatMoney(p.price || 0, currency)}
                 </Link>
               ))}
               {results.length === 0 && (

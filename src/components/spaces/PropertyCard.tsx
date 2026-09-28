@@ -26,14 +26,21 @@ export function PropertyCard({ property }: { property: Property | any }) {
   return (
     <article className="card-elevated group overflow-hidden">
       <div className="relative aspect-[4/3] overflow-hidden">
-        <img
-          src={images?.[index] ?? ""}
-          alt={title ?? ""}
-          loading="lazy"
-          width={1200}
-          height={800}
-          className="size-full object-cover transition-transform duration-500 group-hover:scale-105"
-        />
+        <Link
+          to="/property/$id"
+          params={{ id }}
+          aria-label={`View details for ${title}`}
+          className="block size-full"
+        >
+          <img
+            src={images?.[index] ?? ""}
+            alt={title ?? ""}
+            loading="lazy"
+            width={1200}
+            height={800}
+            className="size-full object-cover transition-transform duration-500 group-hover:scale-105"
+          />
+        </Link>
         <div className="absolute left-3 top-3 flex items-center gap-1 rounded-full bg-card/90 px-2.5 py-1 text-xs font-semibold">
           <Star className="size-3.5 fill-gold text-gold" />
           {rating}

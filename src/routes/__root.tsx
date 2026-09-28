@@ -12,9 +12,9 @@ import { useEffect, type ReactNode } from "react";
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { SpacesProvider } from "@/lib/spaces-store";
+import { AuthProvider } from "@/hooks/useAuth";
 import { Splash } from "@/components/spaces/Splash";
 import { BottomNav } from "@/components/spaces/BottomNav";
-
 import { Toaster } from "@/components/ui/sonner";
 
 function NotFoundComponent() {
@@ -136,15 +136,16 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <SpacesProvider>
-        <Splash />
-        <div className="min-h-screen pb-24 md:pb-28">
-          {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-          <Outlet />
-        </div>
-        <BottomNav />
-        <Toaster position="top-center" richColors />
-      </SpacesProvider>
+      <AuthProvider>
+        <SpacesProvider>
+          <Splash />
+          <div className="min-h-screen pb-24 md:pb-28">
+            <Outlet />
+          </div>
+          <BottomNav />
+          <Toaster position="top-center" richColors />
+        </SpacesProvider>
+      </AuthProvider>
     </QueryClientProvider>
   );
 }

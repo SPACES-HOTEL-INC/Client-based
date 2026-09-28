@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { Headphones, Phone, Mail, Send } from "lucide-react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
+import { SignInRequiredModal } from "@/components/spaces/SignInRequiredModal";
 import { useSpaces } from "@/lib/spaces-store";
 
 export const Route = createFileRoute("/support")({
@@ -40,8 +41,11 @@ const faqs = [
 
 function SupportPage() {
   const { user } = useSpaces();
+  const isGuest = !user || user.guest || !user.email;
+  const [authModalOpen, setAuthModalOpen] = useState(isGuest);
+
   const [messages, setMessages] = useState<Msg[]>([
-    { id: 1, from: "agent", text: `Hi ${user.firstName}, I'm Zainab from the Spaces concierge. How can I help today?` },
+    { id: 1, from: "agent", text: `Hi ${user?.firstName ?? "Guest"}, I'm Zainab from the Spaces concierge. How can I help today?` },
   ]);
   const [draft, setDraft] = useState("");
   const endRef = useRef<HTMLDivElement>(null);
@@ -52,6 +56,10 @@ function SupportPage() {
 
   const send = (e: React.FormEvent) => {
     e.preventDefault();
+    if (isGuest) {
+      setAuthModalOpen(true);
+      return;
+    }
     const text = draft.trim();
     if (!text) return;
     const id = Date.now();
@@ -140,6 +148,11 @@ function SupportPage() {
           ))}
         </Accordion>
       </section>
+
+      <SignInRequiredModal
+        isOpen={authModalOpen}
+        onClose={() => setAuthModalOpen(false)}
+      />
     </div>
   );
 }

@@ -1,4 +1,5 @@
-import type { Property as FrontProperty, Room as FrontRoom } from "./data";
+import { properties, type Property as FrontProperty, type Room as FrontRoom } from "./data";
+import axios, { InternalAxiosRequestConfig, AxiosResponse, AxiosError } from "axios";
 
 const API_BASE = import.meta.env.VITE_API_BASE ?? "https://backend-nq9s.onrender.com";
 
@@ -44,7 +45,7 @@ function mapProperty(b: BackendProperty, rooms: FrontRoom[]): FrontProperty {
   const amenities = b.amenities ?? [];
   const facilities = [{ group: "Amenities", items: Array.isArray(amenities) ? amenities : [] }];
   const coords = { x: 0, y: 0 };
-  // Expose some backend-original keys used by the UI
+  
   const hotel_name = b.hotel_name ?? title;
   const avg_rating = rating;
   const total_reviews = reviews;
@@ -92,11 +93,10 @@ export async function fetchRoomsForProperty(propertyId: string) {
 export async function fetchProperties() {
   try {
     const res = await fetch(`${API_BASE}/api/v1/properties`);
-    if (!res.ok) return [];
+    if (!res.ok) return properties;
     const data = await res.json();
-    if (!Array.isArray(data)) return [];
+    if (!Array.isArray(data) || data.length === 0) return properties;
 
-    // Fetch rooms for all properties concurrently to improve performance
     const out = await Promise.all(
       data.map(async (p: any) => {
         try {
@@ -107,31 +107,28 @@ export async function fetchProperties() {
         }
       })
     );
-    return out;
+    return out.length > 0 ? out : properties;
   } catch (err) {
     console.error("fetchProperties error:", err);
-    return [];
+    return properties;
   }
 }
 
 export async function fetchProperty(propertyId: string) {
   try {
     const res = await fetch(`${API_BASE}/api/v1/properties/${propertyId}`);
-    if (!res.ok) return null;
+    if (!res.ok) return properties.find((p) => p.id === propertyId) ?? null;
     const p = await res.json();
     const rooms = await fetchRoomsForProperty(propertyId);
     return mapProperty(p, rooms);
   } catch (err) {
     console.error("fetchProperty error:", err);
-    return null;
+    return properties.find((p) => p.id === propertyId) ?? null;
   }
 }
 
-
-
 export async function fetchPublicRooms(opts?: { city?: string; limit?: number }) {
   const city = opts?.city ? String(opts.city).toLowerCase() : undefined;
-  // Enforce sensible Home limit (default 8)
   const limit = Math.min(opts?.limit ?? 8, 50);
   try {
     const qs = new URLSearchParams();
@@ -140,10 +137,8 @@ export async function fetchPublicRooms(opts?: { city?: string; limit?: number })
     const path = `/api/v1/rooms/public`;
     const key = getCacheKey(path, qs);
 
-    // Serve cached data immediately if available
     const cached = cache.get(key);
     if (cached && Date.now() - cached.ts < CACHE_TTL) {
-      // refresh in background
       (async () => {
         try {
           const r = await fetch(`${API_BASE}${path}?${qs.toString()}`);
@@ -152,13 +147,11 @@ export async function fetchPublicRooms(opts?: { city?: string; limit?: number })
             cache.set(key, { ts: Date.now(), data: d });
           }
         } catch (e) {
-          /* ignore background fetch errors */
+          /* ignore */
         }
       })();
       const data = cached.data;
-      console.log("API Room Data (cache):", data);
       if (!Array.isArray(data)) return [];
-      // Return raw room objects (frontend will map needed fields)
       return data;
     }
 
@@ -166,9 +159,7 @@ export async function fetchPublicRooms(opts?: { city?: string; limit?: number })
     if (!res.ok) return [];
     const data = await res.json();
     if (!Array.isArray(data)) return [];
-    console.log("API Room Data (fetch):", data);
     cache.set(key, { ts: Date.now(), data });
-    // Return raw room objects (frontend will map needed fields)
     return data;
   } catch (err) {
     console.error("fetchPublicRooms error:", err);
@@ -194,7 +185,6 @@ function mapPublicRoomsToProperties(data: any[]): FrontProperty[] {
 
     return {
       id: String(r.property_id ?? ""),
-      // Prefer room title for display
       title: r.title ?? r.hotel_name ?? "",
       city: r.city ?? "",
       state: r.state ?? "",
@@ -224,17 +214,14 @@ export async function searchRooms(filters?: { city?: string; min_price?: number;
     if (filters?.min_price != null) qs.set("min_price", String(filters.min_price));
     if (filters?.max_price != null) qs.set("max_price", String(filters.max_price));
     if (filters?.property_type) qs.set("property_type", filters.property_type);
-    // Enforce per-page limit for search (default 12)
     const limit = Math.min(filters?.limit ?? 12, 100);
     qs.set("limit", String(limit));
 
     const path = `/api/v1/rooms/search`;
     const key = getCacheKey(path, qs);
 
-    // Serve cached results immediately if fresh (stale-while-revalidate)
     const cached = cache.get(key);
     if (cached && Date.now() - cached.ts < CACHE_TTL) {
-      // background refresh
       (async () => {
         try {
           const r = await fetch(`${API_BASE}${path}?${qs.toString()}`);
@@ -247,46 +234,87 @@ export async function searchRooms(filters?: { city?: string; min_price?: number;
         }
       })();
       const data = cached.data;
-      console.log("API Room Data (cache):", data);
-      if (!Array.isArray(data)) return [];
+      if (!Array.isArray(data) || data.length === 0) return filterStaticProperties(filters);
       return mapPublicRoomsToProperties(data);
     }
 
     const res = await fetch(`${API_BASE}${path}?${qs.toString()}`);
-    if (!res.ok) return [];
+    if (!res.ok) return filterStaticProperties(filters);
     const data = await res.json();
-    if (!Array.isArray(data)) return [];
-    console.log("API Room Data (fetch):", data);
+    if (!Array.isArray(data) || data.length === 0) return filterStaticProperties(filters);
     cache.set(key, { ts: Date.now(), data });
 
     return mapPublicRoomsToProperties(data);
   } catch (err) {
     console.error("searchRooms error:", err);
-    return [];
+    return filterStaticProperties(filters);
   }
 }
 
-// Replace featured/trending to use public rooms (rooms mapped to property-like cards)
+function filterStaticProperties(filters?: { city?: string; min_price?: number; max_price?: number; property_type?: string }) {
+  return properties.filter((p) => {
+    if (filters?.city && !p.city.toLowerCase().includes(filters.city.toLowerCase())) return false;
+    if (filters?.property_type && p.type.toLowerCase() !== filters.property_type.toLowerCase()) return false;
+    if (filters?.min_price != null && p.price < filters.min_price) return false;
+    if (filters?.max_price != null && p.price > filters.max_price) return false;
+    return true;
+  });
+}
+
 export async function fetchFeaturedStays(limit = 4) {
   try {
-    // Fetch featured properties from the properties endpoint
     const props = await fetchProperties();
-    if (!Array.isArray(props)) return [];
+    if (!Array.isArray(props) || props.length === 0) return properties.slice(0, limit);
     return props.slice(0, limit);
   } catch (err) {
     console.error("fetchFeaturedStays error:", err);
-    return [];
+    return properties.slice(0, limit);
   }
 }
 
 export async function fetchTrendingInLagos(limit = 6) {
   try {
     const data = await fetchPublicRooms({ city: "lagos", limit });
-    if (!Array.isArray(data)) return [];
-    // Map public room entries to property-like cards so PropertyCard can render them
+    if (!Array.isArray(data) || data.length === 0) {
+      return properties.filter((p) => p.state.toLowerCase() === "lagos").slice(0, limit);
+    }
     return mapPublicRoomsToProperties(data.slice(0, limit));
   } catch (err) {
     console.error("fetchTrendingInLagos error:", err);
-    return [];
+    return properties.filter((p) => p.state.toLowerCase() === "lagos").slice(0, limit);
   }
 }
+
+// ==========================================
+// AUTHENTICATION & AXIOS CLIENT INTEGRATION
+// ==========================================
+
+export const api = axios.create({
+  baseURL: API_BASE,
+  headers: {
+    "Content-Type": "application/json",
+  },
+});
+
+api.interceptors.request.use(
+  (config: InternalAxiosRequestConfig) => {
+    const token = localStorage.getItem("token");
+    if (token && config.headers) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error: AxiosError) => Promise.reject(error)
+);
+
+api.interceptors.response.use(
+  (response: AxiosResponse) => response,
+  (error: AxiosError) => {
+    if (error.response && error.response.status === 401) {
+      localStorage.removeItem("token");
+    }
+    return Promise.reject(error);
+  }
+);
+
+export default api;

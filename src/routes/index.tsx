@@ -5,8 +5,7 @@ import { fetchTrendingInLagos, fetchFeaturedStays } from "@/lib/api";
 import { formatMoney, useSpaces } from "@/lib/spaces-store";
 import { PropertyCard, PropertyCardSkeleton } from "@/components/spaces/PropertyCard";
 import { HomeHeader } from "@/components/spaces/HomeHeader";
-import { AuthDialog } from "@/components/spaces/AuthDialog";
-
+import { SignInRequiredModal } from "@/components/spaces/SignInRequiredModal";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -37,17 +36,26 @@ const services = [
 function HomePage() {
   const { user, currency } = useSpaces();
   const navigate = useNavigate();
-  const [authOpen, setAuthOpen] = useState(false);
+  const [authModalOpen, setAuthModalOpen] = useState(false);
   const [featured, setFeatured] = useState<any[]>([]);
   const [trending, setTrending] = useState<any[]>([]);
   const [loadingHome, setLoadingHome] = useState(true);
+
+  // Helper to guard actions requiring authentication
+  const handleProtectedAction = (action: () => void) => {
+    const isGuest = !user || !user.email;
+    if (isGuest) {
+      setAuthModalOpen(true);
+    } else {
+      action();
+    }
+  };
 
   useEffect(() => {
     let mounted = true;
     (async () => {
       try {
         setLoadingHome(true);
-        // fetch both featured and trending concurrently; api enforces Home limits
         const [f, t] = await Promise.all([fetchFeaturedStays(), fetchTrendingInLagos()]);
         if (!mounted) return;
         setFeatured(Array.isArray(f) ? f : []);
@@ -75,7 +83,7 @@ function HomePage() {
           <h1 className="font-display text-3xl font-extrabold leading-[1.15] text-brand-foreground md:text-5xl">
             Find your next
             <br />
-            elite escape, {user.firstName}.
+            elite escape, {user?.firstName ?? "Guest"}.
           </h1>
 
           <button
@@ -125,7 +133,6 @@ function HomePage() {
           </div>
           <div className="no-scrollbar -mx-5 flex snap-x snap-mandatory gap-5 overflow-x-auto px-5 pb-2 md:mx-0 md:px-0">
             {loadingHome ? (
-              // show lightweight skeletons to avoid layout shift
               [0, 1, 2, 3].map((i) => (
                 <div key={i} className="w-72 shrink-0 snap-start md:w-96">
                   <div className="card-elevated overflow-hidden">
@@ -190,9 +197,7 @@ function HomePage() {
           <h2 className="mb-4 font-display text-xl font-bold md:text-2xl">Trending in Lagos</h2>
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {loadingHome ? (
-              [0, 1, 2].map((i) => (
-                <PropertyCardSkeleton key={i} />
-              ))
+              [0, 1, 2].map((i) => <PropertyCardSkeleton key={i} />)
             ) : (trending ?? []).length === 0 ? (
               <div className="col-span-full">
                 <div className="card-elevated flex items-center justify-center p-8 text-center">
@@ -200,16 +205,16 @@ function HomePage() {
                 </div>
               </div>
             ) : (
-              (trending ?? []).map((p) => (
-                <PropertyCard key={p.id} property={p} />
-              ))
+              (trending ?? []).map((p) => <PropertyCard key={p.id} property={p} />)
             )}
           </div>
         </section>
       </div>
 
-
-      <AuthDialog open={authOpen} onOpenChange={setAuthOpen} />
+      <SignInRequiredModal
+        isOpen={authModalOpen}
+        onClose={() => setAuthModalOpen(false)}
+      />
     </div>
   );
 }

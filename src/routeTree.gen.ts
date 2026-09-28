@@ -11,9 +11,16 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as BookingsRouteImport } from './routes/bookings'
+import { Route as FaqsRouteImport } from './routes/faqs'
+import { Route as HelpRouteImport } from './routes/help'
+import { Route as LegalRouteImport } from './routes/legal'
+import { Route as LoginRouteImport } from './routes/login'
 import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as SearchRouteImport } from './routes/search'
+import { Route as SignupRouteImport } from './routes/signup'
 import { Route as SupportRouteImport } from './routes/support'
+import { Route as HostIndexRouteImport } from './routes/host/index'
+import { Route as HostCreateRouteImport } from './routes/host/create'
 import { Route as PropertyIdRouteImport } from './routes/property.$id'
 
 const IndexRoute = IndexRouteImport.update({
@@ -26,6 +33,26 @@ const BookingsRoute = BookingsRouteImport.update({
   path: '/bookings',
   getParentRoute: () => rootRouteImport,
 } as any)
+const FaqsRoute = FaqsRouteImport.update({
+  id: '/faqs',
+  path: '/faqs',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const HelpRoute = HelpRouteImport.update({
+  id: '/help',
+  path: '/help',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LegalRoute = LegalRouteImport.update({
+  id: '/legal',
+  path: '/legal',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ProfileRoute = ProfileRouteImport.update({
   id: '/profile',
   path: '/profile',
@@ -36,9 +63,24 @@ const SearchRoute = SearchRouteImport.update({
   path: '/search',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SignupRoute = SignupRouteImport.update({
+  id: '/signup',
+  path: '/signup',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SupportRoute = SupportRouteImport.update({
   id: '/support',
   path: '/support',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const HostIndexRoute = HostIndexRouteImport.update({
+  id: '/host/',
+  path: '/host/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const HostCreateRoute = HostCreateRouteImport.update({
+  id: '/host/create',
+  path: '/host/create',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PropertyIdRoute = PropertyIdRouteImport.update({
@@ -50,51 +92,111 @@ const PropertyIdRoute = PropertyIdRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/bookings': typeof BookingsRoute
+  '/faqs': typeof FaqsRoute
+  '/help': typeof HelpRoute
+  '/legal': typeof LegalRoute
+  '/login': typeof LoginRoute
   '/profile': typeof ProfileRoute
   '/search': typeof SearchRoute
+  '/signup': typeof SignupRoute
   '/support': typeof SupportRoute
+  '/host/create': typeof HostCreateRoute
   '/property/$id': typeof PropertyIdRoute
+  '/host/': typeof HostIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/bookings': typeof BookingsRoute
+  '/faqs': typeof FaqsRoute
+  '/help': typeof HelpRoute
+  '/legal': typeof LegalRoute
+  '/login': typeof LoginRoute
   '/profile': typeof ProfileRoute
   '/search': typeof SearchRoute
+  '/signup': typeof SignupRoute
   '/support': typeof SupportRoute
+  '/host/create': typeof HostCreateRoute
   '/property/$id': typeof PropertyIdRoute
+  '/host': typeof HostIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/bookings': typeof BookingsRoute
+  '/faqs': typeof FaqsRoute
+  '/help': typeof HelpRoute
+  '/legal': typeof LegalRoute
+  '/login': typeof LoginRoute
   '/profile': typeof ProfileRoute
   '/search': typeof SearchRoute
+  '/signup': typeof SignupRoute
   '/support': typeof SupportRoute
+  '/host/create': typeof HostCreateRoute
   '/property/$id': typeof PropertyIdRoute
+  '/host/': typeof HostIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    '/' | '/bookings' | '/profile' | '/search' | '/support' | '/property/$id'
+    | '/'
+    | '/bookings'
+    | '/faqs'
+    | '/help'
+    | '/legal'
+    | '/login'
+    | '/profile'
+    | '/search'
+    | '/signup'
+    | '/support'
+    | '/host/create'
+    | '/property/$id'
+    | '/host/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/bookings' | '/profile' | '/search' | '/support' | '/property/$id'
+  to:
+    | '/'
+    | '/bookings'
+    | '/faqs'
+    | '/help'
+    | '/legal'
+    | '/login'
+    | '/profile'
+    | '/search'
+    | '/signup'
+    | '/support'
+    | '/host/create'
+    | '/property/$id'
+    | '/host'
   id:
     | '__root__'
     | '/'
     | '/bookings'
+    | '/faqs'
+    | '/help'
+    | '/legal'
+    | '/login'
     | '/profile'
     | '/search'
+    | '/signup'
     | '/support'
+    | '/host/create'
     | '/property/$id'
+    | '/host/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   BookingsRoute: typeof BookingsRoute
+  FaqsRoute: typeof FaqsRoute
+  HelpRoute: typeof HelpRoute
+  LegalRoute: typeof LegalRoute
+  LoginRoute: typeof LoginRoute
   ProfileRoute: typeof ProfileRoute
   SearchRoute: typeof SearchRoute
+  SignupRoute: typeof SignupRoute
   SupportRoute: typeof SupportRoute
+  HostCreateRoute: typeof HostCreateRoute
   PropertyIdRoute: typeof PropertyIdRoute
+  HostIndexRoute: typeof HostIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -113,6 +215,34 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BookingsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/faqs': {
+      id: '/faqs'
+      path: '/faqs'
+      fullPath: '/faqs'
+      preLoaderRoute: typeof FaqsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/help': {
+      id: '/help'
+      path: '/help'
+      fullPath: '/help'
+      preLoaderRoute: typeof HelpRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/legal': {
+      id: '/legal'
+      path: '/legal'
+      fullPath: '/legal'
+      preLoaderRoute: typeof LegalRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/profile': {
       id: '/profile'
       path: '/profile'
@@ -127,11 +257,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SearchRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/signup': {
+      id: '/signup'
+      path: '/signup'
+      fullPath: '/signup'
+      preLoaderRoute: typeof SignupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/support': {
       id: '/support'
       path: '/support'
       fullPath: '/support'
       preLoaderRoute: typeof SupportRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/host/': {
+      id: '/host/'
+      path: '/host'
+      fullPath: '/host/'
+      preLoaderRoute: typeof HostIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/host/create': {
+      id: '/host/create'
+      path: '/host/create'
+      fullPath: '/host/create'
+      preLoaderRoute: typeof HostCreateRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/property/$id': {
@@ -147,10 +298,17 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   BookingsRoute: BookingsRoute,
+  FaqsRoute: FaqsRoute,
+  HelpRoute: HelpRoute,
+  LegalRoute: LegalRoute,
+  LoginRoute: LoginRoute,
   ProfileRoute: ProfileRoute,
   SearchRoute: SearchRoute,
+  SignupRoute: SignupRoute,
   SupportRoute: SupportRoute,
+  HostCreateRoute: HostCreateRoute,
   PropertyIdRoute: PropertyIdRoute,
+  HostIndexRoute: HostIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
