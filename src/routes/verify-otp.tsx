@@ -14,7 +14,7 @@ function VerifyOtpPage() {
   const navigate = useNavigate();
   const { email } = useSearch({ from: "/verify-otp" });
 
-  const [otp, setOtp] = useState<string[]>(Array(4).fill(""));
+  const [otp, setOtp] = useState<string[]>(Array(6).fill(""));
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isResending, setIsResending] = useState(false);
   const [timer, setTimer] = useState(60);
@@ -34,7 +34,7 @@ function VerifyOtpPage() {
     newOtp[index] = value.substring(value.length - 1);
     setOtp(newOtp);
 
-    if (value && index < 3) {
+    if (value && index < 5) {
       inputRefs.current[index + 1]?.focus();
     }
   };
@@ -48,17 +48,17 @@ function VerifyOtpPage() {
   const handlePaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
     e.preventDefault();
     const pastedData = e.clipboardData.getData("text").trim();
-    if (!/^\d{4}$/.test(pastedData)) return;
+    if (!/^\d{6}$/.test(pastedData)) return;
 
     setOtp(pastedData.split(""));
-    inputRefs.current[3]?.focus();
+    inputRefs.current[5]?.focus();
   };
 
   const handleVerify = async (e: React.FormEvent) => {
     e.preventDefault();
     const code = otp.join("");
-    if (code.length < 4) {
-      toast.error("Please enter the complete 4-digit verification code");
+    if (code.length < 6) {
+      toast.error("Please enter the complete 6-digit verification code");
       return;
     }
 
@@ -74,7 +74,11 @@ function VerifyOtpPage() {
         }),
       });
 
-      const data = await response.json();
+      const contentType = response.headers.get("content-type");
+      let data: any = {};
+      if (contentType && contentType.includes("application/json")) {
+        data = await response.json();
+      }
 
       if (!response.ok) {
         throw new Error(data.detail || data.message || "Verification failed");
@@ -101,15 +105,19 @@ function VerifyOtpPage() {
         body: JSON.stringify({ email: email.trim() }),
       });
 
-      const data = await response.json();
+      const contentType = response.headers.get("content-type");
+      let data: any = {};
+      if (contentType && contentType.includes("application/json")) {
+        data = await response.json();
+      }
 
       if (!response.ok) {
         throw new Error(data.detail || data.message || "Could not resend OTP");
       }
 
-      toast.success("A new 4-digit code has been sent to your email!");
+      toast.success("A new 6-digit code has been sent to your email!");
       setTimer(60);
-      setOtp(Array(4).fill(""));
+      setOtp(Array(6).fill(""));
       inputRefs.current[0]?.focus();
     } catch (err: any) {
       toast.error(err.message || "Failed to resend code");
@@ -134,11 +142,11 @@ function VerifyOtpPage() {
         </div>
         <h1 className="font-display text-3xl font-extrabold">Verify your email</h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          We sent a 4-digit code to <span className="font-semibold text-foreground">{email || "your email"}</span>.
+          We sent a 6-digit code to <span className="font-semibold text-foreground">{email || "your email"}</span>.
         </p>
 
         <form onSubmit={handleVerify} className="mt-8 flex flex-col gap-6">
-          <div className="flex justify-between gap-3">
+          <div className="flex justify-between gap-2">
             {otp.map((digit, index) => (
               <input
                 key={index}
@@ -150,14 +158,14 @@ function VerifyOtpPage() {
                 onChange={(e) => handleChange(index, e.target.value)}
                 onKeyDown={(e) => handleKeyDown(index, e)}
                 onPaste={handlePaste}
-                className="h-16 w-16 rounded-xl border border-input bg-background text-center text-2xl font-bold outline-none focus:ring-2 focus:ring-primary"
+                className="h-14 w-12 sm:h-16 sm:w-14 rounded-xl border border-input bg-background text-center text-xl sm:text-2xl font-bold outline-none focus:ring-2 focus:ring-primary"
               />
             ))}
           </div>
 
           <button
             type="submit"
-            disabled={isSubmitting || otp.join("").length < 4}
+            disabled={isSubmitting || otp.join("").length < 6}
             className="flex items-center justify-center gap-2 w-full rounded-xl bg-primary py-4 font-semibold text-primary-foreground transition hover:opacity-90 disabled:opacity-50"
           >
             {isSubmitting ? <Loader2 className="h-5 w-5 animate-spin" /> : "Verify Account"}

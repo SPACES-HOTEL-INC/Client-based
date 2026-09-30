@@ -18,8 +18,8 @@ export function BottomNav() {
   const location = useLocation();
   const [authModalOpen, setAuthModalOpen] = useState(false);
 
-  // Hide the navigation bar on auth-related pages
-  const hiddenRoutes = ["/login", "/signup", "/register"];
+  // Hide the navigation bar on auth-related pages including verify-otp
+  const hiddenRoutes = ["/login", "/signup", "/register", "/verify-otp"];
   if (hiddenRoutes.includes(location.pathname)) {
     return null;
   }
