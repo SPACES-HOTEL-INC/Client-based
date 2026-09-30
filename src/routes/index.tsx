@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { ArrowRight, Building2, ChefHat, KeyRound, PartyPopper, Search, Star } from "lucide-react";
 import { fetchTrendingInLagos, fetchFeaturedStays } from "@/lib/api";
 import { formatMoney, useSpaces } from "@/lib/spaces-store";
+import { useAuth } from "@/hooks/useAuth";
 import { PropertyCard, PropertyCardSkeleton } from "@/components/spaces/PropertyCard";
 import { HomeHeader } from "@/components/spaces/HomeHeader";
 import { SignInRequiredModal } from "@/components/spaces/SignInRequiredModal";
@@ -34,7 +35,10 @@ const services = [
 ];
 
 function HomePage() {
-  const { user, currency } = useSpaces();
+  const { currency } = useSpaces();
+  const { user, loading } = useAuth();
+  const firstName = user?.full_name?.trim().split(/\s+/)[0];
+  const displayName = loading ? "there" : user?.email ? firstName || "there" : "Guest";
   const navigate = useNavigate();
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [featured, setFeatured] = useState<any[]>([]);
@@ -83,7 +87,7 @@ function HomePage() {
           <h1 className="font-display text-3xl font-extrabold leading-[1.15] text-brand-foreground md:text-5xl">
             Find your next
             <br />
-            elite escape, {user?.firstName ?? "Guest"}.
+            elite escape, {displayName}.
           </h1>
 
           <button
