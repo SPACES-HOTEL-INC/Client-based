@@ -1,7 +1,6 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useState } from "react";
-import { ArrowLeft, Loader2 } from "lucide-react";
-import { useAuth } from "@/hooks/useAuth";
+import { ArrowLeft, Eye, EyeOff, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/signup")({
@@ -10,10 +9,10 @@ export const Route = createFileRoute("/signup")({
 
 function SignUpPage() {
   const navigate = useNavigate();
-  const { login } = useAuth();
   const [email, setEmail] = useState("");
   const [fullName, setFullName] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleRegister = async (e: React.FormEvent) => {
@@ -21,28 +20,33 @@ function SignUpPage() {
     setIsSubmitting(true);
 
     try {
-      const response = await fetch("/api/v1/auth/signup", {
+      const response = await fetch("/api/v1/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          email,
-          full_name: fullName,
+          email: email.trim(),
+          full_name: fullName.trim(),
           password,
+          role: "guest",
         }),
       });
 
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.detail || "Failed to create account");
+        if (data.detail && Array.isArray(data.detail)) {
+          throw new Error(data.detail[0]?.msg || "Validation Error");
+        }
+        throw new Error(data.detail || data.message || "Failed to create account");
       }
 
-      if (data.access_token) {
-        await login(data.access_token);
-      }
-
-      toast.success("Account created successfully!");
-      navigate({ to: "/" });
+      toast.success("Account created! Check your email for the verification code.");
+      
+      // Navigate to OTP page with search param
+      navigate({
+        to: "/verify-otp",
+        search: { email: email.trim() },
+      });
     } catch (err: any) {
       toast.error(err.message || "Registration failed");
     } finally {
@@ -97,14 +101,25 @@ function SignUpPage() {
             <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
               Password
             </label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="Create a strong password"
-              className="mt-1 w-full rounded-xl border border-input bg-background p-4 text-sm outline-none focus:ring-2 focus:ring-primary"
-              required
-            />
+            <div className="relative mt-1">
+              <input
+                type={showPassword ? "text" : "password"}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Create a strong password"
+                className="w-full rounded-xl border border-input bg-background p-4 pr-12 text-sm outline-none focus:ring-2 focus:ring-primary"
+                required
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword((visible) => !visible)}
+                className="absolute inset-y-0 right-3 flex items-center text-muted-foreground transition-colors hover:text-foreground"
+                aria-label={showPassword ? "Hide password" : "Show password"}
+                aria-pressed={showPassword}
+              >
+                {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+              </button>
+            </div>
           </div>
 
           <button

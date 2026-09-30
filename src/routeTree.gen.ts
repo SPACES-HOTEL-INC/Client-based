@@ -19,6 +19,7 @@ import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as SearchRouteImport } from './routes/search'
 import { Route as SignupRouteImport } from './routes/signup'
 import { Route as SupportRouteImport } from './routes/support'
+import { Route as VerifyOtpRouteImport } from './routes/verify-otp'
 import { Route as HostIndexRouteImport } from './routes/host/index'
 import { Route as HostCreateRouteImport } from './routes/host/create'
 import { Route as PropertyIdRouteImport } from './routes/property.$id'
@@ -73,6 +74,11 @@ const SupportRoute = SupportRouteImport.update({
   path: '/support',
   getParentRoute: () => rootRouteImport,
 } as any)
+const VerifyOtpRoute = VerifyOtpRouteImport.update({
+  id: '/verify-otp',
+  path: '/verify-otp',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const HostIndexRoute = HostIndexRouteImport.update({
   id: '/host/',
   path: '/host/',
@@ -100,6 +106,7 @@ export interface FileRoutesByFullPath {
   '/search': typeof SearchRoute
   '/signup': typeof SignupRoute
   '/support': typeof SupportRoute
+  '/verify-otp': typeof VerifyOtpRoute
   '/host/create': typeof HostCreateRoute
   '/property/$id': typeof PropertyIdRoute
   '/host/': typeof HostIndexRoute
@@ -115,6 +122,7 @@ export interface FileRoutesByTo {
   '/search': typeof SearchRoute
   '/signup': typeof SignupRoute
   '/support': typeof SupportRoute
+  '/verify-otp': typeof VerifyOtpRoute
   '/host/create': typeof HostCreateRoute
   '/property/$id': typeof PropertyIdRoute
   '/host': typeof HostIndexRoute
@@ -131,6 +139,7 @@ export interface FileRoutesById {
   '/search': typeof SearchRoute
   '/signup': typeof SignupRoute
   '/support': typeof SupportRoute
+  '/verify-otp': typeof VerifyOtpRoute
   '/host/create': typeof HostCreateRoute
   '/property/$id': typeof PropertyIdRoute
   '/host/': typeof HostIndexRoute
@@ -148,6 +157,7 @@ export interface FileRouteTypes {
     | '/search'
     | '/signup'
     | '/support'
+    | '/verify-otp'
     | '/host/create'
     | '/property/$id'
     | '/host/'
@@ -163,6 +173,7 @@ export interface FileRouteTypes {
     | '/search'
     | '/signup'
     | '/support'
+    | '/verify-otp'
     | '/host/create'
     | '/property/$id'
     | '/host'
@@ -178,6 +189,7 @@ export interface FileRouteTypes {
     | '/search'
     | '/signup'
     | '/support'
+    | '/verify-otp'
     | '/host/create'
     | '/property/$id'
     | '/host/'
@@ -194,6 +206,7 @@ export interface RootRouteChildren {
   SearchRoute: typeof SearchRoute
   SignupRoute: typeof SignupRoute
   SupportRoute: typeof SupportRoute
+  VerifyOtpRoute: typeof VerifyOtpRoute
   HostCreateRoute: typeof HostCreateRoute
   PropertyIdRoute: typeof PropertyIdRoute
   HostIndexRoute: typeof HostIndexRoute
@@ -271,6 +284,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SupportRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/verify-otp': {
+      id: '/verify-otp'
+      path: '/verify-otp'
+      fullPath: '/verify-otp'
+      preLoaderRoute: typeof VerifyOtpRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/host/': {
       id: '/host/'
       path: '/host'
@@ -306,6 +326,7 @@ const rootRouteChildren: RootRouteChildren = {
   SearchRoute: SearchRoute,
   SignupRoute: SignupRoute,
   SupportRoute: SupportRoute,
+  VerifyOtpRoute: VerifyOtpRoute,
   HostCreateRoute: HostCreateRoute,
   PropertyIdRoute: PropertyIdRoute,
   HostIndexRoute: HostIndexRoute,
