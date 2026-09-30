@@ -23,7 +23,7 @@ function LoginPage() {
     try {
       // Standard OAuth2 form data body for FastAPI OAuth2PasswordBearer
       const formData = new URLSearchParams();
-      formData.append("username", email);
+      formData.append("username", email.trim());
       formData.append("password", password);
 
       const response = await fetch("/api/v1/auth/login", {
@@ -34,10 +34,22 @@ function LoginPage() {
         body: formData,
       });
 
-      const data = await response.json();
+      // Safely check content type before parsing JSON
+      const contentType = response.headers.get("content-type");
+      let data: any = {};
+      if (contentType && contentType.includes("application/json")) {
+        data = await response.json();
+      }
 
       if (!response.ok) {
-        throw new Error(data.detail || "Invalid email or password");
+        // Unpack array validation errors from FastAPI (prevents [object Object] toast errors)
+        if (data.detail && Array.isArray(data.detail)) {
+          throw new Error(data.detail[0]?.msg || "Invalid login input");
+        }
+        if (typeof data.detail === "string") {
+          throw new Error(data.detail);
+        }
+        throw new Error(data.message || "Invalid email or password");
       }
 
       await login(data.access_token);
@@ -98,6 +110,7 @@ function LoginPage() {
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
                 className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground"
+                aria-label={showPassword ? "Hide password" : "Show password"}
               >
                 {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
               </button>
