@@ -21,20 +21,17 @@ function LoginPage() {
     setIsSubmitting(true);
 
     try {
-      // Standard OAuth2 form data body for FastAPI OAuth2PasswordBearer
-      const formData = new URLSearchParams();
-      formData.append("username", email.trim());
-      formData.append("password", password);
-
       const response = await fetch("/api/v1/auth/login", {
         method: "POST",
         headers: {
-          "Content-Type": "application/x-www-form-urlencoded",
+          "Content-Type": "application/json",
         },
-        body: formData,
+        body: JSON.stringify({
+          email: email.trim(),
+          password: password,
+        }),
       });
 
-      // Safely check content type before parsing JSON
       const contentType = response.headers.get("content-type");
       let data: any = {};
       if (contentType && contentType.includes("application/json")) {
@@ -42,7 +39,6 @@ function LoginPage() {
       }
 
       if (!response.ok) {
-        // Unpack array validation errors from FastAPI (prevents [object Object] toast errors)
         if (data.detail && Array.isArray(data.detail)) {
           throw new Error(data.detail[0]?.msg || "Invalid login input");
         }
