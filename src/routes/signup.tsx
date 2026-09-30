@@ -31,7 +31,14 @@ function SignUpPage() {
         }),
       });
 
-      const data = await response.json();
+      // Safely parse JSON or handle HTML error pages (e.g. 404/500 from proxy/server)
+      const contentType = response.headers.get("content-type");
+      let data: any = {};
+      if (contentType && contentType.includes("application/json")) {
+        data = await response.json();
+      } else if (!response.ok) {
+        throw new Error(`Server returned error (${response.status}). Please try again later.`);
+      }
 
       if (!response.ok) {
         if (data.detail && Array.isArray(data.detail)) {
@@ -41,7 +48,7 @@ function SignUpPage() {
       }
 
       toast.success("Account created! Check your email for the verification code.");
-      
+
       // Navigate to OTP page with search param
       navigate({
         to: "/verify-otp",
