@@ -4,7 +4,7 @@ import { Headphones, Phone, Mail, Send } from "lucide-react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
 import { SignInRequiredModal } from "@/components/spaces/SignInRequiredModal";
-import { useSpaces } from "@/lib/spaces-store";
+import { useAuth } from "@/hooks/useAuth";
 
 export const Route = createFileRoute("/support")({
   head: () => ({
@@ -40,12 +40,16 @@ const faqs = [
 ];
 
 function SupportPage() {
-  const { user } = useSpaces();
-  const isGuest = !user || user.guest || !user.email;
-  const [authModalOpen, setAuthModalOpen] = useState(isGuest);
+  const { user, loading } = useAuth();
+  const isGuest = !user || !user.email;
+  const [authModalOpen, setAuthModalOpen] = useState(false);
+
+  useEffect(() => {
+    if (!loading) setAuthModalOpen(isGuest);
+  }, [isGuest, loading]);
 
   const [messages, setMessages] = useState<Msg[]>([
-    { id: 1, from: "agent", text: `Hi ${user?.firstName ?? "Guest"}, I'm Zainab from the Spaces concierge. How can I help today?` },
+    { id: 1, from: "agent", text: `Hi ${user?.full_name?.split(" ")[0] ?? "Guest"}, I'm Zainab from the Spaces concierge. How can I help today?` },
   ]);
   const [draft, setDraft] = useState("");
   const endRef = useRef<HTMLDivElement>(null);
