@@ -93,9 +93,9 @@ export async function fetchRoomsForProperty(propertyId: string) {
 export async function fetchProperties() {
   try {
     const res = await fetch(`${API_BASE}/api/v1/properties`);
-    if (!res.ok) return properties;
+    if (!res.ok) return [];
     const data = await res.json();
-    if (!Array.isArray(data) || data.length === 0) return properties;
+    if (!Array.isArray(data)) return [];
 
     const out = await Promise.all(
       data.map(async (p: any) => {
@@ -107,10 +107,10 @@ export async function fetchProperties() {
         }
       })
     );
-    return out.length > 0 ? out : properties;
+    return out;
   } catch (err) {
     console.error("fetchProperties error:", err);
-    return properties;
+    return [];
   }
 }
 
@@ -234,54 +234,42 @@ export async function searchRooms(filters?: { city?: string; min_price?: number;
         }
       })();
       const data = cached.data;
-      if (!Array.isArray(data) || data.length === 0) return filterStaticProperties(filters);
+      if (!Array.isArray(data)) return [];
       return mapPublicRoomsToProperties(data);
     }
 
     const res = await fetch(`${API_BASE}${path}?${qs.toString()}`);
-    if (!res.ok) return filterStaticProperties(filters);
+    if (!res.ok) return [];
     const data = await res.json();
-    if (!Array.isArray(data) || data.length === 0) return filterStaticProperties(filters);
+    if (!Array.isArray(data)) return [];
     cache.set(key, { ts: Date.now(), data });
 
     return mapPublicRoomsToProperties(data);
   } catch (err) {
     console.error("searchRooms error:", err);
-    return filterStaticProperties(filters);
+    return [];
   }
-}
-
-function filterStaticProperties(filters?: { city?: string; min_price?: number; max_price?: number; property_type?: string }) {
-  return properties.filter((p) => {
-    if (filters?.city && !p.city.toLowerCase().includes(filters.city.toLowerCase())) return false;
-    if (filters?.property_type && p.type.toLowerCase() !== filters.property_type.toLowerCase()) return false;
-    if (filters?.min_price != null && p.price < filters.min_price) return false;
-    if (filters?.max_price != null && p.price > filters.max_price) return false;
-    return true;
-  });
 }
 
 export async function fetchFeaturedStays(limit = 4) {
   try {
     const props = await fetchProperties();
-    if (!Array.isArray(props) || props.length === 0) return properties.slice(0, limit);
+    if (!Array.isArray(props)) return [];
     return props.slice(0, limit);
   } catch (err) {
     console.error("fetchFeaturedStays error:", err);
-    return properties.slice(0, limit);
+    return [];
   }
 }
 
 export async function fetchTrendingInLagos(limit = 6) {
   try {
     const data = await fetchPublicRooms({ city: "lagos", limit });
-    if (!Array.isArray(data) || data.length === 0) {
-      return properties.filter((p) => p.state.toLowerCase() === "lagos").slice(0, limit);
-    }
+    if (!Array.isArray(data)) return [];
     return mapPublicRoomsToProperties(data.slice(0, limit));
   } catch (err) {
     console.error("fetchTrendingInLagos error:", err);
-    return properties.filter((p) => p.state.toLowerCase() === "lagos").slice(0, limit);
+    return [];
   }
 }
 
