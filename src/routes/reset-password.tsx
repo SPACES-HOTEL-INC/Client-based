@@ -1,58 +1,30 @@
 import { createFileRoute, useNavigate, useSearch, Link } from "@tanstack/react-router";
-import { useState, useRef } from "react";
+import { useState } from "react";
 import { ArrowLeft, Eye, EyeOff, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/reset-password")({
   validateSearch: (search: Record<string, unknown>) => ({
     email: (search.email as string) || "",
+    token: (search.token as string) || "",
   }),
   component: ResetPasswordPage,
 });
 
 function ResetPasswordPage() {
   const navigate = useNavigate();
-  const { email } = useSearch({ from: "/reset-password" });
+  const { email, token } = useSearch({ from: "/reset-password" });
 
-  const [otp, setOtp] = useState<string[]>(Array(6).fill(""));
   const [newPassword, setNewPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
-
-  const handleOtpChange = (index: number, value: string) => {
-    if (!/^\d*$/.test(value)) return;
-
-    const newOtp = [...otp];
-    newOtp[index] = value.substring(value.length - 1);
-    setOtp(newOtp);
-
-    if (value && index < 5) {
-      inputRefs.current[index + 1]?.focus();
-    }
-  };
-
-  const handleKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Backspace" && !otp[index] && index > 0) {
-      inputRefs.current[index - 1]?.focus();
-    }
-  };
-
-  const handlePaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
-    e.preventDefault();
-    const pastedData = e.clipboardData.getData("text").trim();
-    if (!/^\d{6}$/.test(pastedData)) return;
-
-    setOtp(pastedData.split(""));
-    inputRefs.current[5]?.focus();
-  };
-
   const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault();
-    const code = otp.join("");
-    if (code.length < 6) {
-      toast.error("Please enter the complete 6-digit verification code");
+
+    if (!token) {
+      toast.error("Missing reset token. Please request password reset again.");
+      navigate({ to: "/forgot-password" });
       return;
     }
 
@@ -63,8 +35,7 @@ function ResetPasswordPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          email: email.trim(),
-          otp_code: code,
+          token: token,
           new_password: newPassword,
         }),
       });
@@ -104,32 +75,10 @@ function ResetPasswordPage() {
       <div className="mt-8 max-w-md mx-auto">
         <h1 className="font-display text-3xl font-extrabold">Reset Password</h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          Enter the 6-digit code sent to <span className="font-semibold text-foreground">{email || "your email"}</span> and your new password.
+          Enter a new password for account <span className="font-semibold text-foreground">{email || "associated with your request"}</span>.
         </p>
 
         <form onSubmit={handleResetPassword} className="mt-8 flex flex-col gap-6">
-          <div>
-            <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2 block">
-              Verification Code
-            </label>
-            <div className="flex justify-between gap-2">
-              {otp.map((digit, index) => (
-                <input
-                  key={index}
-                  ref={(el) => (inputRefs.current[index] = el)}
-                  type="text"
-                  inputMode="numeric"
-                  maxLength={1}
-                  value={digit}
-                  onChange={(e) => handleOtpChange(index, e.target.value)}
-                  onKeyDown={(e) => handleKeyDown(index, e)}
-                  onPaste={handlePaste}
-                  className="h-14 w-12 sm:h-16 sm:w-14 rounded-xl border border-input bg-background text-center text-xl sm:text-2xl font-bold outline-none focus:ring-2 focus:ring-primary"
-                />
-              ))}
-            </div>
-          </div>
-
           <div>
             <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
               New Password
@@ -156,7 +105,7 @@ function ResetPasswordPage() {
 
           <button
             type="submit"
-            disabled={isSubmitting || otp.join("").length < 6}
+            disabled={isSubmitting || !newPassword}
             className="flex items-center justify-center gap-2 w-full rounded-xl bg-primary py-4 font-semibold text-primary-foreground transition hover:opacity-90 disabled:opacity-50"
           >
             {isSubmitting ? <Loader2 className="h-5 w-5 animate-spin" /> : "Reset Password"}

@@ -24,24 +24,27 @@ function ForgotPasswordPage() {
       });
 
       const contentType = response.headers.get("content-type");
-      let data: any = {};
+      let data: any = null;
       if (contentType && contentType.includes("application/json")) {
         data = await response.json();
       }
 
       if (!response.ok) {
-        if (data.detail && Array.isArray(data.detail)) {
+        if (data?.detail && Array.isArray(data.detail)) {
           throw new Error(data.detail[0]?.msg || "Validation error");
         }
-        throw new Error(data.detail || data.message || "Failed to send reset code");
+        throw new Error(data?.detail || "Failed to generate reset token");
       }
 
-      toast.success("Password reset code sent to your email!");
-      
-      // Redirect to reset password page with email param
+      // The token is returned directly in response body (string or object key)
+      const token = typeof data === "string" ? data : data?.token || data?.access_token;
+
+      toast.success("Reset token generated successfully!");
+
+      // Navigate to reset-password with email & token in search params
       navigate({
         to: "/reset-password",
-        search: { email: email.trim() },
+        search: { email: email.trim(), token },
       });
     } catch (err: any) {
       toast.error(err.message || "Something went wrong");
@@ -67,7 +70,7 @@ function ForgotPasswordPage() {
 
         <h1 className="font-display text-3xl font-extrabold">Forgot password?</h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          Enter your account email address below and we'll send you a verification code to reset your password.
+          Enter your account email address below to generate a password reset request.
         </p>
 
         <form onSubmit={handleRequestReset} className="mt-8 flex flex-col gap-4">
@@ -90,7 +93,7 @@ function ForgotPasswordPage() {
             disabled={isSubmitting}
             className="mt-2 flex items-center justify-center gap-2 w-full rounded-xl bg-primary py-4 font-semibold text-primary-foreground transition hover:opacity-90 disabled:opacity-50"
           >
-            {isSubmitting ? <Loader2 className="h-5 w-5 animate-spin" /> : "Send Reset Code"}
+            {isSubmitting ? <Loader2 className="h-5 w-5 animate-spin" /> : "Continue to Reset"}
           </button>
         </form>
 
