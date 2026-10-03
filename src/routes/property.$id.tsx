@@ -1,5 +1,5 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   ArrowLeft,
   BedDouble,
@@ -13,8 +13,10 @@ import {
   ShieldCheck,
   Star,
   Users,
+  Loader2,
+  Send,
 } from "lucide-react";
-import { fetchProperty } from "@/lib/api";
+import { fetchProperty, fetchPropertyReviews, submitPropertyReview } from "@/lib/api";
 import type { Property, Room } from "@/lib/data";
 import { formatMoney, useSpaces } from "@/lib/spaces-store";
 import { Button } from "@/components/ui/button";
@@ -22,6 +24,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { BookingDialog } from "@/components/spaces/BookingDialog";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/property/$id")({
   loader: async ({ params }) => {
@@ -90,6 +93,127 @@ export const Route = createFileRoute("/property/$id")({
   },
   component: PropertyPage,
 });
+
+function ReviewsSection({ propertyId, rating, count }: { propertyId: string; rating: number; count: number }) {
+  const [reviews, setReviews] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [newRating, setNewRating] = useState(5);
+  const [comment, setComment] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    async function loadReviews() {
+      setLoading(true);
+      const data = await fetchPropertyReviews(propertyId);
+      setReviews(data);
+      setLoading(false);
+    }
+    if (propertyId) loadReviews();
+  }, [propertyId]);
+
+  const handleSubmitReview = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!comment.trim()) {
+      toast.error("Please enter a review comment");
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      const created = await submitPropertyReview({
+        property_id: propertyId,
+        rating: newRating,
+        comment: comment.trim(),
+      });
+      toast.success("Review submitted successfully!");
+      setReviews((prev) => [created, ...prev]);
+      setComment("");
+      setNewRating(5);
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || "Failed to submit review");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <section className="space-y-6 pt-6 border-t border-border">
+      <div className="flex items-center justify-between">
+        <h2 className="font-display text-lg font-semibold">Guest Reviews</h2>
+        <span className="flex items-center gap-1 text-sm font-semibold">
+          <Star className="size-4 fill-gold text-gold" /> {rating}
+          <span className="font-normal text-muted-foreground">({reviews.length || count} total)</span>
+        </span>
+      </div>
+
+      <form onSubmit={handleSubmitReview} className="card-elevated p-4 rounded-2xl space-y-3">
+        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Leave a Review</p>
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-muted-foreground">Rating:</span>
+          <div className="flex gap-1">
+            {[1, 2, 3, 4, 5].map((num) => (
+              <button
+                key={num}
+                type="button"
+                onClick={() => setNewRating(num)}
+                className="p-1 focus:outline-none"
+              >
+                <Star
+                  className={`size-4 ${
+                    num <= newRating ? "fill-gold text-gold" : "text-muted-foreground/30"
+                  }`}
+                />
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="flex gap-2">
+          <input
+            type="text"
+            value={comment}
+            onChange={(e) => setComment(e.target.value)}
+            placeholder="Share your stay experience..."
+            className="flex-1 rounded-xl border border-border bg-background px-3 py-2 text-xs outline-none focus:ring-1 focus:ring-primary"
+          />
+          <Button type="submit" disabled={submitting} className="h-9 rounded-xl px-4 text-xs gap-1.5">
+            {submitting ? <Loader2 className="size-3.5 animate-spin" /> : <Send className="size-3.5" />}
+            Post
+          </Button>
+        </div>
+      </form>
+
+      {loading ? (
+        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+          <Loader2 className="size-4 animate-spin text-primary" /> Loading reviews...
+        </div>
+      ) : reviews.length === 0 ? (
+        <p className="text-xs text-muted-foreground">No reviews posted yet for this space.</p>
+      ) : (
+        <div className="grid gap-3 sm:grid-cols-2">
+          {reviews.map((rev: any, index: number) => (
+            <div key={rev.id || index} className="card-elevated p-4 space-y-2 rounded-2xl">
+              <div className="flex items-center justify-between">
+                <span className="font-semibold text-xs">{rev.user_name || "Verified Guest"}</span>
+                <div className="flex">
+                  {[...Array(5)].map((_, i) => (
+                    <Star
+                      key={i}
+                      className={`size-3 ${
+                        i < (rev.rating || 5) ? "fill-gold text-gold" : "text-muted-foreground/30"
+                      }`}
+                    />
+                  ))}
+                </div>
+              </div>
+              <p className="text-xs text-muted-foreground leading-relaxed">{rev.comment}</p>
+            </div>
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
 
 function PropertyPage() {
   const { property } = Route.useLoaderData();
@@ -280,6 +404,8 @@ function PropertyPage() {
               </div>
             </section>
           )}
+
+          <ReviewsSection propertyId={property.id} rating={property.rating} count={property.reviews} />
 
           <section>
             <h2 className="mb-3 font-display text-lg font-semibold">Available rooms & options</h2>

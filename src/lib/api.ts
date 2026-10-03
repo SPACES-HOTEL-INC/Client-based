@@ -305,4 +305,40 @@ api.interceptors.response.use(
   }
 );
 
+// ==========================================
+// REVIEWS & BOOKINGS API HELPERS
+// ==========================================
+
+export async function fetchPropertyReviews(propertyId: string) {
+  try {
+    const res = await api.get(`/api/v1/reviews/property/${propertyId}`);
+    return Array.isArray(res.data) ? res.data : res.data?.data ?? [];
+  } catch (err) {
+    console.error("fetchPropertyReviews error:", err);
+    return [];
+  }
+}
+
+export async function submitPropertyReview(payload: {
+  property_id: string;
+  rating: number;
+  comment: string;
+}) {
+  const res = await api.post("/api/v1/reviews/", payload);
+  return res.data;
+}
+
+export async function createBookingReservation(payload: {
+  space_id: string;
+  room_id: string;
+  check_in: string;
+  check_out: string;
+  guests_count: number;
+  total_amount: number;
+  payment_method: string;
+}) {
+  const res = await api.post("/api/v1/bookings/", payload);
+  return res.data;
+}
+
 export default api;
