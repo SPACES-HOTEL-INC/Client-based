@@ -23,25 +23,39 @@ function ForgotPasswordPage() {
         body: JSON.stringify({ email: email.trim() }),
       });
 
-      const contentType = response.headers.get("content-type");
-      let data: any = null;
-      if (contentType && contentType.includes("application/json")) {
-        data = await response.json();
-      }
-
       if (!response.ok) {
-        if (data?.detail && Array.isArray(data.detail)) {
-          throw new Error(data.detail[0]?.msg || "Validation error");
+        let errorData: any = {};
+        try {
+          errorData = await response.json();
+        } catch (_) {}
+
+        if (errorData?.detail && Array.isArray(errorData.detail)) {
+          throw new Error(errorData.detail[0]?.msg || "Validation error");
         }
-        throw new Error(data?.detail || "Failed to generate reset token");
+        throw new Error(errorData?.detail || errorData?.message || "Failed to generate reset token");
       }
 
-      // The token is returned directly in response body (string or object key)
-      const token = typeof data === "string" ? data : data?.token || data?.access_token;
+      // Read response text first to reliably parse raw string responses from FastAPI
+      const responseText = await response.text();
+      let token = "";
+
+      try {
+        const parsedData = JSON.parse(responseText);
+        token = typeof parsedData === "string" 
+          ? parsedData 
+          : (parsedData?.token || parsedData?.access_token || parsedData?.reset_token || "");
+      } catch (_) {
+        // Fallback if response is an unquoted raw token string
+        token = responseText.replace(/^"|"$/g, "").trim();
+      }
+
+      if (!token) {
+        throw new Error("No reset token received from server");
+      }
 
       toast.success("Reset token generated successfully!");
 
-      // Navigate to reset-password with email & token in search params
+      // Pass email and captured token seamlessly to reset-password
       navigate({
         to: "/reset-password",
         search: { email: email.trim(), token },
