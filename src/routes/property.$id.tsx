@@ -1,4 +1,4 @@
-import { createFileRoute, Link, notFound } from "@tanstack/react-router";
+import { createFileRoute, Link, notFound, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import {
   ArrowLeft,
@@ -25,6 +25,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { BookingDialog } from "@/components/spaces/BookingDialog";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { useAuth } from "@/hooks/useAuth";
+import { SignInRequiredModal } from "@/components/spaces/SignInRequiredModal";
 
 export const Route = createFileRoute("/property/$id")({
   loader: async ({ params }) => {
@@ -35,11 +37,13 @@ export const Route = createFileRoute("/property/$id")({
         throw notFound();
       }
 
-      // Ensure room and facilities structure fallbacks for API compatibility
+      // Ensure property_type takes precedence over generic type
+      const resolvedType = propertyData.property_type || propertyData.type || "Apartment";
+
       const property: Property = {
         ...propertyData,
-        title: propertyData.title || propertyData.name || "Luxury Space",
-        type: propertyData.type || propertyData.property_type || "Apartment",
+        title: propertyData.title || propertyData.name || propertyData.hotel_name || "Luxury Space",
+        type: resolvedType,
         city: propertyData.city || "Lagos",
         state: propertyData.state || "Lagos State",
         address: propertyData.address || `${propertyData.city || "Lagos"}, Nigeria`,
@@ -218,9 +222,23 @@ function ReviewsSection({ propertyId, rating, count }: { propertyId: string; rat
 function PropertyPage() {
   const { property } = Route.useLoaderData();
   const { currency, favorites, toggleFavorite } = useSpaces();
+  const { user, loading: authLoading } = useAuth();
+  const navigate = useNavigate();
   const [selected, setSelected] = useState<Room | null>(null);
   const [slide, setSlide] = useState(0);
   const saved = favorites.includes(property.id);
+
+  if (authLoading) {
+    return <div className="grid min-h-[50vh] place-items-center"><Loader2 className="size-6 animate-spin text-primary" /></div>;
+  }
+
+  if (!user?.email) {
+    return (
+      <div className="min-h-[50vh]">
+        <SignInRequiredModal isOpen onClose={() => navigate({ to: "/search" })} />
+      </div>
+    );
+  }
 
   const cheapest = property.rooms.length > 0 
     ? property.rooms.reduce((a, b) => (a.rate < b.rate ? a : b))
@@ -341,7 +359,8 @@ function PropertyPage() {
         <div className="min-w-0 flex-1 space-y-8">
           <section className="space-y-3">
             <div className="flex flex-wrap items-center gap-2">
-              <Badge variant="secondary" className="rounded-full">
+              {/* Dynamic Property Type Badge */}
+              <Badge variant="secondary" className="rounded-full capitalize font-semibold px-3 py-1">
                 {property.type}
               </Badge>
               <span className="flex items-center gap-1 text-sm font-semibold">

@@ -12,6 +12,8 @@ import { Slider } from "@/components/ui/slider";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Link } from "@tanstack/react-router";
+import { useAuth } from "@/hooks/useAuth";
+import { SignInRequiredModal } from "@/components/spaces/SignInRequiredModal";
 
 type SearchParams = { type?: string | undefined };
 
@@ -32,12 +34,15 @@ export const Route = createFileRoute("/search")({
 });
 
 const MAX_PRICE = 1000000;
+const SEARCH_PROPERTY_TYPES = PROPERTY_TYPES.filter((type) => type !== "Dining");
 
 function SearchPage() {
   const { type } = Route.useSearch();
   const { currency } = useSpaces();
+  const { user, loading: authLoading } = useAuth();
   const [loading, setLoading] = useState(true);
   const [properties, setProperties] = useState<Property[]>([]);
+  const [authModalOpen, setAuthModalOpen] = useState(false);
 
   const initialSearchParams = (() => {
     try {
@@ -137,6 +142,12 @@ function SearchPage() {
   };
 
   const activeFilters = types.length + amenities.length + (minRating > 0 ? 1 : 0);
+  const handleMapPropertyClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    if (!authLoading && (!user || !user.email)) {
+      e.preventDefault();
+      setAuthModalOpen(true);
+    }
+  };
 
   const Filters = (
     <div className="space-y-7">
@@ -151,7 +162,7 @@ function SearchPage() {
       <div>
         <Label className="mb-3 block text-sm font-semibold">Property type</Label>
         <div className="flex flex-wrap gap-2">
-          {PROPERTY_TYPES.map((t) => (
+          {SEARCH_PROPERTY_TYPES.map((t) => (
             <button
               key={t}
               type="button"
@@ -256,7 +267,7 @@ function SearchPage() {
         >
           All
         </button>
-        {PROPERTY_TYPES.map((t) => (
+        {SEARCH_PROPERTY_TYPES.map((t) => (
           <button
             key={t}
             type="button"
@@ -308,6 +319,7 @@ function SearchPage() {
                   key={p.id}
                   to="/property/$id"
                   params={{ id: p.id }}
+                  onClick={handleMapPropertyClick}
                   style={{ left: `${p.coords?.x ?? 50}%`, top: `${p.coords?.y ?? 50}%` }}
                   className="absolute -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground shadow-md transition-transform hover:scale-105"
                 >
@@ -348,6 +360,7 @@ function SearchPage() {
           )}
         </div>
       </div>
+      <SignInRequiredModal isOpen={authModalOpen} onClose={() => setAuthModalOpen(false)} />
     </div>
   );
 }

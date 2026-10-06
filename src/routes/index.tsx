@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { ArrowRight, Building2, ChefHat, KeyRound, PartyPopper, Search, Star } from "lucide-react";
+import { ArrowRight, Building2, KeyRound, PartyPopper, Search, Star, TreePalm } from "lucide-react";
 import { fetchTrendingInLagos, fetchFeaturedStays } from "@/lib/api";
 import { formatMoney, useSpaces } from "@/lib/spaces-store";
 import { useAuth } from "@/hooks/useAuth";
@@ -31,7 +31,7 @@ const services = [
   { label: "Stays", sub: "Hotels & luxury stays", icon: Building2, type: "Hotel" },
   { label: "Event Spaces", sub: "Halls & premium venues", icon: PartyPopper, type: "Event Space" },
   { label: "Shortlets", sub: "Serviced apartments", icon: KeyRound, type: "Shortlet" },
-  { label: "Dining", sub: "Curated experiences", icon: ChefHat, type: "Dining" },
+  { label: "Resort", sub: "Resorts & retreats", icon: TreePalm, type: "Resort" },
 ];
 
 function HomePage() {
@@ -165,6 +165,12 @@ function HomePage() {
                     key={propId}
                     to="/property/$id"
                     params={{ id: propId }}
+                    onClick={(e) => {
+                      if (!loading && (!user || !user.email)) {
+                        e.preventDefault();
+                        setAuthModalOpen(true);
+                      }
+                    }}
                     className="card-elevated w-72 shrink-0 snap-start overflow-hidden md:w-96"
                   >
                     <div className="relative aspect-[4/3]">

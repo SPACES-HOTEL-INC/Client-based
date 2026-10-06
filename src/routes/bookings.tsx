@@ -1,10 +1,12 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
-import { CalendarDays, Users, Ticket } from "lucide-react";
+import { CalendarDays, Loader2, Users, Ticket } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { formatMoney, useSpaces, type Booking } from "@/lib/spaces-store";
+import { useAuth } from "@/hooks/useAuth";
+import { SignInRequiredModal } from "@/components/spaces/SignInRequiredModal";
 
 export const Route = createFileRoute("/bookings")({
   head: () => ({
@@ -20,7 +22,21 @@ export const Route = createFileRoute("/bookings")({
 
 function BookingsPage() {
   const { bookings, hydrated } = useSpaces();
+  const { user, loading: authLoading } = useAuth();
+  const navigate = useNavigate();
   const [tab, setTab] = useState("active");
+
+  if (authLoading) {
+    return <div className="grid min-h-[50vh] place-items-center"><Loader2 className="size-6 animate-spin text-primary" /></div>;
+  }
+
+  if (!user?.email) {
+    return (
+      <div className="min-h-[50vh]">
+        <SignInRequiredModal isOpen onClose={() => navigate({ to: "/" })} />
+      </div>
+    );
+  }
 
   const buckets: Record<string, Booking[]> = {
     active: bookings.filter((b) => b.status === "active"),
