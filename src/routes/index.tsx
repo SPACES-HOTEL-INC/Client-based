@@ -15,7 +15,7 @@ export const Route = createFileRoute("/")({
       {
         name: "description",
         content:
-          "Book elite stays, shortlets, event spaces and dining experiences across Nigeria with Spaces. Pay in Naira or USD.",
+          "Book elite stays, shortlets, event spaces and leisure experiences across Nigeria with Spaces. Pay in Naira or USD.",
       },
       { property: "og:title", content: "Spaces — Elite stays, shortlets & experiences" },
       {
@@ -97,7 +97,7 @@ function HomePage() {
           >
             <Search className="size-5 shrink-0" />
             <span className="truncate text-sm md:text-lg">
-              Search stays, shortlets, venues &amp; dining
+              Search stays, shortlets, venues &amp; leisure experiences
             </span>
           </button>
         </section>
