@@ -165,12 +165,6 @@ function HomePage() {
                     key={propId}
                     to="/property/$id"
                     params={{ id: propId }}
-                    onClick={(e) => {
-                      if (!loading && (!user || !user.email)) {
-                        e.preventDefault();
-                        setAuthModalOpen(true);
-                      }
-                    }}
                     className="card-elevated w-72 shrink-0 snap-start overflow-hidden md:w-96"
                   >
                     <div className="relative aspect-[4/3]">

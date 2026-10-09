@@ -1,4 +1,4 @@
-import { createFileRoute, Link, notFound, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import {
   ArrowLeft,
@@ -223,22 +223,19 @@ function PropertyPage() {
   const { property } = Route.useLoaderData();
   const { currency, favorites, toggleFavorite } = useSpaces();
   const { user, loading: authLoading } = useAuth();
-  const navigate = useNavigate();
   const [selected, setSelected] = useState<Room | null>(null);
+  const [authModalOpen, setAuthModalOpen] = useState(false);
   const [slide, setSlide] = useState(0);
   const saved = favorites.includes(property.id);
 
-  if (authLoading) {
-    return <div className="grid min-h-[50vh] place-items-center"><Loader2 className="size-6 animate-spin text-primary" /></div>;
-  }
-
-  if (!user?.email) {
-    return (
-      <div className="min-h-[50vh]">
-        <SignInRequiredModal isOpen onClose={() => navigate({ to: "/search" })} />
-      </div>
-    );
-  }
+  const handleBookingAttempt = (room: Room) => {
+    if (authLoading) return;
+    if (!user?.email) {
+      setAuthModalOpen(true);
+      return;
+    }
+    setSelected(room);
+  };
 
   const cheapest = property.rooms.length > 0 
     ? property.rooms.reduce((a, b) => (a.rate < b.rate ? a : b))
@@ -457,7 +454,7 @@ function PropertyPage() {
                       <span className="font-display text-lg font-bold">{formatMoney(room.rate, currency)}</span>
                       <span className="block text-xs text-muted-foreground">per night</span>
                     </p>
-                    <Button className="rounded-xl" onClick={() => setSelected(room)}>
+                    <Button className="rounded-xl" onClick={() => handleBookingAttempt(room)}>
                       Select
                     </Button>
                   </div>
@@ -474,7 +471,7 @@ function PropertyPage() {
               <p className="font-display text-2xl font-bold">{formatMoney(cheapest.rate, currency)}</p>
               <p className="text-xs text-muted-foreground">per night · taxes calculated at checkout</p>
             </div>
-            <Button className="h-12 w-full rounded-xl text-base" onClick={() => setSelected(cheapest)}>
+            <Button className="h-12 w-full rounded-xl text-base" onClick={() => handleBookingAttempt(cheapest)}>
               Book now
             </Button>
             <p className="text-center text-xs text-muted-foreground">Free cancellation up to 48 hours before</p>
@@ -488,7 +485,7 @@ function PropertyPage() {
             <p className="truncate font-display text-lg font-bold">{formatMoney(cheapest.rate, currency)}</p>
             <p className="text-xs text-muted-foreground">per night</p>
           </div>
-          <Button className="h-12 shrink-0 rounded-xl px-8" onClick={() => setSelected(cheapest)}>
+          <Button className="h-12 shrink-0 rounded-xl px-8" onClick={() => handleBookingAttempt(cheapest)}>
             Book now
           </Button>
         </div>
@@ -502,6 +499,7 @@ function PropertyPage() {
           onOpenChange={(v) => !v && setSelected(null)}
         />
       )}
+      <SignInRequiredModal isOpen={authModalOpen} onClose={() => setAuthModalOpen(false)} />
     </div>
   );
 }
