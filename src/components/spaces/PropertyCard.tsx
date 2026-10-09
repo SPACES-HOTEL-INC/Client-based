@@ -3,11 +3,23 @@ import { Heart, MapPin, Star, Users } from "lucide-react";
 import { useState } from "react";
 import type { Property } from "@/lib/data";
 import { formatMoney, useSpaces } from "@/lib/spaces-store";
+import { useAuth } from "@/hooks/useAuth";
+import { SignInRequiredModal } from "@/components/spaces/SignInRequiredModal";
 import { cn } from "@/lib/utils";
 
-export function PropertyCard({ property }: { property: Property | any }) {
+export function PropertyCard({
+  property,
+  linkToSearch = false,
+  requireSignIn = false,
+}: {
+  property: Property | any;
+  linkToSearch?: boolean;
+  requireSignIn?: boolean;
+}) {
   const { currency, favorites, toggleFavorite } = useSpaces();
+  const { user, loading: authLoading } = useAuth();
   const [index, setIndex] = useState(0);
+  const [authModalOpen, setAuthModalOpen] = useState(false);
 
   // Support both `Property` shape and raw `room` payloads (room mapped to property-like object)
   const isRoom = property && property.price_per_night != null;
@@ -28,12 +40,23 @@ export function PropertyCard({ property }: { property: Property | any }) {
   const capacity = property?.capacity ?? 1;
 
   const saved = favorites.includes(id);
+  const propertyLink = linkToSearch
+    ? { to: "/search" as const }
+    : { to: "/property/$id" as const, params: { id } };
+  const handlePropertyClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    if (requireSignIn && !authLoading && (!user || !user.email)) {
+      e.preventDefault();
+      setAuthModalOpen(true);
+    }
+  };
+
   return (
+    <>
     <article className="card-elevated group overflow-hidden">
         <div className="relative aspect-[4/3] overflow-hidden">
           <Link
-            to="/property/$id"
-            params={{ id }}
+            {...propertyLink}
+            onClick={handlePropertyClick}
             aria-label={`View details for ${displayTitle}`}
             className="block size-full"
           >
@@ -93,8 +116,8 @@ export function PropertyCard({ property }: { property: Property | any }) {
 
         <div className="space-y-2 p-4">
           <Link
-            to="/property/$id"
-            params={{ id }}
+            {...propertyLink}
+            onClick={handlePropertyClick}
             className="line-clamp-1 font-display text-base font-semibold hover:text-primary"
           >
             {displayTitle}
@@ -116,8 +139,8 @@ export function PropertyCard({ property }: { property: Property | any }) {
               <Users className="size-3.5" /> Up to {capacity ?? 1}
             </span>
             <Link
-              to="/property/$id"
-              params={{ id }}
+              {...propertyLink}
+              onClick={handlePropertyClick}
               className="text-xs font-semibold text-primary"
             >
               View details
@@ -125,6 +148,8 @@ export function PropertyCard({ property }: { property: Property | any }) {
           </div>
         </div>
     </article>
+    <SignInRequiredModal isOpen={authModalOpen} onClose={() => setAuthModalOpen(false)} />
+    </>
   );
 }
 

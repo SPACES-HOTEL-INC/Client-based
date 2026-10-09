@@ -163,8 +163,7 @@ function HomePage() {
                 return (
                   <Link
                     key={propId}
-                    to="/property/$id"
-                    params={{ id: propId }}
+                    to="/search"
                     className="card-elevated w-72 shrink-0 snap-start overflow-hidden md:w-96"
                   >
                     <div className="relative aspect-[4/3]">
@@ -209,7 +208,7 @@ function HomePage() {
                 </div>
               </div>
             ) : (
-              (trending ?? []).map((p) => <PropertyCard key={p.id} property={p} />)
+              (trending ?? []).map((p) => <PropertyCard key={p.id} property={p} linkToSearch />)
             )}
           </div>
         </section>
