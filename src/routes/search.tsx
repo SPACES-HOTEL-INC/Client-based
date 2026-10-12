@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { Map as MapIcon, LayoutGrid, SlidersHorizontal, Search as SearchIcon, X } from "lucide-react";
-import { AMENITIES, PROPERTY_TYPES, type Property } from "@/lib/data";
+import { AMENITIES, normalizePropertyType, PROPERTY_TYPES, type Property } from "@/lib/data";
 import { searchRooms } from "@/lib/api";
 import { formatMoney, useSpaces } from "@/lib/spaces-store";
 import { PropertyCard, PropertyCardSkeleton } from "@/components/spaces/PropertyCard";
@@ -84,7 +84,6 @@ function SearchPage() {
         const fetchedProperties = await searchRooms({
           city: debouncedFilters.query || undefined,
           max_price: debouncedFilters.price?.[0],
-          property_type: debouncedFilters.types.length === 1 ? debouncedFilters.types[0] : undefined,
           limit: 100,
         });
         if (!mounted) return;
@@ -114,8 +113,9 @@ function SearchPage() {
         const location = (p.location ?? "").toString().toLowerCase();
         const matchQuery = !q || title.includes(q) || location.includes(q);
 
-        const pType = (p.type ?? p.property_type ?? "").toString();
-        const matchType = types.length === 0 || types.includes(pType);
+        const pType = normalizePropertyType(p.type ?? p.property_type);
+        const matchType =
+          types.length === 0 || types.some((type) => normalizePropertyType(type) === pType);
 
         const pPrice = Number(p.price || 0);
         const matchPrice = pPrice <= (price[0] ?? MAX_PRICE);

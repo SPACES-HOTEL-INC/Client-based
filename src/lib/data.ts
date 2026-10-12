@@ -7,6 +7,51 @@ import p6 from "@/assets/p6.jpg";
 
 export type PropertyType = "Hotel" | "Shortlet" | "Villa" | "Resort" | "Event Space" | "Dining";
 
+export function normalizePropertyType(value: unknown): PropertyType | undefined {
+  if (typeof value !== "string") return undefined;
+
+  const normalized = value.trim().toLowerCase().replace(/[_-]+/g, " ").replace(/\s+/g, " ");
+
+  switch (normalized) {
+    case "hotel":
+    case "hotels":
+      return "Hotel";
+    case "shortlet":
+    case "shortlets":
+    case "apartment":
+    case "apartments":
+    case "serviced apartment":
+    case "serviced apartments":
+      return "Shortlet";
+    case "villa":
+    case "villas":
+      return "Villa";
+    case "resort":
+    case "resorts":
+      return "Resort";
+    case "event space":
+    case "event spaces":
+      return "Event Space";
+    case "dining":
+      return "Dining";
+    default:
+      return undefined;
+  }
+}
+
+export function getPropertyDisplayName(...values: unknown[]): string {
+  for (const value of values) {
+    if (typeof value !== "string") continue;
+
+    const name = value.trim();
+    if (name && !name.includes("@") && !/^[+\d().\s-]+$/.test(name)) {
+      return name;
+    }
+  }
+
+  return "Verified Host";
+}
+
 export type Room = {
   id: string;
   name: string;

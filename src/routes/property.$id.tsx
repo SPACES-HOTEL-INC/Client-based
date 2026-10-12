@@ -17,7 +17,7 @@ import {
   Send,
 } from "lucide-react";
 import { fetchProperty, fetchPropertyReviews, submitPropertyReview } from "@/lib/api";
-import type { Property, Room } from "@/lib/data";
+import { getPropertyDisplayName, type Property, type Room } from "@/lib/data";
 import { formatMoney, useSpaces } from "@/lib/spaces-store";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -42,7 +42,7 @@ export const Route = createFileRoute("/property/$id")({
 
       const property: Property = {
         ...propertyData,
-        title: propertyData.title || propertyData.name || propertyData.hotel_name || "Luxury Space",
+        title: getPropertyDisplayName(propertyData.title, "Luxury Space"),
         type: resolvedType,
         city: propertyData.city || "Lagos",
         state: propertyData.state || "Lagos State",
@@ -53,7 +53,7 @@ export const Route = createFileRoute("/property/$id")({
         beds: propertyData.beds || propertyData.bedrooms || 1,
         baths: propertyData.baths || propertyData.bathrooms || 1,
         capacity: propertyData.capacity || propertyData.max_guests || 2,
-        host: propertyData.host || propertyData.host_name || "Spaces Host",
+        host: getPropertyDisplayName(propertyData.title, propertyData.host),
         description: propertyData.description || "Experience top-tier hospitality and refined comfort in this premium space.",
         images: Array.isArray(propertyData.images) && propertyData.images.length > 0
           ? propertyData.images
@@ -227,6 +227,7 @@ function PropertyPage() {
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [slide, setSlide] = useState(0);
   const saved = favorites.includes(property.id);
+  const managedBy = getPropertyDisplayName(property.host, property.title);
 
   const handleBookingAttempt = (room: Room) => {
     if (authLoading) return;
@@ -388,11 +389,11 @@ function PropertyPage() {
             <div className="card-elevated flex items-center justify-between gap-4 rounded-2xl p-4">
               <div className="flex min-w-0 items-center gap-4">
                 <span className="grid size-12 shrink-0 place-items-center rounded-full bg-primary font-display text-lg font-bold text-primary-foreground">
-                  {property.host.charAt(0)}
+                  {managedBy.charAt(0)}
                 </span>
                 <div className="min-w-0">
                   <p className="text-sm text-muted-foreground">Managed by</p>
-                  <p className="truncate font-display text-base font-bold">{property.host}</p>
+                  <p className="truncate font-display text-base font-bold">{managedBy}</p>
                 </div>
               </div>
               <span className="flex shrink-0 items-center gap-1.5 rounded-full bg-success/10 px-3 py-1.5 text-sm font-semibold text-success">

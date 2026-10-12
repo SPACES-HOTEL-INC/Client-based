@@ -1,4 +1,4 @@
-import { properties, type Property as FrontProperty, type Room as FrontRoom } from "./data";
+import { getPropertyDisplayName, normalizePropertyType, properties, type Property as FrontProperty, type Room as FrontRoom } from "./data";
 import axios, { InternalAxiosRequestConfig, AxiosResponse, AxiosError } from "axios";
 
 const API_BASE = import.meta.env.VITE_API_BASE ?? "https://backend-nq9s.onrender.com";
@@ -27,19 +27,18 @@ function mapRoom(b: BackendRoom): FrontRoom {
 
 function mapProperty(b: BackendProperty, rooms: FrontRoom[]): FrontProperty {
   const id = String(b.id ?? b._id ?? "");
-  const title = b.hotel_name ?? b.name ?? "Untitled";
+  const title = getPropertyDisplayName(b.hotel_name, b.title, b.name, "Untitled");
   const city = b.city ?? "";
   const state = b.state ?? "";
   const address = b.address ?? "";
-  const typeRaw = (b.property_type ?? "hotel").toString().toLowerCase();
-  const type = typeRaw.includes("short") ? "Shortlet" : typeRaw.includes("resort") ? "Resort" : typeRaw.includes("villa") ? "Villa" : typeRaw.includes("dining") ? "Dining" : "Hotel";
+  const type = normalizePropertyType(b.property_type) ?? "Hotel";
   const rating = Number(b.avg_rating ?? 0) || 0;
   const reviews = Number(b.total_reviews ?? 0) || 0;
   const price = rooms.length ? Math.min(...rooms.map((r) => r.rate)) : 0;
   const capacity = Math.max(1, ...(rooms.map((r) => r.occupancy || 1)));
   const beds = rooms.length;
   const baths = 1;
-  const host = b.contact ?? "Host";
+  const host = getPropertyDisplayName(b.hotel_name, b.title, b.name);
   const images = Array.isArray(b.images) ? b.images : b.images ? [b.images] : [];
   const description = b.description ?? "";
   const amenities = b.amenities ?? [];
@@ -189,7 +188,7 @@ function mapPublicRoomsToProperties(data: any[]): FrontProperty[] {
       city: r.city ?? "",
       state: r.state ?? "",
       address: r.address ?? "",
-      type: r.property_type ? r.property_type.toString() : "Hotel",
+      type: normalizePropertyType(r.property_type) ?? "Hotel",
       rating: Number(r.avg_rating ?? 0) || 0,
       reviews: Number(r.total_reviews ?? 0) || 0,
       price: roomRate,
