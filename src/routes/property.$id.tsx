@@ -219,6 +219,167 @@ function ReviewsSection({ propertyId, rating, count }: { propertyId: string; rat
   );
 }
 
+function RoomOptionCard({
+  room,
+  fallbackImage,
+  currency,
+  onSelect,
+}: {
+  room: Room;
+  fallbackImage: string;
+  currency: string;
+  onSelect: () => void;
+}) {
+  const [galleryOpen, setGalleryOpen] = useState(false);
+  const [activeImage, setActiveImage] = useState(0);
+  const uploadedImages = (room.images ?? [])
+    .filter((image): image is string => typeof image === "string" && image.trim().length > 0)
+    .slice(0, 7);
+  const singleRoomImage = [room.image, room.image_url].find(
+    (image): image is string => typeof image === "string" && image.trim().length > 0,
+  );
+  const galleryImages = uploadedImages.length > 0
+    ? uploadedImages
+    : [singleRoomImage ?? fallbackImage].filter(Boolean);
+  const imageCount = galleryImages.length;
+  const currentImage = galleryImages[activeImage] ?? fallbackImage;
+
+  const moveImage = (direction: number) => {
+    setActiveImage((index) => (index + direction + imageCount) % imageCount);
+  };
+
+  const useFallbackOnError = (event: React.SyntheticEvent<HTMLImageElement>) => {
+    if (fallbackImage && event.currentTarget.getAttribute("src") !== fallbackImage) {
+      event.currentTarget.src = fallbackImage;
+    }
+  };
+
+  return (
+    <>
+      <div className="card-elevated grid grid-cols-[88px_minmax(0,1fr)] gap-4 p-4 sm:grid-cols-[128px_minmax(0,1fr)_auto]">
+        <button
+          type="button"
+          onClick={() => setGalleryOpen(true)}
+          aria-label={`View ${imageCount} image${imageCount === 1 ? "" : "s"} for ${room.name}`}
+          className="group relative row-span-2 aspect-[4/3] h-full w-full overflow-hidden rounded-xl sm:row-span-1"
+        >
+          <img
+            src={galleryImages[0] || undefined}
+            alt={room.name}
+            loading="lazy"
+            width={512}
+            height={384}
+            onError={useFallbackOnError}
+            className="size-full object-cover transition-transform group-hover:scale-105"
+          />
+          {imageCount > 1 && (
+            <span className="absolute bottom-2 right-2 rounded-full bg-black/70 px-2 py-1 text-xs font-semibold text-white">
+              1/{imageCount}
+            </span>
+          )}
+        </button>
+
+        <div className="min-w-0 space-y-2">
+          <p className="font-display font-semibold">{room.name}</p>
+          <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
+            <span className="flex items-center gap-1">
+              <Users className="size-3.5" /> {room.occupancy} guests
+            </span>
+            <span className="flex items-center gap-1">
+              <BedDouble className="size-3.5" /> {room.bed}
+            </span>
+            <span className="flex items-center gap-1">
+              <Maximize className="size-3.5" /> {room.size} m²
+            </span>
+          </div>
+          <div className="flex flex-wrap gap-1.5">
+            {room.amenities.map((amenity) => (
+              <span key={amenity} className="rounded-full bg-secondary px-2.5 py-1 text-[11px]">
+                {amenity}
+              </span>
+            ))}
+          </div>
+          <Button variant="outline" size="sm" className="rounded-xl" onClick={() => setGalleryOpen(true)}>
+            <Images className="size-4" /> Images {imageCount > 1 ? `(${imageCount})` : ""}
+          </Button>
+        </div>
+
+        <div className="col-span-2 flex items-center justify-between gap-3 sm:col-span-1 sm:flex-col sm:items-end sm:justify-center">
+          <p className="text-right">
+            <span className="font-display text-lg font-bold">{formatMoney(room.rate, currency)}</span>
+            <span className="block text-xs text-muted-foreground">per night</span>
+          </p>
+          <Button className="rounded-xl" onClick={onSelect}>
+            Select
+          </Button>
+        </div>
+      </div>
+
+      <Dialog open={galleryOpen} onOpenChange={setGalleryOpen}>
+        <DialogContent className="max-h-[90vh] max-w-5xl overflow-y-auto rounded-3xl">
+          <DialogHeader>
+            <DialogTitle>{room.name} images</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="relative grid min-h-64 place-items-center overflow-hidden rounded-2xl bg-black sm:min-h-[60vh]">
+              <img
+                src={currentImage || undefined}
+                alt={`${room.name} image ${activeImage + 1}`}
+                onError={useFallbackOnError}
+                className="max-h-[60vh] w-full object-contain"
+              />
+              {imageCount > 1 && (
+                <>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="icon"
+                    aria-label="Previous room image"
+                    onClick={() => moveImage(-1)}
+                    className="absolute left-3 top-1/2 -translate-y-1/2 rounded-full"
+                  >
+                    <ChevronLeft className="size-5" />
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="icon"
+                    aria-label="Next room image"
+                    onClick={() => moveImage(1)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full"
+                  >
+                    <ChevronRight className="size-5" />
+                  </Button>
+                </>
+              )}
+              <span className="absolute bottom-3 right-3 rounded-full bg-black/70 px-3 py-1 text-sm font-medium text-white">
+                {activeImage + 1}/{imageCount}
+              </span>
+            </div>
+            {imageCount > 1 && (
+              <div className="flex gap-2 overflow-x-auto pb-1">
+                {galleryImages.map((image, index) => (
+                  <button
+                    key={`${image}-${index}`}
+                    type="button"
+                    aria-label={`Show image ${index + 1}`}
+                    onClick={() => setActiveImage(index)}
+                    className={`size-16 shrink-0 overflow-hidden rounded-lg border-2 ${
+                      activeImage === index ? "border-primary" : "border-transparent"
+                    }`}
+                  >
+                    <img src={image} alt="" onError={useFallbackOnError} className="size-full object-cover" />
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+}
+
 function PropertyPage() {
   const { property } = Route.useLoaderData();
   const { currency, favorites, toggleFavorite } = useSpaces();
@@ -427,65 +588,15 @@ function PropertyPage() {
           <section>
             <h2 className="mb-3 font-display text-lg font-semibold">Available rooms & options</h2>
             <div className="space-y-4">
-              {property.rooms.map((room) => {
-                const fallbackImage = property.images.find((image) => typeof image === "string" && image.trim()) ?? "";
-                const roomImage = [room.image, room.images?.[0], room.image_url].find(
-                  (image): image is string => typeof image === "string" && image.trim().length > 0,
-                ) ?? fallbackImage;
-
-                return (
-                  <div
-                    key={room.id}
-                    className="card-elevated grid grid-cols-[88px_minmax(0,1fr)] gap-4 p-4 sm:grid-cols-[128px_minmax(0,1fr)_auto]"
-                  >
-                    <img
-                      src={roomImage || undefined}
-                      alt={room.name}
-                      loading="lazy"
-                      width={512}
-                      height={384}
-                      onError={(event) => {
-                        if (fallbackImage && event.currentTarget.getAttribute("src") !== fallbackImage) {
-                          event.currentTarget.src = fallbackImage;
-                        } else {
-                          event.currentTarget.style.visibility = "hidden";
-                        }
-                      }}
-                      className="row-span-2 aspect-[4/3] h-full w-full rounded-xl object-cover sm:row-span-1"
-                    />
-                    <div className="min-w-0 space-y-2">
-                      <p className="font-display font-semibold">{room.name}</p>
-                      <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
-                        <span className="flex items-center gap-1">
-                          <Users className="size-3.5" /> {room.occupancy} guests
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <BedDouble className="size-3.5" /> {room.bed}
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <Maximize className="size-3.5" /> {room.size} m²
-                        </span>
-                      </div>
-                      <div className="flex flex-wrap gap-1.5">
-                        {room.amenities.map((amenity) => (
-                          <span key={amenity} className="rounded-full bg-secondary px-2.5 py-1 text-[11px]">
-                            {amenity}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                    <div className="col-span-2 flex items-center justify-between gap-3 sm:col-span-1 sm:flex-col sm:items-end sm:justify-center">
-                      <p className="text-right">
-                        <span className="font-display text-lg font-bold">{formatMoney(room.rate, currency)}</span>
-                        <span className="block text-xs text-muted-foreground">per night</span>
-                      </p>
-                      <Button className="rounded-xl" onClick={() => handleBookingAttempt(room)}>
-                        Select
-                      </Button>
-                    </div>
-                  </div>
-                );
-              })}
+              {property.rooms.map((room) => (
+                <RoomOptionCard
+                  key={room.id}
+                  room={room}
+                  fallbackImage={property.images.find((image) => typeof image === "string" && image.trim()) ?? ""}
+                  currency={currency}
+                  onSelect={() => handleBookingAttempt(room)}
+                />
+              ))}
             </div>
           </section>
         </div>
