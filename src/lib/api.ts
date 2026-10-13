@@ -22,7 +22,19 @@ function mapRoom(b: BackendRoom): FrontRoom {
   const size = b.size ?? 25;
   const amenities = b.amenities ?? [];
   const rate = Math.round(b.price_per_night ?? b.price ?? 0);
-  return { id, name, occupancy, bed, size, amenities, rate };
+  const images = Array.isArray(b.images) ? b.images.filter((image: unknown): image is string => typeof image === "string") : undefined;
+  return {
+    id,
+    name,
+    occupancy,
+    bed,
+    size,
+    amenities: Array.isArray(amenities) ? amenities : [],
+    rate,
+    image: typeof b.image === "string" ? b.image : undefined,
+    images,
+    image_url: typeof b.image_url === "string" ? b.image_url : undefined,
+  };
 }
 
 function mapProperty(b: BackendProperty, rooms: FrontRoom[]): FrontProperty {

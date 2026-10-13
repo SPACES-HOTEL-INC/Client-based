@@ -427,40 +427,65 @@ function PropertyPage() {
           <section>
             <h2 className="mb-3 font-display text-lg font-semibold">Available rooms & options</h2>
             <div className="space-y-4">
-              {property.rooms.map((room) => (
-                <div key={room.id} className="card-elevated grid gap-4 p-4 sm:grid-cols-[minmax(0,1fr)_auto]">
-                  <div className="min-w-0 space-y-2">
-                    <p className="font-display font-semibold">{room.name}</p>
-                    <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
-                      <span className="flex items-center gap-1">
-                        <Users className="size-3.5" /> {room.occupancy} guests
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <BedDouble className="size-3.5" /> {room.bed}
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <Maximize className="size-3.5" /> {room.size} m²
-                      </span>
-                    </div>
-                    <div className="flex flex-wrap gap-1.5">
-                      {room.amenities.map((a) => (
-                        <span key={a} className="rounded-full bg-secondary px-2.5 py-1 text-[11px]">
-                          {a}
+              {property.rooms.map((room) => {
+                const fallbackImage = property.images.find((image) => typeof image === "string" && image.trim()) ?? "";
+                const roomImage = [room.image, room.images?.[0], room.image_url].find(
+                  (image): image is string => typeof image === "string" && image.trim().length > 0,
+                ) ?? fallbackImage;
+
+                return (
+                  <div
+                    key={room.id}
+                    className="card-elevated grid grid-cols-[88px_minmax(0,1fr)] gap-4 p-4 sm:grid-cols-[128px_minmax(0,1fr)_auto]"
+                  >
+                    <img
+                      src={roomImage || undefined}
+                      alt={room.name}
+                      loading="lazy"
+                      width={512}
+                      height={384}
+                      onError={(event) => {
+                        if (fallbackImage && event.currentTarget.getAttribute("src") !== fallbackImage) {
+                          event.currentTarget.src = fallbackImage;
+                        } else {
+                          event.currentTarget.style.visibility = "hidden";
+                        }
+                      }}
+                      className="row-span-2 aspect-[4/3] h-full w-full rounded-xl object-cover sm:row-span-1"
+                    />
+                    <div className="min-w-0 space-y-2">
+                      <p className="font-display font-semibold">{room.name}</p>
+                      <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
+                        <span className="flex items-center gap-1">
+                          <Users className="size-3.5" /> {room.occupancy} guests
                         </span>
-                      ))}
+                        <span className="flex items-center gap-1">
+                          <BedDouble className="size-3.5" /> {room.bed}
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <Maximize className="size-3.5" /> {room.size} m²
+                        </span>
+                      </div>
+                      <div className="flex flex-wrap gap-1.5">
+                        {room.amenities.map((amenity) => (
+                          <span key={amenity} className="rounded-full bg-secondary px-2.5 py-1 text-[11px]">
+                            {amenity}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="col-span-2 flex items-center justify-between gap-3 sm:col-span-1 sm:flex-col sm:items-end sm:justify-center">
+                      <p className="text-right">
+                        <span className="font-display text-lg font-bold">{formatMoney(room.rate, currency)}</span>
+                        <span className="block text-xs text-muted-foreground">per night</span>
+                      </p>
+                      <Button className="rounded-xl" onClick={() => handleBookingAttempt(room)}>
+                        Select
+                      </Button>
                     </div>
                   </div>
-                  <div className="flex items-end justify-between gap-3 sm:flex-col sm:items-end">
-                    <p className="text-right">
-                      <span className="font-display text-lg font-bold">{formatMoney(room.rate, currency)}</span>
-                      <span className="block text-xs text-muted-foreground">per night</span>
-                    </p>
-                    <Button className="rounded-xl" onClick={() => handleBookingAttempt(room)}>
-                      Select
-                    </Button>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </section>
         </div>

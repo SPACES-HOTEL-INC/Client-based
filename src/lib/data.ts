@@ -60,6 +60,9 @@ export type Room = {
   size: number;
   amenities: string[];
   rate: number; // NGN per night
+  image?: string;
+  images?: string[];
+  image_url?: string;
 };
 
 export type Property = {
