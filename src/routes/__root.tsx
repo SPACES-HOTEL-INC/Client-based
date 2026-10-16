@@ -11,10 +11,10 @@ import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
-import { SpaceaeonProvider } from "@/lib/Spaceaeon-store";
+import { SpaceaeonProvider } from "@/lib/spaces-store";
 import { AuthProvider } from "@/hooks/useAuth";
-import { Splash } from "@/components/Spaceaeon/Splash";
-import { BottomNav } from "@/components/Spaceaeon/BottomNav";
+import { Splash } from "@/components/spaces/Splash";
+import { BottomNav } from "@/components/spaces/BottomNav";
 import { Toaster } from "@/components/ui/sonner";
 
 function NotFoundComponent() {

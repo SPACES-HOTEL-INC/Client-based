@@ -2,7 +2,7 @@ import { Link, useNavigate, useLocation } from "@tanstack/react-router";
 import { Home, Search, CalendarCheck, Headphones, User } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
-import { SignInRequiredModal } from "@/components/Spaceaeon/SignInRequiredModal";
+import { SignInRequiredModal } from "@/components/spaces/SignInRequiredModal";
 
 const items = [
   { to: "/", label: "Home", icon: Home, exact: true, protected: false },

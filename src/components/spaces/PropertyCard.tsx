@@ -2,9 +2,9 @@ import { Link } from "@tanstack/react-router";
 import { Heart, MapPin, Star, Users } from "lucide-react";
 import { useState } from "react";
 import type { Property } from "@/lib/data";
-import { formatMoney, useSpaceaeon } from "@/lib/Spaceaeon-store";
+import { formatMoney, useSpaceaeon } from "@/lib/spaces-store";
 import { useAuth } from "@/hooks/useAuth";
-import { SignInRequiredModal } from "@/components/Spaceaeon/SignInRequiredModal";
+import { SignInRequiredModal } from "@/components/spaces/SignInRequiredModal";
 import { cn } from "@/lib/utils";
 
 export function PropertyCard({

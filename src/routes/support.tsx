@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { Headphones, Phone, Mail, Send } from "lucide-react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
-import { SignInRequiredModal } from "@/components/Spaceaeon/SignInRequiredModal";
+import { SignInRequiredModal } from "@/components/spaces/SignInRequiredModal";
 import { useAuth } from "@/hooks/useAuth";
 
 export const Route = createFileRoute("/support")({

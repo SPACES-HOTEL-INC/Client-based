@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { CheckCircle2, Copy, CreditCard, Landmark, Loader2, Minus, Plus } from "lucide-react";
 import type { Property, Room } from "@/lib/data";
-import { formatMoney, makeRef, nightsBetween, useSpaceaeon } from "@/lib/Spaceaeon-store";
+import { formatMoney, makeRef, nightsBetween, useSpaceaeon } from "@/lib/spaces-store";
 import { toast } from "sonner";
 import api from "@/lib/api";
 

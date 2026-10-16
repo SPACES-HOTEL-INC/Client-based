@@ -13,7 +13,7 @@ import {
   XCircle,
 } from "lucide-react";
 import api from "@/lib/api";
-import { formatMoney, useSpaceaeon } from "@/lib/Spaceaeon-store";
+import { formatMoney, useSpaceaeon } from "@/lib/spaces-store";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";

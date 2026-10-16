@@ -1,4 +1,4 @@
-import { CurrencyToggle } from "@/components/Spaceaeon/CurrencyToggle";
+import { CurrencyToggle } from "@/components/spaces/CurrencyToggle";
 import { useAuth } from "@/hooks/useAuth";
 
 function greeting() {

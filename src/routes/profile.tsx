@@ -31,9 +31,9 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-import { SignInRequiredModal } from "@/components/Spaceaeon/SignInRequiredModal";
+import { SignInRequiredModal } from "@/components/spaces/SignInRequiredModal";
 import { useAuth } from "@/hooks/useAuth";
-import { useSpaceaeon } from "@/lib/Spaceaeon-store";
+import { useSpaceaeon } from "@/lib/spaces-store";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/profile")({

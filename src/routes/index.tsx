@@ -2,11 +2,11 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { ArrowRight, Building2, KeyRound, PartyPopper, Search, Star, TreePalm } from "lucide-react";
 import { fetchTrendingInLagos, fetchFeaturedStays } from "@/lib/api";
-import { formatMoney, useSpaceaeon } from "@/lib/Spaceaeon-store";
+import { formatMoney, useSpaceaeon } from "@/lib/spaces-store";
 import { useAuth } from "@/hooks/useAuth";
-import { PropertyCard, PropertyCardSkeleton } from "@/components/Spaceaeon/PropertyCard";
-import { HomeHeader } from "@/components/Spaceaeon/HomeHeader";
-import { SignInRequiredModal } from "@/components/Spaceaeon/SignInRequiredModal";
+import { PropertyCard, PropertyCardSkeleton } from "@/components/spaces/PropertyCard";
+import { HomeHeader } from "@/components/spaces/HomeHeader";
+import { SignInRequiredModal } from "@/components/spaces/SignInRequiredModal";
 
 export const Route = createFileRoute("/")({
   head: () => ({

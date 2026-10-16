@@ -1,4 +1,4 @@
-import { useSpaceaeon } from "@/lib/Spaceaeon-store";
+import { useSpaceaeon } from "@/lib/spaces-store";
 import { cn } from "@/lib/utils";
 
 export function CurrencyToggle({ className }: { className?: string }) {

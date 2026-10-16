@@ -18,15 +18,15 @@ import {
 } from "lucide-react";
 import { fetchProperty, fetchPropertyReviews, submitPropertyReview } from "@/lib/api";
 import { getPropertyDisplayName, type Property, type Room } from "@/lib/data";
-import { formatMoney, useSpaceaeon } from "@/lib/Spaceaeon-store";
+import { formatMoney, useSpaceaeon } from "@/lib/spaces-store";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { BookingDialog } from "@/components/Spaceaeon/BookingDialog";
+import { BookingDialog } from "@/components/spaces/BookingDialog";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
-import { SignInRequiredModal } from "@/components/Spaceaeon/SignInRequiredModal";
+import { SignInRequiredModal } from "@/components/spaces/SignInRequiredModal";
 
 export const Route = createFileRoute("/property/$id")({
   loader: async ({ params }) => {

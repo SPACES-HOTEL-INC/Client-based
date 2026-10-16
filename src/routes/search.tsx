@@ -3,8 +3,8 @@ import { useEffect, useMemo, useState } from "react";
 import { Map as MapIcon, LayoutGrid, SlidersHorizontal, Search as SearchIcon, X } from "lucide-react";
 import { AMENITIES, normalizePropertyType, PROPERTY_TYPES, type Property } from "@/lib/data";
 import { searchRooms } from "@/lib/api";
-import { formatMoney, useSpaceaeon } from "@/lib/Spaceaeon-store";
-import { PropertyCard, PropertyCardSkeleton } from "@/components/Spaceaeon/PropertyCard";
+import { formatMoney, useSpaceaeon } from "@/lib/spaces-store";
+import { PropertyCard, PropertyCardSkeleton } from "@/components/spaces/PropertyCard";
 
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -13,7 +13,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Link } from "@tanstack/react-router";
 import { useAuth } from "@/hooks/useAuth";
-import { SignInRequiredModal } from "@/components/Spaceaeon/SignInRequiredModal";
+import { SignInRequiredModal } from "@/components/spaces/SignInRequiredModal";
 
 type SearchParams = { type?: string | undefined };
 

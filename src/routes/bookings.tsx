@@ -4,9 +4,9 @@ import { CalendarDays, Loader2, Users, Ticket } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { formatMoney, useSpaceaeon, type Booking } from "@/lib/Spaceaeon-store";
+import { formatMoney, useSpaceaeon, type Booking } from "@/lib/spaces-store";
 import { useAuth } from "@/hooks/useAuth";
-import { SignInRequiredModal } from "@/components/Spaceaeon/SignInRequiredModal";
+import { SignInRequiredModal } from "@/components/spaces/SignInRequiredModal";
 
 export const Route = createFileRoute("/bookings")({
   head: () => ({
