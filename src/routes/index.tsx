@@ -15,12 +15,12 @@ export const Route = createFileRoute("/")({
       {
         name: "description",
         content:
-          "Book elite stays, shortlets, event Spaceaeon and leisure experiences across Nigeria with Spaceaeon. Pay in Naira or USD.",
+          "Book elite stays, shortlets, event Spaces and leisure experiences across Nigeria with Spaceaeon. Pay in Naira or USD.",
       },
       { property: "og:title", content: "Spaceaeon — Elite stays, shortlets & experiences" },
       {
         property: "og:description",
-        content: "Discover and book luxury shortlets, hotels, villas and event Spaceaeon across Nigeria.",
+        content: "Discover and book luxury shortlets, hotels, villas and event Spaces across Nigeria.",
       },
     ],
   }),
@@ -29,7 +29,7 @@ export const Route = createFileRoute("/")({
 
 const services = [
   { label: "Stays", sub: "Hotels & luxury stays", icon: Building2, type: "Hotel" },
-  { label: "Event Spaceaeon", sub: "Halls & premium venues", icon: PartyPopper, type: "Event Space" },
+  { label: "Event Spaces", sub: "Halls & premium venues", icon: PartyPopper, type: "Event Space" },
   { label: "Shortlets", sub: "Serviced apartments", icon: KeyRound, type: "Shortlet" },
   { label: "Resort", sub: "Resorts & retreats", icon: TreePalm, type: "Resort" },
 ];
