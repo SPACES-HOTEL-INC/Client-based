@@ -31,16 +31,16 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-import { SignInRequiredModal } from "@/components/spaces/SignInRequiredModal";
+import { SignInRequiredModal } from "@/components/Spaceaeon/SignInRequiredModal";
 import { useAuth } from "@/hooks/useAuth";
-import { useSpaces } from "@/lib/spaces-store";
+import { useSpaceaeon } from "@/lib/Spaceaeon-store";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/profile")({
   head: () => ({
     meta: [
-      { title: "Your profile — Spaces" },
-      { name: "description", content: "Manage your Spaces account, wallet, bank withdrawal details, and preferences." },
+      { title: "Your profile — Spaceaeon" },
+      { name: "description", content: "Manage your Spaceaeon account, wallet, bank withdrawal details, and preferences." },
     ],
   }),
   component: ProfilePage,
@@ -61,7 +61,7 @@ const NIGERIAN_BANKS = [
 
 function ProfilePage() {
   const { user, logout, updateUser } = useAuth();
-  const { currency, bookings, favorites } = useSpaces();
+  const { currency, bookings, favorites } = useSpaceaeon();
   const navigate = useNavigate();
 
   const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
@@ -173,7 +173,7 @@ function ProfilePage() {
         {/* Quick Stats Bar */}
         <div className="card-elevated grid grid-cols-2 divide-x divide-border">
           <Stat label="Bookings" value={String(bookings.length)} icon={<Ticket className="size-4" />} />
-          <Stat label="Saved spaces" value={String(favorites.length)} icon={<Heart className="size-4" />} />
+          <Stat label="Saved Spaceaeon" value={String(favorites.length)} icon={<Heart className="size-4" />} />
         </div>
 
         {/* Account Settings Menu */}
@@ -282,7 +282,7 @@ function ProfilePage() {
           </Button>
         )}
 
-        <p className="text-center text-xs text-muted-foreground">Spaces · v1.0.0</p>
+        <p className="text-center text-xs text-muted-foreground">Spaceaeon · v1.0.0</p>
       </div>
 
       {/* MODALS */}
@@ -364,7 +364,7 @@ function ProfilePage() {
                 <p className="text-base font-bold text-white mt-0.5">₦0</p>
               </div>
               <div>
-                <p className="text-emerald-300">SPACES CREDITS</p>
+                <p className="text-emerald-300">Spaceaeon CREDITS</p>
                 <p className="text-base font-bold text-white mt-0.5">₦0</p>
               </div>
             </div>

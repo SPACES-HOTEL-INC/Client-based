@@ -13,7 +13,7 @@ export const Route = createFileRoute("/legal")({
     };
   },
   head: () => ({
-    meta: [{ title: "Legal — Spaces" }],
+    meta: [{ title: "Legal — Spaceaeon" }],
   }),
   component: LegalPage,
 });
@@ -80,7 +80,7 @@ function LegalPage() {
             <div className="space-y-4">
               <h2 className="text-lg font-bold text-foreground">1. Information Collection</h2>
               <p>
-                At Spaces, we collect personal information necessary to process your bookings, manage account access, and ensure security across our properties and services.
+                At Spaceaeon, we collect personal information necessary to process your bookings, manage account access, and ensure security across our properties and services.
               </p>
               <h2 className="text-lg font-bold text-foreground">2. Use of Data</h2>
               <p>
@@ -93,7 +93,7 @@ function LegalPage() {
             <div className="space-y-4">
               <h2 className="text-lg font-bold text-foreground">1. User Agreement</h2>
               <p>
-                By using Spaces, you agree to abide by all platform rules, check-in schedules, and respect the property guidelines set forth by hosts and partners.
+                By using Spaceaeon, you agree to abide by all platform rules, check-in schedules, and respect the property guidelines set forth by hosts and partners.
               </p>
               <h2 className="text-lg font-bold text-foreground">2. Cancellations & Refunds</h2>
               <p>

@@ -13,7 +13,7 @@ import { Link } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/host/create")({
   head: () => ({
-    meta: [{ title: "Create Space / Room — Spaces Host" }],
+    meta: [{ title: "Create Space / Room — Spaceaeon Host" }],
   }),
   component: CreateSpacePage,
 });
@@ -80,7 +80,7 @@ function CreateSpacePage() {
     };
 
     try {
-      await api.post("/api/v1/spaces", payload);
+      await api.post("/api/v1/Spaceaeon", payload);
       toast.success("Space created successfully!");
       navigate({ to: "/host" });
     } catch (err: any) {

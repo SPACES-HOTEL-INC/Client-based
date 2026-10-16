@@ -3,8 +3,8 @@ import { useEffect, useMemo, useState } from "react";
 import { Map as MapIcon, LayoutGrid, SlidersHorizontal, Search as SearchIcon, X } from "lucide-react";
 import { AMENITIES, normalizePropertyType, PROPERTY_TYPES, type Property } from "@/lib/data";
 import { searchRooms } from "@/lib/api";
-import { formatMoney, useSpaces } from "@/lib/spaces-store";
-import { PropertyCard, PropertyCardSkeleton } from "@/components/spaces/PropertyCard";
+import { formatMoney, useSpaceaeon } from "@/lib/Spaceaeon-store";
+import { PropertyCard, PropertyCardSkeleton } from "@/components/Spaceaeon/PropertyCard";
 
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -13,7 +13,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Link } from "@tanstack/react-router";
 import { useAuth } from "@/hooks/useAuth";
-import { SignInRequiredModal } from "@/components/spaces/SignInRequiredModal";
+import { SignInRequiredModal } from "@/components/Spaceaeon/SignInRequiredModal";
 
 type SearchParams = { type?: string | undefined };
 
@@ -23,10 +23,10 @@ export const Route = createFileRoute("/search")({
   }),
   head: () => ({
     meta: [
-      { title: "Search stays & spaces — Spaces" },
+      { title: "Search stays & Spaceaeon — Spaceaeon" },
       {
         name: "description",
-        content: "Filter luxury stays, shortlets, villas, resorts and event spaces by price, rating and amenities.",
+        content: "Filter luxury stays, shortlets, villas, resorts and event Spaceaeon by price, rating and amenities.",
       },
     ],
   }),
@@ -38,7 +38,7 @@ const SEARCH_PROPERTY_TYPES = PROPERTY_TYPES.filter((type) => type !== "Dining")
 
 function SearchPage() {
   const { type } = Route.useSearch();
-  const { currency } = useSpaces();
+  const { currency } = useSpaceaeon();
   const { user, loading: authLoading } = useAuth();
   const [loading, setLoading] = useState(true);
   const [properties, setProperties] = useState<Property[]>([]);
@@ -89,7 +89,7 @@ function SearchPage() {
         if (!mounted) return;
         setProperties(fetchedProperties);
       } catch (e) {
-        console.error("Failed to fetch spaces from API:", e);
+        console.error("Failed to fetch Spaceaeon from API:", e);
         if (mounted) setProperties([]);
       } finally {
         if (mounted) setLoading(false);
@@ -327,7 +327,7 @@ function SearchPage() {
               ))}
               {results.length === 0 && (
                 <p className="absolute inset-0 grid place-items-center text-sm text-muted-foreground">
-                  No spaces on the map for these filters
+                  No Spaceaeon on the map for these filters
                 </p>
               )}
             </div>

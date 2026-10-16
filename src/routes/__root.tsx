@@ -11,10 +11,10 @@ import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
-import { SpacesProvider } from "@/lib/spaces-store";
+import { SpaceaeonProvider } from "@/lib/Spaceaeon-store";
 import { AuthProvider } from "@/hooks/useAuth";
-import { Splash } from "@/components/spaces/Splash";
-import { BottomNav } from "@/components/spaces/BottomNav";
+import { Splash } from "@/components/Spaceaeon/Splash";
+import { BottomNav } from "@/components/Spaceaeon/BottomNav";
 import { Toaster } from "@/components/ui/sonner";
 
 function NotFoundComponent() {
@@ -82,17 +82,17 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1, viewport-fit=cover" },
-      { title: "Spaces — Elite stays, shortlets & experiences" },
+      { title: "Spaceaeon — Elite stays, shortlets & experiences" },
       {
         name: "description",
         content:
-          "Book elite hotels, shortlets, villas and event spaces across Nigeria with dual NGN and USD pricing.",
+          "Book elite hotels, shortlets, villas and event Spaceaeon across Nigeria with dual NGN and USD pricing.",
       },
       { name: "theme-color", content: "#003399" },
-      { property: "og:title", content: "Spaces — Elite stays, shortlets & experiences" },
+      { property: "og:title", content: "Spaceaeon — Elite stays, shortlets & experiences" },
       {
         property: "og:description",
-        content: "Discover and reserve premium stays, shortlets and event spaces in seconds.",
+        content: "Discover and reserve premium stays, shortlets and event Spaceaeon in seconds.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -137,14 +137,14 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <SpacesProvider>
+        <SpaceaeonProvider>
           <Splash />
           <div className="min-h-screen pb-24 md:pb-28">
             <Outlet />
           </div>
           <BottomNav />
           <Toaster position="top-center" richColors />
-        </SpacesProvider>
+        </SpaceaeonProvider>
       </AuthProvider>
     </QueryClientProvider>
   );

@@ -2,9 +2,9 @@ import { Link } from "@tanstack/react-router";
 import { Heart, MapPin, Star, Users } from "lucide-react";
 import { useState } from "react";
 import type { Property } from "@/lib/data";
-import { formatMoney, useSpaces } from "@/lib/spaces-store";
+import { formatMoney, useSpaceaeon } from "@/lib/Spaceaeon-store";
 import { useAuth } from "@/hooks/useAuth";
-import { SignInRequiredModal } from "@/components/spaces/SignInRequiredModal";
+import { SignInRequiredModal } from "@/components/Spaceaeon/SignInRequiredModal";
 import { cn } from "@/lib/utils";
 
 export function PropertyCard({
@@ -16,7 +16,7 @@ export function PropertyCard({
   linkToSearch?: boolean;
   requireSignIn?: boolean;
 }) {
-  const { currency, favorites, toggleFavorite } = useSpaces();
+  const { currency, favorites, toggleFavorite } = useSpaceaeon();
   const { user, loading: authLoading } = useAuth();
   const [index, setIndex] = useState(0);
   const [authModalOpen, setAuthModalOpen] = useState(false);

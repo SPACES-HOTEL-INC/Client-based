@@ -158,7 +158,7 @@ export function AuthDialog({ open, onOpenChange }: { open: boolean; onOpenChange
             Continue as guest
           </Button>
           <p className="text-center text-sm text-muted-foreground">
-            {mode === "login" ? "New to Spaces?" : "Already have an account?"}{" "}
+            {mode === "login" ? "New to Spaceaeon?" : "Already have an account?"}{" "}
             <button
               type="button"
               className="font-semibold text-primary"

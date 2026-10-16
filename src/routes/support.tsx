@@ -3,15 +3,15 @@ import { useEffect, useRef, useState } from "react";
 import { Headphones, Phone, Mail, Send } from "lucide-react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
-import { SignInRequiredModal } from "@/components/spaces/SignInRequiredModal";
+import { SignInRequiredModal } from "@/components/Spaceaeon/SignInRequiredModal";
 import { useAuth } from "@/hooks/useAuth";
 
 export const Route = createFileRoute("/support")({
   head: () => ({
     meta: [
-      { title: "Support & help centre — Spaces" },
-      { name: "description", content: "Chat with a Spaces concierge or browse answers on bookings, payments and refunds." },
-      { property: "og:title", content: "Support & help centre — Spaces" },
+      { title: "Support & help centre — Spaceaeon" },
+      { name: "description", content: "Chat with a Spaceaeon concierge or browse answers on bookings, payments and refunds." },
+      { property: "og:title", content: "Support & help centre — Spaceaeon" },
       { property: "og:description", content: "Live concierge chat and answers to common booking questions." },
     ],
   }),
@@ -31,7 +31,7 @@ const faqs = [
   },
   {
     q: "What is the cancellation policy?",
-    a: "Most spaces offer free cancellation up to 48 hours before check-in. The exact policy appears on the property page before you pay.",
+    a: "Most Spaceaeon offer free cancellation up to 48 hours before check-in. The exact policy appears on the property page before you pay.",
   },
   {
     q: "Where do I find my booking reference?",
@@ -49,7 +49,7 @@ function SupportPage() {
   }, [isGuest, loading]);
 
   const [messages, setMessages] = useState<Msg[]>([
-    { id: 1, from: "agent", text: `Hi ${user?.full_name?.split(" ")[0] ?? "Guest"}, I'm Zainab from the Spaces concierge. How can I help today?` },
+    { id: 1, from: "agent", text: `Hi ${user?.full_name?.split(" ")[0] ?? "Guest"}, I'm Zainab from the Spaceaeon concierge. How can I help today?` },
   ]);
   const [draft, setDraft] = useState("");
   const endRef = useRef<HTMLDivElement>(null);
@@ -101,7 +101,7 @@ function SupportPage() {
           <Phone className="size-4 text-primary" /> Call us
         </a>
         <a
-          href="mailto:concierge@spaces.ng"
+          href="mailto:concierge@Spaceaeon.ng"
           className="card-elevated flex items-center gap-3 p-4 text-sm font-medium"
         >
           <Mail className="size-4 text-primary" /> Email

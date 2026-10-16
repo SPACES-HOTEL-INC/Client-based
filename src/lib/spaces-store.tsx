@@ -34,7 +34,7 @@ type Ctx = {
 
 const GUEST: User = { firstName: "Abubakar", email: "", guest: true };
 
-const SpacesContext = createContext<Ctx | null>(null);
+const SpaceaeonContext = createContext<Ctx | null>(null);
 
 const read = <T,>(key: string, fallback: T): T => {
   try {
@@ -45,7 +45,7 @@ const read = <T,>(key: string, fallback: T): T => {
   }
 };
 
-export function SpacesProvider({ children }: { children: ReactNode }) {
+export function SpaceaeonProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User>(GUEST);
   const [currency, setCurrencyState] = useState<Currency>("NGN");
   const [bookings, setBookings] = useState<Booking[]>([]);
@@ -53,10 +53,10 @@ export function SpacesProvider({ children }: { children: ReactNode }) {
   const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
-    setUser(read<User>("spaces.user", GUEST));
-    setCurrencyState(read<Currency>("spaces.currency", "NGN"));
-    setBookings(read<Booking[]>("spaces.bookings", []));
-    setFavorites(read<string[]>("spaces.favorites", []));
+    setUser(read<User>("Spaceaeon.user", GUEST));
+    setCurrencyState(read<Currency>("Spaceaeon.currency", "NGN"));
+    setBookings(read<Booking[]>("Spaceaeon.bookings", []));
+    setFavorites(read<string[]>("Spaceaeon.favorites", []));
     setHydrated(true);
   }, []);
 
@@ -77,28 +77,28 @@ export function SpacesProvider({ children }: { children: ReactNode }) {
       hydrated,
       setCurrency: (c) => {
         setCurrencyState(c);
-        persist("spaces.currency", c);
+        persist("Spaceaeon.currency", c);
       },
       signIn: (firstName, email) => {
         const next: User = { firstName, email, guest: false };
         setUser(next);
-        persist("spaces.user", next);
+        persist("Spaceaeon.user", next);
       },
       signOut: () => {
         setUser(GUEST);
-        persist("spaces.user", GUEST);
+        persist("Spaceaeon.user", GUEST);
       },
       addBooking: (b) => {
         setBookings((prev) => {
           const next = [b, ...prev];
-          persist("spaces.bookings", next);
+          persist("Spaceaeon.bookings", next);
           return next;
         });
       },
       toggleFavorite: (id) => {
         setFavorites((prev) => {
           const next = prev.includes(id) ? prev.filter((f) => f !== id) : [...prev, id];
-          persist("spaces.favorites", next);
+          persist("Spaceaeon.favorites", next);
           return next;
         });
       },
@@ -106,12 +106,12 @@ export function SpacesProvider({ children }: { children: ReactNode }) {
     [user, currency, bookings, favorites, hydrated],
   );
 
-  return <SpacesContext.Provider value={value}>{children}</SpacesContext.Provider>;
+  return <SpaceaeonContext.Provider value={value}>{children}</SpaceaeonContext.Provider>;
 }
 
-export function useSpaces() {
-  const ctx = useContext(SpacesContext);
-  if (!ctx) throw new Error("useSpaces must be used inside SpacesProvider");
+export function useSpaceaeon() {
+  const ctx = useContext(SpaceaeonContext);
+  if (!ctx) throw new Error("useSpaceaeon must be used inside SpaceaeonProvider");
   return ctx;
 }
 

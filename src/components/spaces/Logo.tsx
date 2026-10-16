@@ -1,6 +1,6 @@
 export function ArchMark({ className = "h-10 w-10" }: { className?: string }) {
   return (
-    <svg viewBox="0 0 512 512" className={className} role="img" aria-label="Spaces logo">
+    <svg viewBox="0 0 512 512" className={className} role="img" aria-label="Spaceaeon logo">
       <rect width="512" height="512" rx="112" fill="#0A0F1D" />
       <path
         fill="#FFFFFF"
@@ -12,7 +12,7 @@ export function ArchMark({ className = "h-10 w-10" }: { className?: string }) {
   );
 }
 
-export function SpacesLogo({
+export function SpaceaeonLogo({
   size = "md",
   onDark = true,
 }: {
@@ -27,7 +27,7 @@ export function SpacesLogo({
       <span
         className={`${text} font-display font-semibold tracking-tight ${onDark ? "text-white" : "text-foreground"}`}
       >
-        Spaces
+        Spaceaeon
       </span>
     </div>
   );

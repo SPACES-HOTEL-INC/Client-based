@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { CheckCircle2, Copy, CreditCard, Landmark, Loader2, Minus, Plus } from "lucide-react";
 import type { Property, Room } from "@/lib/data";
-import { formatMoney, makeRef, nightsBetween, useSpaces } from "@/lib/spaces-store";
+import { formatMoney, makeRef, nightsBetween, useSpaceaeon } from "@/lib/Spaceaeon-store";
 import { toast } from "sonner";
 import api from "@/lib/api";
 
@@ -26,7 +26,7 @@ export function BookingDialog({
   open: boolean;
   onOpenChange: (v: boolean) => void;
 }) {
-  const { currency, addBooking, user } = useSpaces();
+  const { currency, addBooking, user } = useSpaceaeon();
   const [step, setStep] = useState<Step>("dates");
   const [checkIn, setCheckIn] = useState(inDays(2));
   const [checkOut, setCheckOut] = useState(inDays(4));
@@ -238,7 +238,7 @@ export function BookingDialog({
                 <p className="text-sm text-muted-foreground">Transfer exactly {formatMoney(total, currency)} to:</p>
                 <div className="flex items-center justify-between rounded-xl bg-secondary px-4 py-3">
                   <div>
-                    <p className="text-xs text-muted-foreground">Wema Bank · SPACES / {user.firstName}</p>
+                    <p className="text-xs text-muted-foreground">Wema Bank · Spaceaeon / {user.firstName}</p>
                     <p className="font-display text-lg font-semibold tracking-wider">7643 209 118</p>
                   </div>
                   <Button

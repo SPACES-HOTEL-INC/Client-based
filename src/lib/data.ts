@@ -30,7 +30,7 @@ export function normalizePropertyType(value: unknown): PropertyType | undefined 
     case "resorts":
       return "Resort";
     case "event space":
-    case "event spaces":
+    case "event Spaceaeon":
       return "Event Space";
     case "dining":
       return "Dining";

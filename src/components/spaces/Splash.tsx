@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { SpacesLogo } from "./Logo";
+import { SpaceaeonLogo } from "./Logo";
 
 export function Splash() {
   const [show, setShow] = useState(true);
@@ -7,13 +7,13 @@ export function Splash() {
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-    if (sessionStorage.getItem("spaces.splash") === "seen") {
+    if (sessionStorage.getItem("Spaceaeon.splash") === "seen") {
       setShow(false);
       return;
     }
     const t1 = setTimeout(() => setFading(true), 2000);
     const t2 = setTimeout(() => {
-      sessionStorage.setItem("spaces.splash", "seen");
+      sessionStorage.setItem("Spaceaeon.splash", "seen");
       setShow(false);
     }, 2600);
     return () => {
@@ -32,7 +32,7 @@ export function Splash() {
       aria-hidden={fading}
     >
       <div className="animate-splash-in flex flex-col items-center">
-        <SpacesLogo size="lg" />
+        <SpaceaeonLogo size="lg" />
         <p className="mt-4 text-sm tracking-wide text-brand-foreground/70">
           Elite stays, shortlets &amp; experiences
         </p>

@@ -13,14 +13,14 @@ import {
   XCircle,
 } from "lucide-react";
 import api from "@/lib/api";
-import { formatMoney, useSpaces } from "@/lib/spaces-store";
+import { formatMoney, useSpaceaeon } from "@/lib/Spaceaeon-store";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/host/")({
   head: () => ({
-    meta: [{ title: "Host Dashboard — Spaces" }],
+    meta: [{ title: "Host Dashboard — Spaceaeon" }],
   }),
   component: HostDashboardPage,
 });
@@ -53,7 +53,7 @@ interface HostProperty {
 }
 
 function HostDashboardPage() {
-  const { currency, user } = useSpaces();
+  const { currency, user } = useSpaceaeon();
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState<HostStats>({
     totalEarnings: 0,
@@ -74,7 +74,7 @@ function HostDashboardPage() {
         const [statsRes, bookingsRes, propsRes] = await Promise.allSettled([
           api.get("/api/v1/host/stats"),
           api.get("/api/v1/host/bookings"),
-          api.get("/api/v1/host/spaces"),
+          api.get("/api/v1/host/Spaceaeon"),
         ]);
 
         if (!mounted) return;
@@ -212,7 +212,7 @@ function HostDashboardPage() {
           <h1 className="font-display text-2xl font-bold md:text-3xl">
             Welcome back, {user?.firstName || "Host"}
           </h1>
-          <p className="text-sm text-muted-foreground">Manage your spaces, reservations, and revenue.</p>
+          <p className="text-sm text-muted-foreground">Manage your Spaceaeon, reservations, and revenue.</p>
         </div>
         <Link to="/search">
           <Button className="rounded-xl gap-2 h-11">

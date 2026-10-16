@@ -3,7 +3,7 @@ import { ArrowLeft, MessageSquare, Mail, Twitter, Instagram, AlertTriangle, Chev
 
 export const Route = createFileRoute("/help")({
   head: () => ({
-    meta: [{ title: "Get Help — Spaces" }],
+    meta: [{ title: "Get Help — Spaceaeon" }],
   }),
   component: HelpPage,
 });
@@ -30,7 +30,7 @@ function HelpPage() {
         </Link>
 
         <a 
-          href="mailto:concierge@spaces.ng" 
+          href="mailto:concierge@Spaceaeon.ng" 
           className="flex items-center justify-between py-4 group"
         >
           <div className="flex items-center gap-4">

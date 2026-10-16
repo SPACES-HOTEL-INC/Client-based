@@ -4,16 +4,16 @@ import { CalendarDays, Loader2, Users, Ticket } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { formatMoney, useSpaces, type Booking } from "@/lib/spaces-store";
+import { formatMoney, useSpaceaeon, type Booking } from "@/lib/Spaceaeon-store";
 import { useAuth } from "@/hooks/useAuth";
-import { SignInRequiredModal } from "@/components/spaces/SignInRequiredModal";
+import { SignInRequiredModal } from "@/components/Spaceaeon/SignInRequiredModal";
 
 export const Route = createFileRoute("/bookings")({
   head: () => ({
     meta: [
-      { title: "Your bookings — Spaces" },
-      { name: "description", content: "Track active, pending and past reservations with your Spaces booking passes." },
-      { property: "og:title", content: "Your bookings — Spaces" },
+      { title: "Your bookings — Spaceaeon" },
+      { name: "description", content: "Track active, pending and past reservations with your Spaceaeon booking passes." },
+      { property: "og:title", content: "Your bookings — Spaceaeon" },
       { property: "og:description", content: "Active, pending and completed guest stays in one place." },
     ],
   }),
@@ -21,7 +21,7 @@ export const Route = createFileRoute("/bookings")({
 });
 
 function BookingsPage() {
-  const { bookings, hydrated } = useSpaces();
+  const { bookings, hydrated } = useSpaceaeon();
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const [tab, setTab] = useState("active");
@@ -78,7 +78,7 @@ function BookingsPage() {
 }
 
 function BookingCard({ booking }: { booking: Booking }) {
-  const { currency } = useSpaces();
+  const { currency } = useSpaceaeon();
   return (
     <article className="card-elevated grid grid-cols-[88px_minmax(0,1fr)] gap-4 p-4">
       <img
@@ -128,7 +128,7 @@ function EmptyState({ label }: { label: string }) {
         When you reserve a stay it appears here with your booking pass and reference code.
       </p>
       <Button asChild className="rounded-xl">
-        <Link to="/search">Explore spaces</Link>
+        <Link to="/search">Explore Spaceaeon</Link>
       </Button>
     </div>
   );

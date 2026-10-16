@@ -10,8 +10,8 @@ import {
 export const Route = createFileRoute("/faqs")({
   head: () => ({
     meta: [
-      { title: "Frequently Asked Questions — Spaces" },
-      { name: "description", content: "Frequently asked questions and answers about Spaces." },
+      { title: "Frequently Asked Questions — Spaceaeon" },
+      { name: "description", content: "Frequently asked questions and answers about Spaceaeon." },
     ],
   }),
   component: FAQsPage,
@@ -19,12 +19,12 @@ export const Route = createFileRoute("/faqs")({
 
 const FAQ_DATA = [
   {
-    q: "What is Spaces?",
-    a: "Spaces is a platform for finding and booking unique venues, studios, staycation spots, and event halls.",
+    q: "What is Spaceaeon?",
+    a: "Spaceaeon is a platform for finding and booking unique venues, studios, staycation spots, and event halls.",
   },
   {
-    q: "Do I need an account to use Spaces?",
-    a: "You can browse listings as a guest, but you'll need an account to book or save spaces.",
+    q: "Do I need an account to use Spaceaeon?",
+    a: "You can browse listings as a guest, but you'll need an account to book or save Spaceaeon.",
   },
   {
     q: "How do I create an account?",
@@ -52,7 +52,7 @@ const FAQ_DATA = [
   },
   {
     q: "Can I book multiple items or days at once?",
-    a: "Yes, you can select multi-day ranges or multiple time slots for studios and event spaces.",
+    a: "Yes, you can select multi-day ranges or multiple time slots for studios and event Spaceaeon.",
   },
   {
     q: "How do I know if my booking is confirmed?",
@@ -64,7 +64,7 @@ const FAQ_DATA = [
   },
   {
     q: "What payment methods are accepted?",
-    a: "We accept debit cards, direct bank transfers via Paystack/Flutterwave, and Spaces Wallet balances.",
+    a: "We accept debit cards, direct bank transfers via Paystack/Flutterwave, and Spaceaeon Wallet balances.",
   },
   {
     q: "Is my payment secure?",
@@ -80,7 +80,7 @@ const FAQ_DATA = [
   },
   {
     q: "How long do refunds take?",
-    a: "Approved refunds are credited to your Spaces Wallet immediately, or to your bank account within 3–5 working days.",
+    a: "Approved refunds are credited to your Spaceaeon Wallet immediately, or to your bank account within 3–5 working days.",
   },
   {
     q: "How do I contact support?",

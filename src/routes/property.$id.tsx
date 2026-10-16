@@ -18,15 +18,15 @@ import {
 } from "lucide-react";
 import { fetchProperty, fetchPropertyReviews, submitPropertyReview } from "@/lib/api";
 import { getPropertyDisplayName, type Property, type Room } from "@/lib/data";
-import { formatMoney, useSpaces } from "@/lib/spaces-store";
+import { formatMoney, useSpaceaeon } from "@/lib/Spaceaeon-store";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { BookingDialog } from "@/components/spaces/BookingDialog";
+import { BookingDialog } from "@/components/Spaceaeon/BookingDialog";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
-import { SignInRequiredModal } from "@/components/spaces/SignInRequiredModal";
+import { SignInRequiredModal } from "@/components/Spaceaeon/SignInRequiredModal";
 
 export const Route = createFileRoute("/property/$id")({
   loader: async ({ params }) => {
@@ -81,10 +81,10 @@ export const Route = createFileRoute("/property/$id")({
   },
   head: ({ loaderData }) => {
     if (!loaderData) {
-      return { meta: [{ title: "Space unavailable — Spaces" }, { name: "robots", content: "noindex" }] };
+      return { meta: [{ title: "Space unavailable — Spaceaeon" }, { name: "robots", content: "noindex" }] };
     }
     const p = loaderData.property;
-    const title = `${p.title} — Spaces`;
+    const title = `${p.title} — Spaceaeon`;
     const description = `${p.type} in ${p.city}, ${p.state}. Rated ${p.rating} from ₦${p.price.toLocaleString("en-NG")} per night.`;
     return {
       meta: [
@@ -382,7 +382,7 @@ function RoomOptionCard({
 
 function PropertyPage() {
   const { property } = Route.useLoaderData();
-  const { currency, favorites, toggleFavorite } = useSpaces();
+  const { currency, favorites, toggleFavorite } = useSpaceaeon();
   const { user, loading: authLoading } = useAuth();
   const [selected, setSelected] = useState<Room | null>(null);
   const [authModalOpen, setAuthModalOpen] = useState(false);

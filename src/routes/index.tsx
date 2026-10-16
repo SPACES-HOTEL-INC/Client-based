@@ -2,25 +2,25 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { ArrowRight, Building2, KeyRound, PartyPopper, Search, Star, TreePalm } from "lucide-react";
 import { fetchTrendingInLagos, fetchFeaturedStays } from "@/lib/api";
-import { formatMoney, useSpaces } from "@/lib/spaces-store";
+import { formatMoney, useSpaceaeon } from "@/lib/Spaceaeon-store";
 import { useAuth } from "@/hooks/useAuth";
-import { PropertyCard, PropertyCardSkeleton } from "@/components/spaces/PropertyCard";
-import { HomeHeader } from "@/components/spaces/HomeHeader";
-import { SignInRequiredModal } from "@/components/spaces/SignInRequiredModal";
+import { PropertyCard, PropertyCardSkeleton } from "@/components/Spaceaeon/PropertyCard";
+import { HomeHeader } from "@/components/Spaceaeon/HomeHeader";
+import { SignInRequiredModal } from "@/components/Spaceaeon/SignInRequiredModal";
 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Spaces — Elite stays, shortlets & experiences" },
+      { title: "Spaceaeon — Elite stays, shortlets & experiences" },
       {
         name: "description",
         content:
-          "Book elite stays, shortlets, event spaces and leisure experiences across Nigeria with Spaces. Pay in Naira or USD.",
+          "Book elite stays, shortlets, event Spaceaeon and leisure experiences across Nigeria with Spaceaeon. Pay in Naira or USD.",
       },
-      { property: "og:title", content: "Spaces — Elite stays, shortlets & experiences" },
+      { property: "og:title", content: "Spaceaeon — Elite stays, shortlets & experiences" },
       {
         property: "og:description",
-        content: "Discover and book luxury shortlets, hotels, villas and event spaces across Nigeria.",
+        content: "Discover and book luxury shortlets, hotels, villas and event Spaceaeon across Nigeria.",
       },
     ],
   }),
@@ -29,13 +29,13 @@ export const Route = createFileRoute("/")({
 
 const services = [
   { label: "Stays", sub: "Hotels & luxury stays", icon: Building2, type: "Hotel" },
-  { label: "Event Spaces", sub: "Halls & premium venues", icon: PartyPopper, type: "Event Space" },
+  { label: "Event Spaceaeon", sub: "Halls & premium venues", icon: PartyPopper, type: "Event Space" },
   { label: "Shortlets", sub: "Serviced apartments", icon: KeyRound, type: "Shortlet" },
   { label: "Resort", sub: "Resorts & retreats", icon: TreePalm, type: "Resort" },
 ];
 
 function HomePage() {
-  const { currency } = useSpaces();
+  const { currency } = useSpaceaeon();
   const { user, loading } = useAuth();
   const firstName = user?.full_name?.trim().split(/\s+/)[0];
   const displayName = loading ? "there" : user?.email ? firstName || "there" : "Guest";
