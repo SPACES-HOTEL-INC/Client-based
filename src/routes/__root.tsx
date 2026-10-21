@@ -86,13 +86,13 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       {
         name: "description",
         content:
-          "Book elite hotels, shortlets, villas and event Spaceaeon across Nigeria with dual NGN and USD pricing.",
+          "Book elite hotels, apartments, shortlets, villas and event spaces across Nigeria with dual NGN and USD pricing.",
       },
       { name: "theme-color", content: "#003399" },
       { property: "og:title", content: "Spaceaeon — Elite stays, shortlets & experiences" },
       {
         property: "og:description",
-        content: "Discover and reserve premium stays, shortlets and event Spaceaeon in seconds.",
+        content: "Discover and reserve premium stays, apartments, shortlets and event spaces in seconds.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },

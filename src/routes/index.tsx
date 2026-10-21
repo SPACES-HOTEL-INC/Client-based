@@ -15,12 +15,12 @@ export const Route = createFileRoute("/")({
       {
         name: "description",
         content:
-          "Book elite stays, shortlets, event Spaces and leisure experiences across Nigeria with Spaceaeon. Pay in Naira or USD.",
+          "Book elite stays, shortlets, event spaces and leisure experiences across Nigeria with Spaceaeon. Pay in Naira or USD.",
       },
       { property: "og:title", content: "Spaceaeon — Elite stays, shortlets & experiences" },
       {
         property: "og:description",
-        content: "Discover and book luxury shortlets, hotels, villas and event Spaces across Nigeria.",
+        content: "Discover and book luxury shortlets, hotels, villas and event spaces across Nigeria.",
       },
     ],
   }),
@@ -30,6 +30,7 @@ export const Route = createFileRoute("/")({
 const services = [
   { label: "Stays", sub: "Hotels & luxury stays", icon: Building2, type: "Hotel" },
   { label: "Event Spaces", sub: "Halls & premium venues", icon: PartyPopper, type: "Event Space" },
+  { label: "Apartments", sub: "Apartment stays", icon: Building2, type: "Apartment" },
   { label: "Shortlets", sub: "Serviced apartments", icon: KeyRound, type: "Shortlet" },
   { label: "Resort", sub: "Resorts & retreats", icon: TreePalm, type: "Resort" },
 ];
@@ -108,7 +109,7 @@ function HomePage() {
           <h2 className="mb-4 font-display text-xl font-bold md:text-2xl">
             What are you looking for?
           </h2>
-          <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+          <div className="grid grid-cols-2 gap-4 lg:grid-cols-3 xl:grid-cols-5">
             {services.map(({ label, sub, icon: Icon, type }) => (
               <button
                 key={label}

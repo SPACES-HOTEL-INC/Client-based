@@ -5,7 +5,7 @@ import p4 from "@/assets/p4.jpg";
 import p5 from "@/assets/p5.jpg";
 import p6 from "@/assets/p6.jpg";
 
-export type PropertyType = "Hotel" | "Shortlet" | "Villa" | "Resort" | "Event Space" | "Dining";
+export type PropertyType = "Hotel" | "Apartment" | "Shortlet" | "Villa" | "Resort" | "Event Space" | "Dining";
 
 export function normalizePropertyType(value: unknown): PropertyType | undefined {
   if (typeof value !== "string") return undefined;
@@ -18,11 +18,12 @@ export function normalizePropertyType(value: unknown): PropertyType | undefined 
       return "Hotel";
     case "shortlet":
     case "shortlets":
-    case "apartment":
-    case "apartments":
     case "serviced apartment":
     case "serviced apartments":
       return "Shortlet";
+    case "apartment":
+    case "apartments":
+      return "Apartment";
     case "villa":
     case "villas":
       return "Villa";
@@ -30,7 +31,7 @@ export function normalizePropertyType(value: unknown): PropertyType | undefined 
     case "resorts":
       return "Resort";
     case "event space":
-    case "event Spaceaeon":
+    case "event spaceaeon":
       return "Event Space";
     case "dining":
       return "Dining";
@@ -248,6 +249,6 @@ export const properties: Property[] = [
 ];
 
 export const AMENITIES = ["Wi-Fi", "Pool", "Gym", "Breakfast", "Parking", "Air conditioning"];
-export const PROPERTY_TYPES: PropertyType[] = ["Hotel", "Shortlet", "Villa", "Resort", "Event Space", "Dining"];
+export const PROPERTY_TYPES: PropertyType[] = ["Hotel", "Apartment", "Shortlet", "Villa", "Resort", "Event Space", "Dining"];
 
 export const getProperty = (id: string) => properties.find((p) => p.id === id);

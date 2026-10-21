@@ -13,6 +13,7 @@ import {
   XCircle,
 } from "lucide-react";
 import api from "@/lib/api";
+import { normalizePropertyType, type PropertyType } from "@/lib/data";
 import { formatMoney, useSpaceaeon } from "@/lib/spaces-store";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -48,6 +49,7 @@ interface HostProperty {
   title: string;
   city: string;
   price: number;
+  type?: PropertyType;
   status: "active" | "draft" | "unlisted";
   image: string;
 }
@@ -144,6 +146,7 @@ function HostDashboardPage() {
                 title: p.title || p.name || "Hosted Space",
                 city: p.city || "Lagos",
                 price: p.price || p.price_per_night || 50000,
+                type: normalizePropertyType(p.property_type ?? p.type),
                 status: p.is_active ? "active" : "unlisted",
                 image: p.image_url || p.images?.[0] || "https://images.unsplash.com/photo-1566073771259-6a8506099945",
               }))
@@ -214,7 +217,7 @@ function HostDashboardPage() {
           </h1>
           <p className="text-sm text-muted-foreground">Manage your Spaceaeon, reservations, and revenue.</p>
         </div>
-        <Link to="/search">
+        <Link to="/host/create">
           <Button className="rounded-xl gap-2 h-11">
             <Plus className="size-4" /> Add new space
           </Button>
@@ -308,6 +311,7 @@ function HostDashboardPage() {
                   <p className="font-display font-semibold line-clamp-1">{p.title}</p>
                   <Badge variant="outline">{p.status}</Badge>
                 </div>
+                {p.type && <Badge variant="secondary">{p.type}</Badge>}
                 <p className="text-sm text-muted-foreground">{p.city}</p>
                 <p className="font-display font-bold text-base">{formatMoney(p.price, currency)} / night</p>
               </div>

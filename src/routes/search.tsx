@@ -26,7 +26,7 @@ export const Route = createFileRoute("/search")({
       { title: "Search stays & Spaceaeon — Spaceaeon" },
       {
         name: "description",
-        content: "Filter luxury stays, shortlets, villas, resorts and event Spaceaeon by price, rating and amenities.",
+        content: "Filter luxury stays, apartments, shortlets, villas, resorts and event spaces by price, rating and amenities.",
       },
     ],
   }),

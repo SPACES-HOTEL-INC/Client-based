@@ -1,7 +1,7 @@
 import { getPropertyDisplayName, normalizePropertyType, properties, type Property as FrontProperty, type Room as FrontRoom } from "./data";
 import axios, { InternalAxiosRequestConfig, AxiosResponse, AxiosError } from "axios";
 
-const API_BASE = import.meta.env.VITE_API_BASE ?? "https://backend-nq9s.onrender.com";
+const API_BASE = import.meta.env.VITE_API_BASE ?? "https://backend-production-0623a.up.railway.app";
 
 // Simple in-memory cache for GET results (stale-while-revalidate)
 const CACHE_TTL = 30 * 1000; // 30s

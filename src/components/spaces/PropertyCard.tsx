@@ -1,7 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { Heart, MapPin, Star, Users } from "lucide-react";
 import { useState } from "react";
-import type { Property } from "@/lib/data";
+import { normalizePropertyType, type Property } from "@/lib/data";
 import { formatMoney, useSpaceaeon } from "@/lib/spaces-store";
 import { useAuth } from "@/hooks/useAuth";
 import { SignInRequiredModal } from "@/components/spaces/SignInRequiredModal";
@@ -31,7 +31,10 @@ export function PropertyCard({
   const hostOrLocation = property?.host ?? property?.hotel_name ?? "";
   
   // Property Type resolution
-  const propertyType = property?.property_type ?? property?.type ?? "Property";
+  const rawPropertyType = property?.property_type ?? property?.type;
+  const propertyType =
+    normalizePropertyType(rawPropertyType) ??
+    (typeof rawPropertyType === "string" && rawPropertyType.trim() ? rawPropertyType.trim() : "Property");
 
   const city = property?.city ?? "";
   const state = property?.state ?? "";

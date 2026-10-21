@@ -52,7 +52,7 @@ const FAQ_DATA = [
   },
   {
     q: "Can I book multiple items or days at once?",
-    a: "Yes, you can select multi-day ranges or multiple time slots for studios and event Spaceaeon.",
+    a: "Yes, you can select multi-day ranges or multiple time slots for studios and event spaces.",
   },
   {
     q: "How do I know if my booking is confirmed?",
