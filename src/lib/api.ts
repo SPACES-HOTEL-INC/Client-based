@@ -1,7 +1,19 @@
 import { getPropertyDisplayName, normalizePropertyType, properties, type Property as FrontProperty, type Room as FrontRoom } from "./data";
 import axios, { InternalAxiosRequestConfig, AxiosResponse, AxiosError } from "axios";
 
-const API_BASE = import.meta.env.VITE_API_BASE ?? "https://backend-production-0623a.up.railway.app";
+function resolveApiBase(value: string | undefined) {
+  const base = value?.trim() || "https://backend-production-0623a.up.railway.app";
+  const url = new URL(base);
+  const isLocalhost = ["localhost", "127.0.0.1", "[::1]"].includes(url.hostname);
+
+  if (url.protocol === "http:" && (!import.meta.env.DEV || !isLocalhost)) {
+    url.protocol = "https:";
+  }
+
+  return url.toString().replace(/\/$/, "");
+}
+
+const API_BASE = resolveApiBase(import.meta.env.VITE_API_BASE);
 
 // Simple in-memory cache for GET results (stale-while-revalidate)
 const CACHE_TTL = 30 * 1000; // 30s
