@@ -1,6 +1,7 @@
 import { getPropertyDisplayName, normalizePropertyType, properties, type Property as FrontProperty, type Room as FrontRoom } from "./data";
 import axios, { InternalAxiosRequestConfig, AxiosResponse, AxiosError } from "axios";
 
+// 1. Define clean base URL enforcing HTTPS and avoiding duplicate path segments
 function resolveApiBase(value: string | undefined) {
   const base = value?.trim() || "https://backend-production-0623a.up.railway.app";
   const url = new URL(base);
@@ -13,7 +14,8 @@ function resolveApiBase(value: string | undefined) {
   return url.toString().replace(/\/$/, "");
 }
 
-const API_BASE = resolveApiBase(import.meta.env.VITE_API_BASE);
+// Base URL without /api/v1 so we can append it cleanly
+export const API_BASE = resolveApiBase(import.meta.env.VITE_API_URL || 'https://backend-production-0623a.up.railway.app');
 
 // Simple in-memory cache for GET results (stale-while-revalidate)
 const CACHE_TTL = 30 * 1000; // 30s
@@ -152,7 +154,7 @@ export async function fetchProperty(propertyId: string) {
 
 export async function fetchPublicRooms(opts?: { city?: string; limit?: number }) {
   const city = opts?.city ? String(opts.city).toLowerCase() : undefined;
-  const limit = Math.min(opts?.limit ?? 8, 50);
+  const limit = Math.min(opts?.limit ?? 8, 100);
   try {
     const qs = new URLSearchParams();
     if (city) qs.set("city", city);
@@ -275,25 +277,14 @@ export async function searchRooms(filters?: { city?: string; min_price?: number;
 }
 
 export async function fetchFeaturedStays(limit = 4) {
-  try {
-    const props = await fetchProperties();
-    if (!Array.isArray(props)) return [];
-    return props.slice(0, limit);
-  } catch (err) {
-    console.error("fetchFeaturedStays error:", err);
-    return [];
-  }
+  return searchRooms({ limit });
 }
 
 export async function fetchTrendingInLagos(limit = 6) {
-  try {
-    const data = await fetchPublicRooms({ city: "lagos", limit });
-    if (!Array.isArray(data)) return [];
-    return mapPublicRoomsToProperties(data.slice(0, limit));
-  } catch (err) {
-    console.error("fetchTrendingInLagos error:", err);
-    return [];
-  }
+  const rooms = await fetchPublicRooms({ limit: 100 });
+  return mapPublicRoomsToProperties(rooms)
+    .filter((property) => `${property.city} ${property.state}`.toLowerCase().includes("lagos"))
+    .slice(0, limit);
 }
 
 // ==========================================
@@ -301,7 +292,7 @@ export async function fetchTrendingInLagos(limit = 6) {
 // ==========================================
 
 export const api = axios.create({
-  baseURL: API_BASE,
+  baseURL: `${API_BASE}/api/v1`,
   headers: {
     "Content-Type": "application/json",
   },
@@ -334,7 +325,7 @@ api.interceptors.response.use(
 
 export async function fetchPropertyReviews(propertyId: string) {
   try {
-    const res = await api.get(`/api/v1/reviews/property/${propertyId}`);
+    const res = await api.get(`/reviews/property/${propertyId}`);
     return Array.isArray(res.data) ? res.data : res.data?.data ?? [];
   } catch (err) {
     console.error("fetchPropertyReviews error:", err);
@@ -347,7 +338,7 @@ export async function submitPropertyReview(payload: {
   rating: number;
   comment: string;
 }) {
-  const res = await api.post("/api/v1/reviews/", payload);
+  const res = await api.post("/reviews/", payload);
   return res.data;
 }
 
@@ -360,7 +351,7 @@ export async function createBookingReservation(payload: {
   total_amount: number;
   payment_method: string;
 }) {
-  const res = await api.post("/api/v1/bookings/", payload);
+  const res = await api.post("/bookings/", payload);
   return res.data;
 }
 
