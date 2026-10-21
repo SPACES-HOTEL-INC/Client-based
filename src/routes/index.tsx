@@ -1,8 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { ArrowRight, Building2, KeyRound, PartyPopper, Search, Star, TreePalm } from "lucide-react";
+import { ArrowRight, Building2, KeyRound, PartyPopper, Search, TreePalm } from "lucide-react";
 import { fetchTrendingInLagos, fetchFeaturedStays } from "@/lib/api";
-import { formatMoney, useSpaceaeon } from "@/lib/spaces-store";
 import { useAuth } from "@/hooks/useAuth";
 import { PropertyCard, PropertyCardSkeleton } from "@/components/spaces/PropertyCard";
 import { HomeHeader } from "@/components/spaces/HomeHeader";
@@ -35,7 +34,6 @@ const services = [
 ];
 
 function HomePage() {
-  const { currency } = useSpaceaeon();
   const { user, loading } = useAuth();
   const firstName = user?.full_name?.trim().split(/\s+/)[0];
   const displayName = loading ? "there" : user?.email ? firstName || "there" : "Guest";
@@ -155,43 +153,14 @@ function HomePage() {
                 </div>
               </div>
             ) : (
-              (featured ?? []).map((p) => {
-                const propId = String(p.property_id ?? p.id ?? "");
-                const img = Array.isArray(p.images) ? p.images[0] : p.images ?? "";
-                const price = p.price_per_night ?? p.price ?? 0;
-                const ratingVal = p.avg_rating ?? p.rating ?? 0;
-                return (
-                  <Link
-                    key={propId}
-                    to="/search"
-                    className="card-elevated w-72 shrink-0 snap-start overflow-hidden md:w-96"
-                  >
-                    <div className="relative aspect-[4/3]">
-                      <img
-                        src={img}
-                        alt={p.title ?? ""}
-                        loading="lazy"
-                        width={1200}
-                        height={800}
-                        className="size-full object-cover"
-                      />
-                      <span className="absolute left-3 top-3 flex items-center gap-1.5 rounded-full bg-ink/80 px-3 py-1.5 text-sm font-semibold text-brand-foreground">
-                        <Star className="size-4 fill-gold text-gold" /> {ratingVal}
-                      </span>
-                      <span className="absolute right-3 top-3 rounded-full bg-ink/80 px-3 py-1.5 text-sm font-semibold text-brand-foreground">
-                        {formatMoney(price ?? 0, currency)}
-                        <span className="font-normal opacity-70">/night</span>
-                      </span>
-                    </div>
-                    <div className="space-y-1 p-4">
-                      <p className="line-clamp-1 font-display text-base font-semibold">{p.title ?? ""}</p>
-                      <p className="text-sm text-muted-foreground">
-                        {p.hotel_name ? `${p.hotel_name} · ` : ""}{p.city ?? ""} · {p.state ?? ""}
-                      </p>
-                    </div>
-                  </Link>
-                );
-              })
+              (featured ?? []).map((p) => (
+                <div
+                  key={p.property_id ?? p.id}
+                  className="w-72 shrink-0 snap-start md:w-96"
+                >
+                  <PropertyCard property={p} linkToSearch />
+                </div>
+              ))
             )}
           </div>
         </section>
