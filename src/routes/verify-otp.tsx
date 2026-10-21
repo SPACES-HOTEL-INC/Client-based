@@ -85,7 +85,7 @@ function VerifyOtpPage() {
       }
 
       toast.success("Account verified successfully!");
-      navigate({ to: "/login" });
+      navigate({ to: "/login", replace: true });
     } catch (err: any) {
       toast.error(err.message || "Failed to verify code");
     } finally {
@@ -129,7 +129,7 @@ function VerifyOtpPage() {
   return (
     <div className="min-h-screen bg-background px-6 py-6 text-foreground">
       <button
-        onClick={() => navigate({ to: "/signup" })}
+        onClick={() => navigate({ to: "/signup", replace: true })}
         className="flex h-10 w-10 items-center justify-center rounded-full bg-accent text-foreground transition-colors hover:bg-accent/80"
         aria-label="Go back"
       >

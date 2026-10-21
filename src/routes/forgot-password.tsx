@@ -59,6 +59,7 @@ function ForgotPasswordPage() {
       navigate({
         to: "/reset-password",
         search: { email: email.trim(), token },
+        replace: true,
       });
     } catch (err: any) {
       toast.error(err.message || "Something went wrong");
@@ -70,7 +71,7 @@ function ForgotPasswordPage() {
   return (
     <div className="min-h-screen bg-background px-6 py-6 text-foreground">
       <button
-        onClick={() => navigate({ to: "/login" })}
+        onClick={() => navigate({ to: "/login", replace: true })}
         className="flex h-10 w-10 items-center justify-center rounded-full bg-accent text-foreground transition-colors hover:bg-accent/80"
         aria-label="Go back"
       >
@@ -113,7 +114,7 @@ function ForgotPasswordPage() {
 
         <p className="mt-8 text-center text-sm text-muted-foreground">
           Remember your password?{" "}
-          <Link to="/login" className="font-bold text-foreground underline">
+          <Link to="/login" replace className="font-bold text-foreground underline">
             Log in
           </Link>
         </p>

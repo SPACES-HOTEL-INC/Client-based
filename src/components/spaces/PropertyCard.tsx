@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { Heart, MapPin, Star, Users } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { normalizePropertyType, type Property } from "@/lib/data";
 import { formatMoney, useSpaceaeon } from "@/lib/spaces-store";
 import { useAuth } from "@/hooks/useAuth";
@@ -19,12 +19,34 @@ export function PropertyCard({
   const { currency, favorites, toggleFavorite } = useSpaceaeon();
   const { user, loading: authLoading } = useAuth();
   const [index, setIndex] = useState(0);
+  const [isImageHovered, setIsImageHovered] = useState(false);
   const [authModalOpen, setAuthModalOpen] = useState(false);
 
   // Support both `Property` shape and raw `room` payloads (room mapped to property-like object)
   const isRoom = property && property.price_per_night != null;
   const id = String(property?.id ?? property?.property_id ?? "");
-  const images: string[] = Array.isArray(property?.images) ? property.images : property?.images ? [property.images] : [];
+  const images: string[] = Array.isArray(property?.images)
+    ? property.images.filter(
+        (image: unknown): image is string => typeof image === "string" && image.trim().length > 0,
+      )
+    : typeof property?.images === "string" && property.images.trim()
+      ? [property.images]
+      : [];
+  const currentImage = images[index] ?? images[0];
+
+  useEffect(() => {
+    if (isImageHovered || images.length < 2) return;
+
+    const intervalId = window.setInterval(() => {
+      setIndex((currentIndex) => (currentIndex + 1) % images.length);
+    }, 3750);
+
+    return () => window.clearInterval(intervalId);
+  }, [images.length, isImageHovered]);
+
+  useEffect(() => {
+    setIndex((currentIndex) => (images.length ? currentIndex % images.length : 0));
+  }, [images.length]);
   
   // Title / Name resolution
   const displayTitle = property?.name ?? property?.title ?? property?.hotel_name ?? "";
@@ -56,21 +78,29 @@ export function PropertyCard({
   return (
     <>
     <article className="card-elevated group overflow-hidden">
-        <div className="relative aspect-[4/3] overflow-hidden">
+        <div
+          className="relative aspect-[4/3] overflow-hidden"
+          onMouseEnter={() => setIsImageHovered(true)}
+          onMouseLeave={() => setIsImageHovered(false)}
+        >
           <Link
             {...propertyLink}
             onClick={handlePropertyClick}
             aria-label={`View details for ${displayTitle}`}
             className="block size-full"
           >
-            <img
-              src={images?.[index] ?? ""}
-              alt={displayTitle ?? ""}
-              loading="lazy"
-              width={1200}
-              height={800}
-              className="size-full object-cover transition-transform duration-500 group-hover:scale-105"
-            />
+            {currentImage ? (
+              <img
+                src={currentImage}
+                alt={displayTitle ?? ""}
+                loading="lazy"
+                width={1200}
+                height={800}
+                className="size-full object-cover transition-transform duration-500 group-hover:scale-105"
+              />
+            ) : (
+              <div aria-hidden="true" className="size-full bg-muted" />
+            )}
           </Link>
           
           {/* Rating Badge */}
@@ -101,20 +131,23 @@ export function PropertyCard({
           </div>
 
           {/* Image Navigation Indicators */}
-          <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5">
-            {(images ?? []).map((_, i) => (
-              <button
-                key={i}
-                type="button"
-                aria-label={`Photo ${i + 1}`}
-                onClick={() => setIndex(i)}
-                className={cn(
-                  "h-1.5 rounded-full transition-all",
-                  i === index ? "w-5 bg-card" : "w-1.5 bg-card/60",
-                )}
-              />
-            ))}
-          </div>
+          {images.length > 1 && (
+            <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5">
+              {images.map((_, i) => (
+                <button
+                  key={i}
+                  type="button"
+                  aria-label={`Photo ${i + 1}`}
+                  aria-current={i === index}
+                  onClick={() => setIndex(i)}
+                  className={cn(
+                    "h-1.5 rounded-full transition-all",
+                    i === index ? "w-5 bg-card" : "w-1.5 bg-card/60",
+                  )}
+                />
+              ))}
+            </div>
+          )}
         </div>
 
         <div className="space-y-2 p-4">

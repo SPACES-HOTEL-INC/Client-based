@@ -24,7 +24,7 @@ function ResetPasswordPage() {
 
     if (!token) {
       toast.error("Missing reset token. Please request password reset again.");
-      navigate({ to: "/forgot-password" });
+      navigate({ to: "/forgot-password", replace: true });
       return;
     }
 
@@ -54,7 +54,7 @@ function ResetPasswordPage() {
       }
 
       toast.success("Password reset successfully! Please log in.");
-      navigate({ to: "/login" });
+      navigate({ to: "/login", replace: true });
     } catch (err: any) {
       toast.error(err.message || "Failed to reset password");
     } finally {
@@ -65,7 +65,7 @@ function ResetPasswordPage() {
   return (
     <div className="min-h-screen bg-background px-6 py-6 text-foreground">
       <button
-        onClick={() => navigate({ to: "/forgot-password" })}
+        onClick={() => navigate({ to: "/forgot-password", replace: true })}
         className="flex h-10 w-10 items-center justify-center rounded-full bg-accent text-foreground transition-colors hover:bg-accent/80"
         aria-label="Go back"
       >
@@ -114,7 +114,7 @@ function ResetPasswordPage() {
 
         <p className="mt-8 text-center text-sm text-muted-foreground">
           Back to{" "}
-          <Link to="/login" className="font-bold text-foreground underline">
+          <Link to="/login" replace className="font-bold text-foreground underline">
             Log in
           </Link>
         </p>

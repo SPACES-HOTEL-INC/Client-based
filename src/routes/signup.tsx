@@ -53,6 +53,7 @@ function SignUpPage() {
       navigate({
         to: "/verify-otp",
         search: { email: email.trim() },
+        replace: true,
       });
     } catch (err: any) {
       toast.error(err.message || "Registration failed");
@@ -64,7 +65,7 @@ function SignUpPage() {
   return (
     <div className="min-h-screen bg-background px-6 py-6 text-foreground">
       <button
-        onClick={() => navigate({ to: ".." })}
+        onClick={() => navigate({ to: "..", replace: true })}
         className="flex h-10 w-10 items-center justify-center rounded-full bg-accent text-foreground transition-colors hover:bg-accent/80"
         aria-label="Go back"
       >
@@ -140,7 +141,7 @@ function SignUpPage() {
 
         <p className="mt-8 text-center text-sm text-muted-foreground">
           Already have an account?{" "}
-          <Link to="/login" className="font-bold text-foreground underline">
+          <Link to="/login" replace className="font-bold text-foreground underline">
             Login
           </Link>
         </p>

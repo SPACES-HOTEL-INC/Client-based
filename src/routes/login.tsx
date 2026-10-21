@@ -50,7 +50,7 @@ function LoginPage() {
 
       await login(data.access_token);
       toast.success("Welcome back!");
-      navigate({ to: "/" });
+      navigate({ to: "/", replace: true });
     } catch (err: any) {
       toast.error(err.message || "Failed to log in");
     } finally {
@@ -61,7 +61,7 @@ function LoginPage() {
   return (
     <div className="min-h-screen bg-background px-6 py-6 text-foreground">
       <button
-        onClick={() => navigate({ to: ".." })}
+        onClick={() => navigate({ to: "..", replace: true })}
         className="flex h-10 w-10 items-center justify-center rounded-full bg-accent text-foreground transition-colors hover:bg-accent/80"
         aria-label="Go back"
       >
@@ -96,6 +96,7 @@ function LoginPage() {
               </label>
               <Link
                 to="/forgot-password"
+                replace
                 className="text-xs font-semibold text-primary hover:underline"
               >
                 Forgot password?
@@ -132,7 +133,7 @@ function LoginPage() {
 
         <p className="mt-8 text-center text-sm text-muted-foreground">
           Don't have an account?{" "}
-          <Link to="/signup" className="font-bold text-foreground underline">
+          <Link to="/signup" replace className="font-bold text-foreground underline">
             Create account
           </Link>
         </p>
