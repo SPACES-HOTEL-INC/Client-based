@@ -18,7 +18,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import type { Property, Room } from "@/lib/data";
 import { formatMoney, makeRef, nightsBetween, useSpaceaeon } from "@/lib/spaces-store";
 import { toast } from "sonner";
-import api from "@/lib/api";
+import { createBookingReservation } from "@/lib/api";
 
 const formatISODate = (date: Date) =>
   `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
@@ -93,7 +93,7 @@ export function BookingDialog({
 
     try {
       const fallbackReference = makeRef();
-      const res = await api.post("/api/v1/bookings", {
+      const responseData = await createBookingReservation({
         space_id: property.id,
         room_id: room.id,
         check_in: checkIn,
@@ -103,8 +103,13 @@ export function BookingDialog({
         payment_method: "bank_transfer",
       });
 
-      const responseData = res.data?.data || res.data;
-      const bookingRef = String(responseData?.reference || responseData?.id || fallbackReference);
+      const bookingData = responseData?.data || responseData;
+      const bookingRef = String(
+        bookingData?.reference ||
+          bookingData?.booking_reference ||
+          bookingData?.id ||
+          fallbackReference,
+      );
 
       addBooking({
         ref: bookingRef,
@@ -124,7 +129,21 @@ export function BookingDialog({
       setStep("done");
     } catch (error) {
       console.error("Booking creation failed:", error);
-      toast.error("Could not submit your booking. Please try again.");
+      const responseData =
+        typeof error === "object" && error !== null && "response" in error ? error.response : null;
+      const errorBody =
+        typeof responseData === "object" && responseData !== null && "data" in responseData
+          ? responseData.data
+          : null;
+      const message =
+        typeof errorBody === "object" && errorBody !== null
+          ? "detail" in errorBody && typeof errorBody.detail === "string"
+            ? errorBody.detail
+            : "message" in errorBody && typeof errorBody.message === "string"
+              ? errorBody.message
+              : null
+          : null;
+      toast.error(message || "Could not submit your booking. Please try again.");
     } finally {
       setLoading(false);
     }
