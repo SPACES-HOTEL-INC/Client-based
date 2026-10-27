@@ -127,7 +127,7 @@ export function BookingDialog({
         checkOut,
         guests,
         total,
-        status: "pending",
+        status: "active",
         method: "Bank transfer",
       });
 
@@ -177,7 +177,7 @@ export function BookingDialog({
       <DialogContent className="max-h-[90vh] max-w-lg overflow-y-auto rounded-3xl">
         <DialogHeader className="text-left">
           <DialogTitle className="font-display text-xl">
-            {step === "done" ? "Booking confirmed" : property.title}
+            {step === "done" ? "Booking successful" : property.title}
           </DialogTitle>
           {step !== "done" && <p className="text-sm text-muted-foreground">{room.name}</p>}
         </DialogHeader>
@@ -339,7 +339,7 @@ export function BookingDialog({
               <Row label="Total" value={formatMoney(total, currency)} />
             </div>
             <Badge variant="secondary" className="rounded-full">
-              Pending confirmation
+              Active booking
             </Badge>
             <Button
               type="button"
