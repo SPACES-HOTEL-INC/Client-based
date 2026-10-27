@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
   ArrowLeft,
+  CalendarDays,
   CheckCircle2,
   ChevronDown,
   ChevronUp,
@@ -12,6 +13,8 @@ import {
   Plus,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import type { Property, Room } from "@/lib/data";
 import { formatMoney, makeRef, nightsBetween, useSpaceaeon } from "@/lib/spaces-store";
 import { toast } from "sonner";
@@ -333,10 +336,15 @@ function DateStepper({
   const year = date.getFullYear();
   const [monthInput, setMonthInput] = useState(String(month).padStart(2, "0"));
   const [yearInput, setYearInput] = useState(String(year));
+  const [calendarOpen, setCalendarOpen] = useState(false);
+  const [displayMonth, setDisplayMonth] = useState(
+    new Date(date.getFullYear(), date.getMonth(), 1),
+  );
 
   useEffect(() => {
     setMonthInput(String(month).padStart(2, "0"));
     setYearInput(String(year));
+    setDisplayMonth(new Date(year, month - 1, 1));
   }, [month, year]);
 
   const normalizeDate = (nextMonth: number, nextYear: number) => {
@@ -376,28 +384,71 @@ function DateStepper({
             {formatDateLabel(value)}
           </p>
         </div>
-        <div className="flex shrink-0 flex-col gap-1">
-          <Button
-            type="button"
-            size="icon"
-            variant="outline"
-            className="size-8 rounded-lg"
-            aria-label={`Advance ${label.toLowerCase()} by one day`}
-            onClick={() => onChange(addDays(value, 1))}
-          >
-            <ChevronUp className="size-4" />
-          </Button>
-          <Button
-            type="button"
-            size="icon"
-            variant="outline"
-            className="size-8 rounded-lg"
-            aria-label={`Move ${label.toLowerCase()} back by one day`}
-            disabled={value <= minDate}
-            onClick={() => onChange(addDays(value, -1))}
-          >
-            <ChevronDown className="size-4" />
-          </Button>
+        <div className="flex shrink-0 items-center gap-2">
+          <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
+            <PopoverTrigger asChild>
+              <Button
+                type="button"
+                size="icon"
+                variant="outline"
+                className="size-9 rounded-lg"
+                aria-label={`Choose ${label.toLowerCase()} date from calendar`}
+              >
+                <CalendarDays className="size-4" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent
+              align="end"
+              side="bottom"
+              className="w-auto rounded-2xl border-border p-2 shadow-xl"
+            >
+              <div className="px-3 pt-2">
+                <p className="text-sm font-semibold">Choose {label.toLowerCase()}</p>
+                <p className="text-xs text-muted-foreground">
+                  Select a date on or after {formatDateLabel(minDate)}.
+                </p>
+              </div>
+              <Calendar
+                mode="single"
+                selected={date}
+                month={displayMonth}
+                onMonthChange={setDisplayMonth}
+                onSelect={(nextDate) => {
+                  if (nextDate) {
+                    onChange(formatISODate(nextDate < minimumDate ? minimumDate : nextDate));
+                    setCalendarOpen(false);
+                  }
+                }}
+                disabled={{ before: minimumDate }}
+                startMonth={minimumDate}
+                endMonth={new Date(new Date().getFullYear() + 10, 11, 1)}
+                className="p-2 [--cell-size:2.5rem]"
+              />
+            </PopoverContent>
+          </Popover>
+          <div className="flex flex-col gap-1">
+            <Button
+              type="button"
+              size="icon"
+              variant="outline"
+              className="size-8 rounded-lg"
+              aria-label={`Advance ${label.toLowerCase()} by one day`}
+              onClick={() => onChange(addDays(value, 1))}
+            >
+              <ChevronUp className="size-4" />
+            </Button>
+            <Button
+              type="button"
+              size="icon"
+              variant="outline"
+              className="size-8 rounded-lg"
+              aria-label={`Move ${label.toLowerCase()} back by one day`}
+              disabled={value <= minDate}
+              onClick={() => onChange(addDays(value, -1))}
+            >
+              <ChevronDown className="size-4" />
+            </Button>
+          </div>
         </div>
       </div>
 
