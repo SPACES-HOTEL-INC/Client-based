@@ -127,7 +127,7 @@ export function makeRef() {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ0123456789";
   let out = "";
   for (let i = 0; i < 6; i++) out += chars[Math.floor(Math.random() * chars.length)];
-  return `SPC-${out}`;
+  return `SPC - ${out}`;
 }
 
 export function nightsBetween(a: string, b: string) {

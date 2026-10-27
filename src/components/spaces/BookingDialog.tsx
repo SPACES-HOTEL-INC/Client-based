@@ -109,12 +109,13 @@ export function BookingDialog({
       });
 
       const bookingData = responseData?.data || responseData;
-      const bookingRef = String(
-        bookingData?.reference ||
-          bookingData?.booking_reference ||
-          bookingData?.id ||
-          fallbackReference,
-      );
+      const responseReference =
+        bookingData?.reference || bookingData?.booking_reference || bookingData?.id;
+      const referenceCode =
+        typeof responseReference === "string"
+          ? responseReference.match(/^(?:SPC\s*-\s*)?([A-Z0-9]{6})$/i)?.[1]
+          : null;
+      const bookingRef = referenceCode ? `SPC - ${referenceCode.toUpperCase()}` : fallbackReference;
 
       addBooking({
         ref: bookingRef,
@@ -136,6 +137,13 @@ export function BookingDialog({
       console.error("Booking creation failed:", error);
       const responseData =
         typeof error === "object" && error !== null && "response" in error ? error.response : null;
+      const status =
+        typeof responseData === "object" &&
+        responseData !== null &&
+        "status" in responseData &&
+        typeof responseData.status === "number"
+          ? responseData.status
+          : null;
       const errorBody =
         typeof responseData === "object" && responseData !== null && "data" in responseData
           ? responseData.data
@@ -148,7 +156,11 @@ export function BookingDialog({
               ? errorBody.message
               : null
           : null;
-      toast.error(message || "Could not submit your booking. Please try again.");
+      toast.error(
+        status === 401
+          ? "Your session has expired. Please sign in again before booking."
+          : message || "Could not submit your booking. Please try again.",
+      );
     } finally {
       setLoading(false);
     }

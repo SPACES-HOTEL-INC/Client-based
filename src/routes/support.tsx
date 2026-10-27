@@ -35,7 +35,7 @@ const faqs = [
   },
   {
     q: "Where do I find my booking reference?",
-    a: "Every confirmed reservation gets a code like SPC-4KD92X. You'll find it on the confirmation screen and on the booking pass in the Bookings tab.",
+    a: "Every confirmed reservation gets a code like SPC - 4KD92X. You'll find it on the confirmation screen and on the booking pass in the Bookings tab.",
   },
 ];
 

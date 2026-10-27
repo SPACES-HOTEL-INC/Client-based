@@ -300,7 +300,7 @@ export const api = axios.create({
 
 api.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
-    const token = localStorage.getItem("token");
+    const token = localStorage.getItem("access_token") || localStorage.getItem("token");
     if (token && config.headers) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -313,6 +313,7 @@ api.interceptors.response.use(
   (response: AxiosResponse) => response,
   (error: AxiosError) => {
     if (error.response && error.response.status === 401) {
+      localStorage.removeItem("access_token");
       localStorage.removeItem("token");
     }
     return Promise.reject(error);
