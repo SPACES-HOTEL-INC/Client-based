@@ -36,8 +36,6 @@ const addDays = (value: string, days: number) => {
   return formatISODate(date);
 };
 
-const inDays = (days: number) => addDays(today(), days);
-
 const formatDateLabel = (value: string) =>
   new Intl.DateTimeFormat("en", { month: "short", day: "numeric", year: "numeric" }).format(
     parseISODate(value),
@@ -58,11 +56,18 @@ export function BookingDialog({
 }) {
   const { currency, addBooking, user } = useSpaceaeon();
   const [step, setStep] = useState<Step>("dates");
-  const [checkIn, setCheckIn] = useState(inDays(2));
-  const [checkOut, setCheckOut] = useState(inDays(4));
+  const [checkIn, setCheckIn] = useState(today);
+  const [checkOut, setCheckOut] = useState(() => addDays(today(), 1));
   const [guests, setGuests] = useState(2);
   const [loading, setLoading] = useState(false);
   const [reference, setReference] = useState("");
+
+  useEffect(() => {
+    if (!open) return;
+    const defaultCheckIn = today();
+    setCheckIn(defaultCheckIn);
+    setCheckOut(addDays(defaultCheckIn, 1));
+  }, [open]);
 
   const nights = useMemo(() => nightsBetween(checkIn, checkOut), [checkIn, checkOut]);
   const subtotal = room.rate * nights;
