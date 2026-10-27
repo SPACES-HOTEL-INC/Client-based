@@ -22,6 +22,7 @@ import { Route as SearchRouteImport } from './routes/search'
 import { Route as SignupRouteImport } from './routes/signup'
 import { Route as SupportRouteImport } from './routes/support'
 import { Route as VerifyOtpRouteImport } from './routes/verify-otp'
+import { Route as WalletRouteImport } from './routes/wallet'
 import { Route as HostIndexRouteImport } from './routes/host/index'
 import { Route as HostCreateRouteImport } from './routes/host/create'
 import { Route as PropertyIdRouteImport } from './routes/property.$id'
@@ -91,6 +92,11 @@ const VerifyOtpRoute = VerifyOtpRouteImport.update({
   path: '/verify-otp',
   getParentRoute: () => rootRouteImport,
 } as any)
+const WalletRoute = WalletRouteImport.update({
+  id: '/wallet',
+  path: '/wallet',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const HostIndexRoute = HostIndexRouteImport.update({
   id: '/host/',
   path: '/host/',
@@ -121,6 +127,7 @@ export interface FileRoutesByFullPath {
   '/signup': typeof SignupRoute
   '/support': typeof SupportRoute
   '/verify-otp': typeof VerifyOtpRoute
+  '/wallet': typeof WalletRoute
   '/host/create': typeof HostCreateRoute
   '/property/$id': typeof PropertyIdRoute
   '/host/': typeof HostIndexRoute
@@ -139,6 +146,7 @@ export interface FileRoutesByTo {
   '/signup': typeof SignupRoute
   '/support': typeof SupportRoute
   '/verify-otp': typeof VerifyOtpRoute
+  '/wallet': typeof WalletRoute
   '/host/create': typeof HostCreateRoute
   '/property/$id': typeof PropertyIdRoute
   '/host': typeof HostIndexRoute
@@ -158,6 +166,7 @@ export interface FileRoutesById {
   '/signup': typeof SignupRoute
   '/support': typeof SupportRoute
   '/verify-otp': typeof VerifyOtpRoute
+  '/wallet': typeof WalletRoute
   '/host/create': typeof HostCreateRoute
   '/property/$id': typeof PropertyIdRoute
   '/host/': typeof HostIndexRoute
@@ -178,6 +187,7 @@ export interface FileRouteTypes {
     | '/signup'
     | '/support'
     | '/verify-otp'
+    | '/wallet'
     | '/host/create'
     | '/property/$id'
     | '/host/'
@@ -196,6 +206,7 @@ export interface FileRouteTypes {
     | '/signup'
     | '/support'
     | '/verify-otp'
+    | '/wallet'
     | '/host/create'
     | '/property/$id'
     | '/host'
@@ -214,6 +225,7 @@ export interface FileRouteTypes {
     | '/signup'
     | '/support'
     | '/verify-otp'
+    | '/wallet'
     | '/host/create'
     | '/property/$id'
     | '/host/'
@@ -233,6 +245,7 @@ export interface RootRouteChildren {
   SignupRoute: typeof SignupRoute
   SupportRoute: typeof SupportRoute
   VerifyOtpRoute: typeof VerifyOtpRoute
+  WalletRoute: typeof WalletRoute
   HostCreateRoute: typeof HostCreateRoute
   PropertyIdRoute: typeof PropertyIdRoute
   HostIndexRoute: typeof HostIndexRoute
@@ -331,6 +344,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof VerifyOtpRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/wallet': {
+      id: '/wallet'
+      path: '/wallet'
+      fullPath: '/wallet'
+      preLoaderRoute: typeof WalletRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/host/': {
       id: '/host/'
       path: '/host'
@@ -369,6 +389,7 @@ const rootRouteChildren: RootRouteChildren = {
   SignupRoute: SignupRoute,
   SupportRoute: SupportRoute,
   VerifyOtpRoute: VerifyOtpRoute,
+  WalletRoute: WalletRoute,
   HostCreateRoute: HostCreateRoute,
   PropertyIdRoute: PropertyIdRoute,
   HostIndexRoute: HostIndexRoute,
