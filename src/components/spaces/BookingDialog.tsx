@@ -1,8 +1,17 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Loader2, Minus, Plus } from "lucide-react";
-import { Calendar } from "@/components/ui/calendar";
+import { Badge } from "@/components/ui/badge";
+import {
+  ArrowLeft,
+  CheckCircle2,
+  ChevronDown,
+  ChevronUp,
+  Loader2,
+  Minus,
+  Plus,
+} from "lucide-react";
+import { Input } from "@/components/ui/input";
 import type { Property, Room } from "@/lib/data";
 import { formatMoney, makeRef, nightsBetween, useSpaceaeon } from "@/lib/spaces-store";
 import { toast } from "sonner";
@@ -31,8 +40,7 @@ const formatDateLabel = (value: string) =>
     parseISODate(value),
   );
 
-type Step = "dates" | "summary";
-const ROW_HEIGHT = 40;
+type Step = "dates" | "summary" | "done";
 
 export function BookingDialog({
   property,
@@ -49,9 +57,9 @@ export function BookingDialog({
   const [step, setStep] = useState<Step>("dates");
   const [checkIn, setCheckIn] = useState(inDays(2));
   const [checkOut, setCheckOut] = useState(inDays(4));
-  const [activeDateField, setActiveDateField] = useState<"checkIn" | "checkOut">("checkIn");
   const [guests, setGuests] = useState(2);
   const [loading, setLoading] = useState(false);
+  const [reference, setReference] = useState("");
 
   const nights = useMemo(() => nightsBetween(checkIn, checkOut), [checkIn, checkOut]);
   const subtotal = room.rate * nights;
@@ -62,8 +70,8 @@ export function BookingDialog({
 
   const reset = () => {
     setStep("dates");
-    setActiveDateField("checkIn");
     setLoading(false);
+    setReference("");
   };
 
   const updateCheckIn = (date: string) => {
@@ -76,41 +84,12 @@ export function BookingDialog({
     setCheckOut(date < minimumCheckOut ? minimumCheckOut : date);
   };
 
-  const updateActiveDate = (date: string) => {
-    if (activeDateField === "checkIn") {
-      updateCheckIn(date);
-    } else {
-      updateCheckOut(date);
-    }
-  };
-
-  const activeDate = activeDateField === "checkIn" ? checkIn : checkOut;
-  const activeMinimum = activeDateField === "checkIn" ? today() : minimumCheckOut;
-  const activeDateValue = parseISODate(activeDate);
-  const activeMinimumValue = parseISODate(activeMinimum);
-  const activeDaysInMonth = new Date(
-    activeDateValue.getFullYear(),
-    activeDateValue.getMonth() + 1,
-    0,
-  ).getDate();
-  const activeMinDay =
-    activeDateValue.getFullYear() === activeMinimumValue.getFullYear() &&
-    activeDateValue.getMonth() === activeMinimumValue.getMonth()
-      ? activeMinimumValue.getDate()
-      : 1;
-
-  const updateActiveMonth = (month: Date) => {
-    const currentDate = parseISODate(activeDate);
-    const lastDayOfMonth = new Date(month.getFullYear(), month.getMonth() + 1, 0).getDate();
-    const day = Math.min(currentDate.getDate(), lastDayOfMonth);
-    updateActiveDate(formatISODate(new Date(month.getFullYear(), month.getMonth(), day)));
-  };
-
   const pay = async () => {
     if (loading) return;
     setLoading(true);
 
     try {
+      const fallbackReference = makeRef();
       const res = await api.post("/api/v1/bookings", {
         space_id: property.id,
         room_id: room.id,
@@ -122,7 +101,7 @@ export function BookingDialog({
       });
 
       const responseData = res.data?.data || res.data;
-      const bookingRef = responseData?.reference || responseData?.id || makeRef();
+      const bookingRef = String(responseData?.reference || responseData?.id || fallbackReference);
 
       addBooking({
         ref: bookingRef,
@@ -138,8 +117,8 @@ export function BookingDialog({
         method: "Bank transfer",
       });
 
-      toast.success("Booking request submitted. Payment is pending.");
-      onOpenChange(false);
+      setReference(bookingRef);
+      setStep("done");
     } catch (error) {
       console.error("Booking creation failed:", error);
       toast.error("Could not submit your booking. Please try again.");
@@ -158,107 +137,47 @@ export function BookingDialog({
     >
       <DialogContent className="max-h-[90vh] max-w-lg overflow-y-auto rounded-3xl">
         <DialogHeader className="text-left">
-          <DialogTitle className="font-display text-xl">{property.title}</DialogTitle>
-          <p className="text-sm text-muted-foreground">{room.name}</p>
+          <DialogTitle className="font-display text-xl">
+            {step === "done" ? "Booking confirmed" : property.title}
+          </DialogTitle>
+          {step !== "done" && <p className="text-sm text-muted-foreground">{room.name}</p>}
         </DialogHeader>
 
-        <div className="flex items-center justify-between">
-          <Button
-            type="button"
-            variant="ghost"
-            className="-ml-2"
-            disabled={loading}
-            onClick={() => (step === "dates" ? onOpenChange(false) : setStep("dates"))}
-          >
-            <ArrowLeft className="size-4" />
-            {step === "dates" ? "Back to property" : "Back to dates"}
-          </Button>
-          <p className="text-xs font-medium text-muted-foreground">
-            Step {step === "dates" ? "1" : "2"} of 2
-          </p>
-        </div>
+        {step !== "done" && (
+          <div className="flex items-center justify-between">
+            <Button
+              type="button"
+              variant="ghost"
+              className="-ml-2"
+              disabled={loading}
+              onClick={() => (step === "dates" ? onOpenChange(false) : setStep("dates"))}
+            >
+              <ArrowLeft className="size-4" />
+              {step === "dates" ? "Back to property" : "Back to dates"}
+            </Button>
+            <p className="text-xs font-medium text-muted-foreground">
+              Step {step === "dates" ? "1" : "2"} of 2
+            </p>
+          </div>
+        )}
 
         {step === "dates" && (
           <div className="space-y-5">
-            <div className="grid grid-cols-2 gap-3">
-              <button
-                type="button"
-                aria-pressed={activeDateField === "checkIn"}
-                onClick={() => setActiveDateField("checkIn")}
-                className={`rounded-2xl border p-3 text-left transition-colors ${
-                  activeDateField === "checkIn"
-                    ? "border-primary bg-accent/40"
-                    : "border-border bg-card hover:bg-secondary"
-                }`}
-              >
-                <span className="block text-xs text-muted-foreground">Check-in</span>
-                <span className="mt-1 block text-sm font-semibold">{formatDateLabel(checkIn)}</span>
-              </button>
-              <button
-                type="button"
-                aria-pressed={activeDateField === "checkOut"}
-                onClick={() => setActiveDateField("checkOut")}
-                className={`rounded-2xl border p-3 text-left transition-colors ${
-                  activeDateField === "checkOut"
-                    ? "border-primary bg-accent/40"
-                    : "border-border bg-card hover:bg-secondary"
-                }`}
-              >
-                <span className="block text-xs text-muted-foreground">Check-out</span>
-                <span className="mt-1 block text-sm font-semibold">
-                  {formatDateLabel(checkOut)}
-                </span>
-              </button>
-            </div>
-
-            <div className="grid gap-4 rounded-2xl border border-border bg-card p-3 sm:grid-cols-[minmax(0,1fr)_88px] sm:p-4">
-              <div className="min-w-0">
-                <div className="mb-2 flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-semibold">
-                      {activeDateField === "checkIn" ? "Select check-in" : "Select check-out"}
-                    </p>
-                    <p className="text-xs text-muted-foreground">Choose a date on the calendar</p>
-                  </div>
-                </div>
-                <Calendar
-                  mode="single"
-                  selected={activeDateValue}
-                  month={activeDateValue}
-                  onMonthChange={updateActiveMonth}
-                  onSelect={(date) => {
-                    if (date) updateActiveDate(formatISODate(date));
-                  }}
-                  disabled={{ before: activeMinimumValue }}
-                  modifiers={{
-                    stay: {
-                      from: parseISODate(checkIn),
-                      to: parseISODate(checkOut),
-                    },
-                  }}
-                  modifiersClassNames={{ stay: "bg-accent text-accent-foreground" }}
-                  className="mx-auto p-1 [--cell-size:2.25rem]"
-                  startMonth={activeMinimumValue}
-                  endMonth={new Date(new Date().getFullYear() + 10, 11, 1)}
-                />
-              </div>
-              <div className="flex flex-col items-center justify-center rounded-xl bg-secondary/60 px-2 py-3">
-                <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                  Day
-                </p>
-                <DayWheel
-                  label={`${activeDateField === "checkIn" ? "Check-in" : "Check-out"} day`}
-                  value={activeDateValue.getDate()}
-                  daysInMonth={activeDaysInMonth}
-                  minDay={activeMinDay}
-                  onChange={(day) => {
-                    const selected = new Date(activeDateValue);
-                    selected.setDate(day);
-                    updateActiveDate(formatISODate(selected));
-                  }}
-                />
-              </div>
-            </div>
+            <section className="space-y-3 rounded-2xl border border-border bg-card p-4">
+              <DateStepper
+                label="Check-in"
+                value={checkIn}
+                minDate={today()}
+                onChange={updateCheckIn}
+              />
+              <div className="border-t border-border" />
+              <DateStepper
+                label="Check-out"
+                value={checkOut}
+                minDate={minimumCheckOut}
+                onChange={updateCheckOut}
+              />
+            </section>
 
             <div className="flex items-center justify-between rounded-2xl border border-border p-4">
               <div>
@@ -359,132 +278,167 @@ export function BookingDialog({
             </Button>
           </div>
         )}
+
+        {step === "done" && (
+          <div className="space-y-5 py-2 text-center">
+            <CheckCircle2 className="mx-auto size-14 text-teal" />
+            <div>
+              <p className="font-display text-lg font-semibold">{property.title}</p>
+              <p className="text-sm text-muted-foreground">{room.name}</p>
+            </div>
+            <div className="rounded-2xl bg-secondary p-4">
+              <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                Booking reference
+              </p>
+              <p className="font-display text-2xl font-bold tracking-wider">{reference}</p>
+            </div>
+            <div className="space-y-2 text-left text-sm">
+              <Row label="Dates" value={`${checkIn} → ${checkOut}`} />
+              <Row label="Nights" value={String(nights)} />
+              <Row label="Guests" value={String(guests)} />
+              <Row label="Payment method" value="Bank transfer" />
+              <Row label="Total" value={formatMoney(total, currency)} />
+            </div>
+            <Badge variant="secondary" className="rounded-full">
+              Pending confirmation
+            </Badge>
+            <Button
+              type="button"
+              className="h-12 w-full rounded-xl"
+              onClick={() => onOpenChange(false)}
+            >
+              Done
+            </Button>
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   );
 }
 
-function DayWheel({
+function DateStepper({
   label,
   value,
-  daysInMonth,
-  minDay,
+  minDate,
   onChange,
 }: {
   label: string;
-  value: number;
-  daysInMonth: number;
-  minDay: number;
-  onChange: (day: number) => void;
+  value: string;
+  minDate: string;
+  onChange: (date: string) => void;
 }) {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const dragRef = useRef<{ startY: number; startScrollTop: number } | null>(null);
-  const scrollTimeoutRef = useRef<number | null>(null);
-  const scrollingRef = useRef(false);
-  const options = useMemo(
-    () => Array.from({ length: daysInMonth - minDay + 1 }, (_, index) => minDay + index),
-    [daysInMonth, minDay],
-  );
-  const selectedIndex = Math.max(0, options.indexOf(value));
+  const date = parseISODate(value);
+  const minimumDate = parseISODate(minDate);
+  const month = date.getMonth() + 1;
+  const year = date.getFullYear();
+  const [monthInput, setMonthInput] = useState(String(month).padStart(2, "0"));
+  const [yearInput, setYearInput] = useState(String(year));
 
   useEffect(() => {
-    if (scrollingRef.current) return;
-    if (containerRef.current) {
-      containerRef.current.scrollTop = selectedIndex * ROW_HEIGHT;
-    }
-  }, [selectedIndex, options.length]);
+    setMonthInput(String(month).padStart(2, "0"));
+    setYearInput(String(year));
+  }, [month, year]);
 
-  useEffect(
-    () => () => {
-      if (scrollTimeoutRef.current !== null) window.clearTimeout(scrollTimeoutRef.current);
-    },
-    [],
-  );
-
-  const selectIndex = (index: number) => {
-    const nextIndex = Math.max(0, Math.min(options.length - 1, index));
-    onChange(options[nextIndex]);
-    containerRef.current?.scrollTo({
-      top: nextIndex * ROW_HEIGHT,
-      behavior: "smooth",
-    });
+  const normalizeDate = (nextMonth: number, nextYear: number) => {
+    const lastDay = new Date(nextYear, nextMonth, 0).getDate();
+    const nextDate = formatISODate(
+      new Date(nextYear, nextMonth - 1, Math.min(date.getDate(), lastDay)),
+    );
+    onChange(nextDate < minDate ? minDate : nextDate);
   };
 
-  const syncFromScroll = () => {
-    scrollingRef.current = true;
-    if (scrollTimeoutRef.current !== null) window.clearTimeout(scrollTimeoutRef.current);
-    scrollTimeoutRef.current = window.setTimeout(() => {
-      const element = containerRef.current;
-      if (!element) return;
-      const index = Math.max(
-        0,
-        Math.min(options.length - 1, Math.round(element.scrollTop / ROW_HEIGHT)),
-      );
-      scrollingRef.current = false;
-      if (options[index] !== value) onChange(options[index]);
-    }, 100);
+  const commitMonth = () => {
+    const parsedMonth = Number(monthInput);
+    if (!Number.isInteger(parsedMonth) || parsedMonth < 1 || parsedMonth > 12) {
+      setMonthInput(String(month).padStart(2, "0"));
+      return;
+    }
+    normalizeDate(parsedMonth, year);
+  };
+
+  const commitYear = () => {
+    const parsedYear = Number(yearInput);
+    const minYear = minimumDate.getFullYear();
+    const maxYear = new Date().getFullYear() + 10;
+    if (!Number.isInteger(parsedYear) || parsedYear < minYear || parsedYear > maxYear) {
+      setYearInput(String(year));
+      return;
+    }
+    normalizeDate(month, parsedYear);
   };
 
   return (
-    <div
-      ref={containerRef}
-      role="listbox"
-      tabIndex={0}
-      aria-label={label}
-      className="h-[200px] cursor-grab select-none overflow-y-auto overscroll-contain py-20 text-center outline-none active:cursor-grabbing [scrollbar-width:none] snap-y snap-mandatory touch-pan-y [&::-webkit-scrollbar]:hidden"
-      onScroll={syncFromScroll}
-      onPointerDown={(event) => {
-        if (event.pointerType !== "mouse" || event.button !== 0) return;
-        dragRef.current = {
-          startY: event.clientY,
-          startScrollTop: event.currentTarget.scrollTop,
-        };
-        event.currentTarget.setPointerCapture(event.pointerId);
-      }}
-      onPointerMove={(event) => {
-        if (!dragRef.current || event.pointerType !== "mouse") return;
-        event.currentTarget.scrollTop =
-          dragRef.current.startScrollTop - (event.clientY - dragRef.current.startY);
-      }}
-      onPointerUp={(event) => {
-        if (!dragRef.current || event.pointerType !== "mouse") return;
-        dragRef.current = null;
-        selectIndex(Math.round(event.currentTarget.scrollTop / ROW_HEIGHT));
-      }}
-      onPointerCancel={() => {
-        dragRef.current = null;
-      }}
-      onKeyDown={(event) => {
-        if (event.key === "ArrowUp") {
-          event.preventDefault();
-          selectIndex(selectedIndex - 1);
-        } else if (event.key === "ArrowDown") {
-          event.preventDefault();
-          selectIndex(selectedIndex + 1);
-        } else if (event.key === "Home") {
-          event.preventDefault();
-          selectIndex(0);
-        } else if (event.key === "End") {
-          event.preventDefault();
-          selectIndex(options.length - 1);
-        }
-      }}
-    >
-      {options.map((option, index) => (
-        <button
-          key={option}
-          type="button"
-          role="option"
-          aria-selected={option === value}
-          tabIndex={-1}
-          className={`block h-10 w-full snap-center text-sm transition-colors ${
-            option === value ? "font-bold text-foreground" : "text-muted-foreground"
-          }`}
-          onClick={() => selectIndex(index)}
-        >
-          {String(option).padStart(2, "0")}
-        </button>
-      ))}
+    <div className="space-y-3">
+      <div className="flex items-center justify-between gap-3">
+        <div className="min-w-0">
+          <p className="text-xs font-medium text-muted-foreground">{label}</p>
+          <p className="mt-1 truncate font-display text-lg font-semibold">
+            {formatDateLabel(value)}
+          </p>
+        </div>
+        <div className="flex shrink-0 flex-col gap-1">
+          <Button
+            type="button"
+            size="icon"
+            variant="outline"
+            className="size-8 rounded-lg"
+            aria-label={`Advance ${label.toLowerCase()} by one day`}
+            onClick={() => onChange(addDays(value, 1))}
+          >
+            <ChevronUp className="size-4" />
+          </Button>
+          <Button
+            type="button"
+            size="icon"
+            variant="outline"
+            className="size-8 rounded-lg"
+            aria-label={`Move ${label.toLowerCase()} back by one day`}
+            disabled={value <= minDate}
+            onClick={() => onChange(addDays(value, -1))}
+          >
+            <ChevronDown className="size-4" />
+          </Button>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-3 border-t border-border pt-3">
+        <label className="space-y-1">
+          <span className="block text-xs text-muted-foreground">Month (1–12)</span>
+          <Input
+            type="text"
+            inputMode="numeric"
+            aria-label={`${label} month`}
+            value={monthInput}
+            maxLength={2}
+            onChange={(event) => {
+              if (/^\d{0,2}$/.test(event.target.value)) setMonthInput(event.target.value);
+            }}
+            onBlur={commitMonth}
+            onKeyDown={(event) => {
+              if (event.key === "Enter") event.currentTarget.blur();
+            }}
+            className="h-9 rounded-lg"
+          />
+        </label>
+        <label className="space-y-1">
+          <span className="block text-xs text-muted-foreground">Year</span>
+          <Input
+            type="text"
+            inputMode="numeric"
+            aria-label={`${label} year`}
+            value={yearInput}
+            maxLength={4}
+            onChange={(event) => {
+              if (/^\d{0,4}$/.test(event.target.value)) setYearInput(event.target.value);
+            }}
+            onBlur={commitYear}
+            onKeyDown={(event) => {
+              if (event.key === "Enter") event.currentTarget.blur();
+            }}
+            className="h-9 rounded-lg"
+          />
+        </label>
+      </div>
     </div>
   );
 }

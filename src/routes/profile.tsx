@@ -44,7 +44,7 @@ export const Route = createFileRoute("/profile")({
 
 function ProfilePage() {
   const { user, logout, updateUser } = useAuth();
-  const { bookings, favorites } = useSpaceaeon();
+  const { bookings, favorites, currency } = useSpaceaeon();
   const navigate = useNavigate();
 
   const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
