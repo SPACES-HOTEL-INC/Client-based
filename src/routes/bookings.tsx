@@ -48,7 +48,7 @@ export const Route = createFileRoute("/bookings")({
 function canCancelBooking(booking: Booking) {
   const today = new Date();
   const todayString = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
-  return booking.status === "active" && booking.checkIn > todayString;
+  return booking.status === "active" && booking.checkIn >= todayString;
 }
 
 function formatBookingDate(value: string) {
