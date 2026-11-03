@@ -357,7 +357,7 @@ export async function createBookingReservation(payload: {
 }
 
 export async function cancelBookingReservation(bookingId: string) {
-  const res = await api.post(`/bookings/${encodeURIComponent(bookingId)}/cancel`);
+  const res = await api.delete(`/bookings/${encodeURIComponent(bookingId)}`);
   return res.data;
 }
 

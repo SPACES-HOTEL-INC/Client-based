@@ -46,7 +46,9 @@ export const Route = createFileRoute("/bookings")({
 });
 
 function canCancelBooking(booking: Booking) {
-  return booking.status === "active";
+  const today = new Date();
+  const todayString = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+  return booking.status === "active" && booking.checkIn > todayString;
 }
 
 function formatBookingDate(value: string) {
@@ -90,10 +92,14 @@ function BookingsPage() {
 
   const handleCancel = async () => {
     if (!cancelTarget || cancelling) return;
-    const bookingId = cancelTarget.backendId || cancelTarget.ref;
+    if (!cancelTarget.backendId) {
+      toast.error("This booking is missing its backend ID and cannot be cancelled here.");
+      return;
+    }
+
     setCancelling(true);
     try {
-      await cancelBookingReservation(bookingId);
+      await cancelBookingReservation(cancelTarget.backendId);
       updateBookingStatus(cancelTarget.ref, "cancelled");
       toast.success("Booking cancelled.");
       setSelectedBooking(null);

@@ -108,8 +108,7 @@ export function BookingDialog({
       const bookingData = responseData?.data || responseData;
       const responseReference =
         bookingData?.reference || bookingData?.booking_reference || bookingData?.id;
-      const backendId =
-        bookingData?.id ?? bookingData?._id ?? bookingData?.booking_id ?? responseReference;
+      const backendId = bookingData?.id ?? bookingData?._id ?? bookingData?.booking_id;
       const referenceCode =
         typeof responseReference === "string"
           ? responseReference.match(/^(?:SPC\s*-\s*)?([A-Z0-9]{6})$/i)?.[1]
