@@ -31,7 +31,7 @@ const faqs = [
   },
   {
     q: "What is the cancellation policy?",
-    a: "Most Spaceaeon offer free cancellation up to 48 hours before check-in. The exact policy appears on the property page before you pay.",
+    a: "Spaceaeon offers free cancellation up to 48 hours before check-in. The exact policy appears on the property page before you pay.",
   },
   {
     q: "Where do I find my booking reference?",
@@ -101,7 +101,7 @@ function SupportPage() {
           <Phone className="size-4 text-primary" /> Call us
         </a>
         <a
-          href="mailto:concierge@Spaceaeon.ng"
+          href="mailto:info@spaceaeon.online"
           className="card-elevated flex items-center gap-3 p-4 text-sm font-medium"
         >
           <Mail className="size-4 text-primary" /> Email

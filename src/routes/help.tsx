@@ -29,8 +29,8 @@ function HelpPage() {
           <ChevronRight className="size-5 text-muted-foreground group-hover:translate-x-0.5 transition-transform" />
         </Link>
 
-        <a 
-          href="mailto:concierge@Spaceaeon.ng" 
+        <a
+          href="mailto:info@spaceaeon.online"
           className="flex items-center justify-between py-4 group"
         >
           <div className="flex items-center gap-4">

@@ -45,12 +45,8 @@ export const Route = createFileRoute("/bookings")({
   component: BookingsPage,
 });
 
-function localDateString(date: Date) {
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
-}
-
 function canCancelBooking(booking: Booking) {
-  return booking.status === "active" && booking.checkIn > localDateString(new Date());
+  return booking.status === "active";
 }
 
 function formatBookingDate(value: string) {
@@ -123,7 +119,7 @@ function BookingsPage() {
             Pending {buckets.pending.length ? `(${buckets.pending.length})` : ""}
           </TabsTrigger>
           <TabsTrigger value="past" className="rounded-full">
-            Past / Cancelled
+            Past
           </TabsTrigger>
         </TabsList>
 
@@ -259,7 +255,7 @@ function BookingsPage() {
                   onClick={() => setCancelTarget(selectedBooking)}
                 >
                   <XCircle className="size-4" />
-                  Cancel booking
+                  Cancel Booking
                 </Button>
               )}
             </div>
@@ -277,7 +273,7 @@ function BookingsPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>Cancel this booking?</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to cancel this reservation?
+              Are you sure you want to cancel this booking?
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -364,7 +360,7 @@ function BookingCard({
             onClick={onCancel}
           >
             <XCircle className="size-4" />
-            Cancel booking
+            Cancel Booking
           </Button>
         </div>
       )}
