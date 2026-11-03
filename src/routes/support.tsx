@@ -23,7 +23,7 @@ type Msg = { id: number; from: "agent" | "me"; text: string };
 const faqs = [
   {
     q: "How do I confirm a bank transfer payment?",
-    a: "Send the exact amount to the dedicated Wema Bank account shown at checkout. Your booking moves from Pending to Active automatically once the transfer is matched, usually within two minutes.",
+    a: "Send the exact amount to the dedicated Wema Bank account shown at checkout. Your booking moves from Pending to Active automatically once the transfer is matched, usually within 60 seconds.",
   },
   {
     q: "Can I pay in US Dollars?",

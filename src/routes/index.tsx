@@ -85,7 +85,7 @@ function HomePage() {
           <h1 className="font-display text-3xl font-extrabold leading-[1.15] text-brand-foreground md:text-5xl">
             Find your next
             <br />
-            elite escape, {displayName}.
+            luxury stay, {displayName}.
           </h1>
 
           <button

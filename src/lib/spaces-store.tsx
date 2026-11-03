@@ -6,6 +6,7 @@ export const USD_RATE = 1600;
 export type User = { firstName: string; email: string; guest: boolean };
 
 export type Booking = {
+  backendId?: string;
   ref: string;
   propertyId: string;
   propertyTitle: string;
@@ -15,7 +16,10 @@ export type Booking = {
   checkOut: string;
   guests: number;
   total: number; // NGN
-  status: "active" | "pending" | "past";
+  subtotal?: number;
+  serviceFee?: number;
+  cautionFee?: number;
+  status: "active" | "pending" | "past" | "cancelled";
   method: string;
 };
 
@@ -29,6 +33,7 @@ type Ctx = {
   signIn: (firstName: string, email: string) => void;
   signOut: () => void;
   addBooking: (b: Booking) => void;
+  updateBookingStatus: (ref: string, status: Booking["status"]) => void;
   toggleFavorite: (id: string) => void;
 };
 
@@ -91,6 +96,15 @@ export function SpaceaeonProvider({ children }: { children: ReactNode }) {
       addBooking: (b) => {
         setBookings((prev) => {
           const next = [b, ...prev];
+          persist("Spaceaeon.bookings", next);
+          return next;
+        });
+      },
+      updateBookingStatus: (ref, status) => {
+        setBookings((prev) => {
+          const next = prev.map((booking) =>
+            booking.ref === ref ? { ...booking, status } : booking,
+          );
           persist("Spaceaeon.bookings", next);
           return next;
         });

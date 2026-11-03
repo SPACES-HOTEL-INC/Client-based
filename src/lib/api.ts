@@ -356,4 +356,11 @@ export async function createBookingReservation(payload: {
   return res.data;
 }
 
+export async function cancelBookingReservation(bookingId: string) {
+  const res = await api.patch(`/bookings/${encodeURIComponent(bookingId)}`, {
+    status: "cancelled",
+  });
+  return res.data;
+}
+
 export default api;

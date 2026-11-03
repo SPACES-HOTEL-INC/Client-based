@@ -23,10 +23,7 @@ import { createBookingReservation } from "@/lib/api";
 const formatISODate = (date: Date) =>
   `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
 
-const parseISODate = (value: string) => {
-  const [year, month, day] = value.split("-").map(Number);
-  return new Date(year, month - 1, day);
-};
+const parseISODate = (value: string) => new Date(`${value}T00:00:00`);
 
 const today = () => formatISODate(new Date());
 
@@ -111,6 +108,8 @@ export function BookingDialog({
       const bookingData = responseData?.data || responseData;
       const responseReference =
         bookingData?.reference || bookingData?.booking_reference || bookingData?.id;
+      const backendId =
+        bookingData?.id ?? bookingData?._id ?? bookingData?.booking_id ?? responseReference;
       const referenceCode =
         typeof responseReference === "string"
           ? responseReference.match(/^(?:SPC\s*-\s*)?([A-Z0-9]{6})$/i)?.[1]
@@ -118,6 +117,7 @@ export function BookingDialog({
       const bookingRef = referenceCode ? `SPC - ${referenceCode.toUpperCase()}` : fallbackReference;
 
       addBooking({
+        ...(backendId != null ? { backendId: String(backendId) } : {}),
         ref: bookingRef,
         propertyId: property.id,
         propertyTitle: property.title,
@@ -127,6 +127,9 @@ export function BookingDialog({
         checkOut,
         guests,
         total,
+        subtotal,
+        serviceFee,
+        cautionFee: caution,
         status: "active",
         method: "Bank transfer",
       });
