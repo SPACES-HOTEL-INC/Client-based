@@ -379,7 +379,7 @@ export type ApiBooking = {
 };
 
 export type BookingCreationResponse = {
-  id: string;
+  id: string | null;
   spc_code: string | null;
   status: string | null;
 };
@@ -428,18 +428,17 @@ export async function createBookingReservation(
       ? res.data.data
       : res.data;
 
-  if (typeof response !== "object" || response === null || !("id" in response)) {
-    throw new Error("The booking response did not include a booking ID.");
-  }
-
-  const { id, spc_code, status } = response;
-  if (typeof id !== "string" || !id.trim()) {
-    throw new Error("The booking response contained an invalid booking ID.");
-  }
+  const booking =
+    typeof response === "object" && response !== null && !Array.isArray(response)
+      ? (response as Record<string, unknown>)
+      : {};
+  const id = typeof booking.id === "string" && booking.id.trim() ? booking.id : null;
+  const spcCode = booking.spc_code;
+  const status = booking.status;
 
   return {
     id,
-    spc_code: typeof spc_code === "string" && spc_code.trim() ? spc_code : null,
+    spc_code: typeof spcCode === "string" && spcCode.trim() ? spcCode : null,
     status: typeof status === "string" ? status : null,
   };
 }

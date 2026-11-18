@@ -119,7 +119,7 @@ export function BookingDialog({
             : "Pending";
 
       addBooking({
-        backendId: responseData.id,
+        backendId: responseData.id ?? undefined,
         ref: bookingReference,
         propertyId: property.id,
         propertyTitle: property.title,
