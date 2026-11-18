@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { CalendarDays, Clock3, Loader2, Ticket, Users, XCircle } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -23,7 +23,7 @@ import {
 } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { SignInRequiredModal } from "@/components/spaces/SignInRequiredModal";
-import { cancelBookingReservation } from "@/lib/api";
+import { cancelBookingReservation, fetchMyBookings, fetchProperty } from "@/lib/api";
 import { formatMoney, nightsBetween, useSpaceaeon, type Booking } from "@/lib/spaces-store";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -48,7 +48,27 @@ export const Route = createFileRoute("/bookings")({
 function canCancelBooking(booking: Booking) {
   const today = new Date();
   const todayString = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
-  return booking.status === "active" && booking.checkIn >= todayString;
+  return ["active", "pending"].includes(booking.status) && booking.checkIn >= todayString;
+}
+
+function normalizeBookingStatus(status: string): Booking["status"] {
+  switch (status.toLowerCase()) {
+    case "pending":
+      return "pending";
+    case "confirmed":
+    case "active":
+    case "checked_in":
+      return "active";
+    case "cancelled":
+    case "canceled":
+      return "cancelled";
+    case "completed":
+    case "checked_out":
+    case "past":
+      return "past";
+    default:
+      return "unknown";
+  }
 }
 
 function formatBookingDate(value: string) {
@@ -60,13 +80,67 @@ function formatBookingDate(value: string) {
 }
 
 function BookingsPage() {
-  const { bookings, hydrated, currency, updateBookingStatus } = useSpaceaeon();
+  const { bookings, currency, replaceBookings, updateBookingStatus } = useSpaceaeon();
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const [tab, setTab] = useState("active");
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
   const [cancelTarget, setCancelTarget] = useState<Booking | null>(null);
   const [cancelling, setCancelling] = useState(false);
+  const [historyLoading, setHistoryLoading] = useState(true);
+  const [historyError, setHistoryError] = useState(false);
+  const [reloadKey, setReloadKey] = useState(0);
+
+  useEffect(() => {
+    if (authLoading || !user?.email) return;
+
+    let mounted = true;
+    setHistoryLoading(true);
+    setHistoryError(false);
+
+    const loadBookings = async () => {
+      try {
+        const apiBookings = await fetchMyBookings();
+        const propertyIds = [...new Set(apiBookings.map((booking) => booking.property_id))];
+        const propertyEntries = await Promise.all(
+          propertyIds.map(async (propertyId) => [propertyId, await fetchProperty(propertyId)] as const),
+        );
+        if (!mounted) return;
+
+        const propertiesById = new Map(propertyEntries);
+        replaceBookings(
+          apiBookings.map((booking) => {
+            const property = propertiesById.get(booking.property_id);
+            const room = property?.rooms.find((candidate) => candidate.id === booking.room_id);
+            return {
+              backendId: booking.id,
+              ref: booking.spc_code || booking.id,
+              propertyId: booking.property_id,
+              propertyTitle: property?.title || "Property details unavailable",
+              image: room?.image || room?.images?.[0] || property?.images?.[0] || "",
+              roomName: room?.name || "Room details unavailable",
+              checkIn: booking.check_in_date,
+              checkOut: booking.check_out_date,
+              guests: booking.num_guests,
+              total: Number(booking.total_price),
+              status: normalizeBookingStatus(booking.status),
+              method: "Not specified",
+            };
+          }),
+        );
+      } catch (error) {
+        console.error("Failed to load booking history:", error);
+        if (mounted) setHistoryError(true);
+      } finally {
+        if (mounted) setHistoryLoading(false);
+      }
+    };
+
+    void loadBookings();
+    return () => {
+      mounted = false;
+    };
+  }, [authLoading, user?.email, reloadKey, replaceBookings]);
 
   if (authLoading) {
     return (
@@ -84,10 +158,11 @@ function BookingsPage() {
     );
   }
 
-  const buckets: { active: Booking[]; pending: Booking[]; past: Booking[] } = {
+  const buckets: { active: Booking[]; pending: Booking[]; past: Booking[]; other: Booking[] } = {
     active: bookings.filter((booking) => booking.status === "active"),
     pending: bookings.filter((booking) => booking.status === "pending"),
     past: bookings.filter((booking) => booking.status === "past" || booking.status === "cancelled"),
+    other: bookings.filter((booking) => booking.status === "unknown"),
   };
 
   const handleCancel = async () => {
@@ -116,8 +191,17 @@ function BookingsPage() {
     <div className="mx-auto max-w-5xl px-5 pt-6 md:px-10">
       <h1 className="font-display text-2xl font-bold">Your bookings</h1>
 
+      {historyError && (
+        <div className="mt-4 flex items-center justify-between gap-4 rounded-xl border border-destructive/30 bg-destructive/5 p-4 text-sm">
+          <p>Could not load your bookings. Please try again.</p>
+          <Button type="button" variant="outline" size="sm" onClick={() => setReloadKey((key) => key + 1)}>
+            Retry
+          </Button>
+        </div>
+      )}
+
       <Tabs value={tab} onValueChange={setTab} className="mt-4">
-        <TabsList className="grid w-full grid-cols-3 rounded-full">
+        <TabsList className="grid w-full grid-cols-4 rounded-full">
           <TabsTrigger value="active" className="rounded-full">
             Active {buckets.active.length ? `(${buckets.active.length})` : ""}
           </TabsTrigger>
@@ -127,13 +211,17 @@ function BookingsPage() {
           <TabsTrigger value="past" className="rounded-full">
             Past
           </TabsTrigger>
+          <TabsTrigger value="other" className="rounded-full">
+            Other {buckets.other.length ? `(${buckets.other.length})` : ""}
+          </TabsTrigger>
         </TabsList>
 
-        {(["active", "pending", "past"] as const).map((key) => (
+        {(["active", "pending", "past", "other"] as const).map((key) => (
           <TabsContent key={key} value={key} className="mt-5 space-y-4">
-            {!hydrated ? (
+            {historyLoading ? (
               <div className="h-32 animate-pulse rounded-3xl bg-muted" />
-            ) : buckets[key].length === 0 ? (
+            ) : historyError ? null : (
+            buckets[key].length === 0 ? (
               <EmptyState label={key} />
             ) : (
               buckets[key].map((booking) => (
@@ -144,7 +232,7 @@ function BookingsPage() {
                   onCancel={() => setCancelTarget(booking)}
                 />
               ))
-            )}
+            ))}
           </TabsContent>
         ))}
       </Tabs>
@@ -317,26 +405,30 @@ function BookingCard({
       <button
         type="button"
         onClick={onSelect}
-        className="grid w-full grid-cols-[88px_minmax(0,1fr)] gap-4 p-4 text-left transition-colors hover:bg-muted/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+        className={`${booking.image ? "grid grid-cols-[88px_minmax(0,1fr)]" : "block"} w-full gap-4 p-4 text-left transition-colors hover:bg-muted/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary`}
         aria-label={`View booking ${booking.ref} for ${booking.propertyTitle}`}
       >
-        <img
-          src={booking.image}
-          alt={booking.propertyTitle}
-          loading="lazy"
-          width={1200}
-          height={800}
-          className="size-22 h-full w-22 rounded-2xl object-cover"
-        />
+        {booking.image && (
+          <img
+            src={booking.image}
+            alt={booking.propertyTitle}
+            loading="lazy"
+            width={1200}
+            height={800}
+            className="size-22 h-full w-22 rounded-2xl object-cover"
+          />
+        )}
         <div className="min-w-0 space-y-1.5">
           <div className="flex items-start justify-between gap-3">
             <p className="truncate font-display font-semibold">{booking.propertyTitle}</p>
             <Badge variant="secondary" className="shrink-0 rounded-full text-[11px] capitalize">
               {booking.status === "pending"
-                ? "Pending payment"
+                ? "Pending"
                 : booking.status === "cancelled"
                   ? "Cancelled"
-                  : booking.status}
+                  : booking.status === "unknown"
+                    ? "Status unavailable"
+                    : booking.status}
             </Badge>
           </div>
           <p className="truncate text-xs text-muted-foreground">{booking.roomName}</p>

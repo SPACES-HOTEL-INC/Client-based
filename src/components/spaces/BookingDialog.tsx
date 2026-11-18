@@ -16,7 +16,7 @@ import { Input } from "@/components/ui/input";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import type { Property, Room } from "@/lib/data";
-import { formatMoney, makeRef, nightsBetween, useSpaceaeon } from "@/lib/spaces-store";
+import { formatMoney, nightsBetween, useSpaceaeon } from "@/lib/spaces-store";
 import { toast } from "sonner";
 import { createBookingReservation } from "@/lib/api";
 
@@ -94,30 +94,23 @@ export function BookingDialog({
     setLoading(true);
 
     try {
-      const fallbackReference = makeRef();
       const responseData = await createBookingReservation({
-        space_id: property.id,
+        property_id: property.id,
         room_id: room.id,
-        check_in: checkIn,
-        check_out: checkOut,
-        guests_count: guests,
-        total_amount: total,
-        payment_method: "bank_transfer",
+        check_in_date: checkIn,
+        check_out_date: checkOut,
+        num_guests: guests,
+        special_requests: "",
+        total_price: total,
       });
 
-      const bookingData = responseData?.data || responseData;
-      const responseReference =
-        bookingData?.reference || bookingData?.booking_reference || bookingData?.id;
-      const backendId = bookingData?.id ?? bookingData?._id ?? bookingData?.booking_id;
-      const referenceCode =
-        typeof responseReference === "string"
-          ? responseReference.match(/^(?:SPC\s*-\s*)?([A-Z0-9]{6})$/i)?.[1]
-          : null;
-      const bookingRef = referenceCode ? `SPC - ${referenceCode.toUpperCase()}` : fallbackReference;
+      if (!responseData.id || !responseData.spc_code) {
+        throw new Error("The booking response is missing its ID or reference code.");
+      }
 
       addBooking({
-        ...(backendId != null ? { backendId: String(backendId) } : {}),
-        ref: bookingRef,
+        backendId: responseData.id,
+        ref: responseData.spc_code,
         propertyId: property.id,
         propertyTitle: property.title,
         image: property.images[0] ?? "",
@@ -129,11 +122,11 @@ export function BookingDialog({
         subtotal,
         serviceFee,
         cautionFee: caution,
-        status: "active",
-        method: "Bank transfer",
+        status: "pending",
+        method: "Pending",
       });
 
-      setReference(bookingRef);
+      setReference(responseData.spc_code);
       setStep("done");
     } catch (error) {
       console.error("Booking creation failed:", error);
@@ -179,7 +172,7 @@ export function BookingDialog({
       <DialogContent className="max-h-[90vh] max-w-lg overflow-y-auto rounded-3xl">
         <DialogHeader className="text-left">
           <DialogTitle className="font-display text-xl">
-            {step === "done" ? "Booking successful" : property.title}
+            {step === "done" ? "Booking request submitted" : property.title}
           </DialogTitle>
           {step !== "done" && <p className="text-sm text-muted-foreground">{room.name}</p>}
         </DialogHeader>
@@ -314,7 +307,7 @@ export function BookingDialog({
               {loading ? (
                 <Loader2 className="size-5 animate-spin" />
               ) : (
-                `Pay Now · ${formatMoney(total, currency)}`
+                `Submit booking · ${formatMoney(total, currency)}`
               )}
             </Button>
           </div>
@@ -337,11 +330,10 @@ export function BookingDialog({
               <Row label="Dates" value={`${checkIn} → ${checkOut}`} />
               <Row label="Nights" value={String(nights)} />
               <Row label="Guests" value={String(guests)} />
-              <Row label="Payment method" value="Bank transfer" />
               <Row label="Total" value={formatMoney(total, currency)} />
             </div>
             <Badge variant="secondary" className="rounded-full">
-              Active booking
+              Pending
             </Badge>
             <Button
               type="button"

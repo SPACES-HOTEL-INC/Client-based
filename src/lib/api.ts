@@ -346,16 +346,41 @@ export async function submitPropertyReview(payload: {
   return res.data;
 }
 
-export async function createBookingReservation(payload: {
-  space_id: string;
+export type BookingReservationPayload = {
+  property_id: string;
   room_id: string;
-  check_in: string;
-  check_out: string;
-  guests_count: number;
-  total_amount: number;
-  payment_method: string;
-}) {
-  const res = await api.post("/bookings/", payload);
+  check_in_date: string;
+  check_out_date: string;
+  num_guests: number;
+  special_requests: string;
+  total_price: number;
+};
+
+export type ApiBooking = BookingReservationPayload & {
+  id: string;
+  guest_id: string;
+  num_nights: number;
+  spc_code: string;
+  checked_in_at: string | null;
+  status: string;
+  created_at: string;
+  updated_at: string;
+  guest_name?: string;
+  guest_email?: string;
+  room_title?: string;
+  property_name?: string;
+};
+
+export async function createBookingReservation(payload: BookingReservationPayload) {
+  const res = await api.post<ApiBooking>("/bookings/", payload);
+  return res.data;
+}
+
+export async function fetchMyBookings() {
+  const res = await api.get<ApiBooking[]>("/bookings/mine");
+  if (!Array.isArray(res.data)) {
+    throw new Error("The booking history response was not a list.");
+  }
   return res.data;
 }
 
