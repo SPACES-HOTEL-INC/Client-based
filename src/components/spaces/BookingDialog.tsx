@@ -16,7 +16,7 @@ import { Input } from "@/components/ui/input";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import type { Property, Room } from "@/lib/data";
-import { formatMoney, nightsBetween, useSpaceaeon } from "@/lib/spaces-store";
+import { formatMoney, makeRef, nightsBetween, useSpaceaeon } from "@/lib/spaces-store";
 import { toast } from "sonner";
 import { createBookingReservation } from "@/lib/api";
 
@@ -104,13 +104,23 @@ export function BookingDialog({
         total_price: total,
       });
 
-      if (!responseData.id || !responseData.spc_code) {
-        throw new Error("The booking response is missing its ID or reference code.");
-      }
+      const bookingReference = responseData.spc_code || makeRef();
+      const bookingStatus =
+        responseData.status === "confirmed" || responseData.status === "active"
+          ? "active"
+          : responseData.status === "cancelled"
+            ? "cancelled"
+            : "pending";
+      const bookingStatusLabel =
+        bookingStatus === "active"
+          ? "Confirmed"
+          : bookingStatus === "cancelled"
+            ? "Cancelled"
+            : "Pending";
 
       addBooking({
         backendId: responseData.id,
-        ref: responseData.spc_code,
+        ref: bookingReference,
         propertyId: property.id,
         propertyTitle: property.title,
         image: property.images[0] ?? "",
@@ -122,11 +132,11 @@ export function BookingDialog({
         subtotal,
         serviceFee,
         cautionFee: caution,
-        status: "pending",
-        method: "Pending",
+        status: bookingStatus,
+        method: "Not specified",
       });
 
-      setReference(responseData.spc_code);
+      setReference(bookingReference);
       setStep("done");
     } catch (error) {
       console.error("Booking creation failed:", error);
@@ -333,7 +343,7 @@ export function BookingDialog({
               <Row label="Total" value={formatMoney(total, currency)} />
             </div>
             <Badge variant="secondary" className="rounded-full">
-              Pending
+              {bookingStatusLabel}
             </Badge>
             <Button
               type="button"

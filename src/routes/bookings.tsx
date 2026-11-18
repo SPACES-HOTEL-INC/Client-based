@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState, type ReactNode } from "react";
 import { CalendarDays, Clock3, Loader2, Ticket, Users, XCircle } from "lucide-react";
 import { toast } from "sonner";
@@ -88,20 +88,23 @@ function BookingsPage() {
   const [cancelTarget, setCancelTarget] = useState<Booking | null>(null);
   const [cancelling, setCancelling] = useState(false);
   const [historyLoading, setHistoryLoading] = useState(true);
-  const [historyError, setHistoryError] = useState(false);
-  const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
     if (authLoading || !user?.email) return;
 
     let mounted = true;
     setHistoryLoading(true);
-    setHistoryError(false);
 
     const loadBookings = async () => {
       try {
         const apiBookings = await fetchMyBookings();
-        const propertyIds = [...new Set(apiBookings.map((booking) => booking.property_id))];
+        const propertyIds = [
+          ...new Set(
+            apiBookings
+              .map((booking) => booking.property_id)
+              .filter((propertyId): propertyId is string => Boolean(propertyId)),
+          ),
+        ];
         const propertyEntries = await Promise.all(
           propertyIds.map(
             async (propertyId) => [propertyId, await fetchProperty(propertyId)] as const,
@@ -112,19 +115,22 @@ function BookingsPage() {
         const propertiesById = new Map(propertyEntries);
         replaceBookings(
           apiBookings.map((booking) => {
-            const property = propertiesById.get(booking.property_id);
+            const propertyId = booking.property_id ?? "";
+            const property = propertyId ? propertiesById.get(propertyId) : undefined;
             const room = property?.rooms.find((candidate) => candidate.id === booking.room_id);
+            const checkIn = booking.check_in_date || booking.created_at.slice(0, 10);
             return {
               backendId: booking.id,
               ref: booking.spc_code || booking.id,
-              propertyId: booking.property_id,
-              propertyTitle: property?.title || "Property details unavailable",
+              propertyId,
+              propertyTitle:
+                booking.property_name || property?.title || "Property details unavailable",
               image: room?.image || room?.images?.[0] || property?.images?.[0] || "",
-              roomName: room?.name || "Room details unavailable",
-              checkIn: booking.check_in_date,
-              checkOut: booking.check_out_date,
-              guests: booking.num_guests,
-              total: Number(booking.total_price),
+              roomName: booking.room_title || room?.name || "Room details unavailable",
+              checkIn,
+              checkOut: booking.check_out_date || checkIn,
+              guests: booking.num_guests ?? 1,
+              total: Number(booking.total_price ?? 0),
               status: normalizeBookingStatus(booking.status),
               method: "Not specified",
             };
@@ -132,7 +138,7 @@ function BookingsPage() {
         );
       } catch (error) {
         console.error("Failed to load booking history:", error);
-        if (mounted) setHistoryError(true);
+        if (mounted) replaceBookings([]);
       } finally {
         if (mounted) setHistoryLoading(false);
       }
@@ -142,7 +148,7 @@ function BookingsPage() {
     return () => {
       mounted = false;
     };
-  }, [authLoading, user?.email, reloadKey, replaceBookings]);
+  }, [authLoading, user?.email, replaceBookings]);
 
   if (authLoading) {
     return (
@@ -161,18 +167,11 @@ function BookingsPage() {
   }
 
   const buckets: { active: Booking[]; pending: Booking[]; past: Booking[] } = {
-    active:
-      historyLoading || historyError
-        ? []
-        : bookings.filter((booking) => booking.status === "active"),
-    pending:
-      historyLoading || historyError
-        ? []
-        : bookings.filter((booking) => booking.status === "pending"),
-    past:
-      historyLoading || historyError
-        ? []
-        : bookings.filter((booking) => booking.status === "past" || booking.status === "cancelled"),
+    active: historyLoading ? [] : bookings.filter((booking) => booking.status === "active"),
+    pending: historyLoading ? [] : bookings.filter((booking) => booking.status === "pending"),
+    past: historyLoading
+      ? []
+      : bookings.filter((booking) => booking.status === "past" || booking.status === "cancelled"),
   };
 
   const handleCancel = async () => {
@@ -201,20 +200,6 @@ function BookingsPage() {
     <div className="mx-auto max-w-5xl px-5 pt-6 md:px-10">
       <h1 className="font-display text-2xl font-bold">Your bookings</h1>
 
-      {historyError && (
-        <div className="mt-4 flex items-center justify-between gap-4 rounded-xl border border-destructive/30 bg-destructive/5 p-4 text-sm">
-          <p>Could not load your bookings. Please try again.</p>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => setReloadKey((key) => key + 1)}
-          >
-            Retry
-          </Button>
-        </div>
-      )}
-
       <Tabs value={tab} onValueChange={setTab} className="mt-4">
         <TabsList className="grid w-full grid-cols-3 rounded-full">
           <TabsTrigger value="active" className="rounded-full">
@@ -230,11 +215,7 @@ function BookingsPage() {
 
         {(["active", "pending", "past"] as const).map((key) => (
           <TabsContent key={key} value={key} className="mt-5 space-y-4">
-            {historyLoading ? (
-              <div className="h-32 animate-pulse rounded-3xl bg-muted" />
-            ) : historyError ? null : buckets[key].length === 0 ? (
-              <EmptyState label={key} />
-            ) : (
+            {buckets[key].length > 0 &&
               buckets[key].map((booking) => (
                 <BookingCard
                   key={booking.ref}
@@ -242,8 +223,7 @@ function BookingsPage() {
                   onSelect={() => setSelectedBooking(booking)}
                   onCancel={() => setCancelTarget(booking)}
                 />
-              ))
-            )}
+              ))}
           </TabsContent>
         ))}
       </Tabs>
@@ -504,23 +484,6 @@ function MoneyRow({
     <div className={`flex items-center justify-between text-sm ${strong ? "font-semibold" : ""}`}>
       <span className={strong ? "" : "text-muted-foreground"}>{label}</span>
       <span>{formatMoney(amount, currency)}</span>
-    </div>
-  );
-}
-
-function EmptyState({ label }: { label: string }) {
-  return (
-    <div className="card-elevated flex flex-col items-center gap-3 px-6 py-14 text-center">
-      <span className="grid size-14 place-items-center rounded-2xl bg-accent text-primary">
-        <Ticket className="size-6" />
-      </span>
-      <p className="font-display text-lg font-semibold">No {label} bookings</p>
-      <p className="max-w-xs text-sm text-muted-foreground">
-        When you reserve a stay it appears here with your booking pass and reference code.
-      </p>
-      <Button asChild className="rounded-xl">
-        <Link to="/search">Explore Spaceaeon</Link>
-      </Button>
     </div>
   );
 }
