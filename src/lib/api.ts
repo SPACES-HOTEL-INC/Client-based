@@ -371,17 +371,52 @@ export type ApiBooking = BookingReservationPayload & {
   property_name?: string;
 };
 
+function isApiBooking(value: unknown): value is ApiBooking {
+  if (!value || typeof value !== "object") return false;
+  const booking = value as Record<string, unknown>;
+  return (
+    typeof booking.id === "string" &&
+    typeof booking.guest_id === "string" &&
+    typeof booking.room_id === "string" &&
+    typeof booking.property_id === "string" &&
+    typeof booking.check_in_date === "string" &&
+    typeof booking.check_out_date === "string" &&
+    typeof booking.num_guests === "number" &&
+    typeof booking.special_requests === "string" &&
+    typeof booking.total_price === "number" &&
+    typeof booking.num_nights === "number" &&
+    typeof booking.spc_code === "string" &&
+    (typeof booking.checked_in_at === "string" || booking.checked_in_at === null) &&
+    typeof booking.status === "string" &&
+    typeof booking.created_at === "string" &&
+    typeof booking.updated_at === "string"
+  );
+}
+
 export async function createBookingReservation(payload: BookingReservationPayload) {
   const res = await api.post<ApiBooking>("/bookings/", payload);
   return res.data;
 }
 
 export async function fetchMyBookings() {
-  const res = await api.get<ApiBooking[]>("/bookings/mine");
-  if (!Array.isArray(res.data)) {
-    throw new Error("The booking history response was not a list.");
+  const res = await api.get<unknown>("/bookings/mine");
+  if (res.data == null) {
+    return [];
   }
-  return res.data;
+
+  const data =
+    Array.isArray(res.data)
+      ? res.data
+      : typeof res.data === "object" &&
+          "data" in res.data &&
+          Array.isArray(res.data.data)
+        ? res.data.data
+        : null;
+
+  if (!data || !data.every(isApiBooking)) {
+    throw new Error("The booking history response was not a valid booking list.");
+  }
+  return data;
 }
 
 export async function cancelBookingReservation(bookingId: string) {

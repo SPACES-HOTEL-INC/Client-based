@@ -158,11 +158,10 @@ function BookingsPage() {
     );
   }
 
-  const buckets: { active: Booking[]; pending: Booking[]; past: Booking[]; other: Booking[] } = {
+  const buckets: { active: Booking[]; pending: Booking[]; past: Booking[] } = {
     active: bookings.filter((booking) => booking.status === "active"),
     pending: bookings.filter((booking) => booking.status === "pending"),
     past: bookings.filter((booking) => booking.status === "past" || booking.status === "cancelled"),
-    other: bookings.filter((booking) => booking.status === "unknown"),
   };
 
   const handleCancel = async () => {
@@ -201,7 +200,7 @@ function BookingsPage() {
       )}
 
       <Tabs value={tab} onValueChange={setTab} className="mt-4">
-        <TabsList className="grid w-full grid-cols-4 rounded-full">
+        <TabsList className="grid w-full grid-cols-3 rounded-full">
           <TabsTrigger value="active" className="rounded-full">
             Active {buckets.active.length ? `(${buckets.active.length})` : ""}
           </TabsTrigger>
@@ -211,12 +210,9 @@ function BookingsPage() {
           <TabsTrigger value="past" className="rounded-full">
             Past
           </TabsTrigger>
-          <TabsTrigger value="other" className="rounded-full">
-            Other {buckets.other.length ? `(${buckets.other.length})` : ""}
-          </TabsTrigger>
         </TabsList>
 
-        {(["active", "pending", "past", "other"] as const).map((key) => (
+        {(["active", "pending", "past"] as const).map((key) => (
           <TabsContent key={key} value={key} className="mt-5 space-y-4">
             {historyLoading ? (
               <div className="h-32 animate-pulse rounded-3xl bg-muted" />
