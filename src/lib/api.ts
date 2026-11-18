@@ -300,9 +300,6 @@ export const api = axios.create({
 
 api.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
-    if (config.url?.startsWith("/api/v1/")) {
-      config.url = config.url.replace(/^\/api\/v1/, "");
-    }
     const token = localStorage.getItem("access_token") || localStorage.getItem("token");
     if (token && config.headers) {
       config.headers.Authorization = `Bearer ${token}`;
@@ -346,134 +343,17 @@ export async function submitPropertyReview(payload: {
   return res.data;
 }
 
-export type BookingReservationPayload = {
-  property_id: string;
+export async function createBookingReservation(payload: {
+  space_id: string;
   room_id: string;
-  check_in_date: string;
-  check_out_date: string;
-  num_guests: number;
-  special_requests: string;
-  total_price: number;
-};
-
-export type ApiBooking = {
-  id: string;
-  guest_id: string;
-  room_id: string;
-  property_id?: string | null;
-  check_in_date?: string | null;
-  check_out_date?: string | null;
-  num_guests?: number;
-  special_requests?: string | null;
-  total_price?: number | null;
-  num_nights?: number | null;
-  spc_code?: string | null;
-  checked_in_at?: string | null;
-  status: string;
-  created_at: string;
-  updated_at?: string | null;
-  guest_name?: string | null;
-  guest_email?: string | null;
-  room_title?: string | null;
-  property_name?: string | null;
-};
-
-export type BookingCreationResponse = {
-  id: string | null;
-  spc_code: string | null;
-  status: string | null;
-};
-
-function isApiBooking(value: unknown): value is ApiBooking {
-  if (!value || typeof value !== "object") return false;
-  const booking = value as Record<string, unknown>;
-  const optionalString = (key: string) =>
-    booking[key] === undefined || booking[key] === null || typeof booking[key] === "string";
-  const optionalNumber = (key: string) =>
-    booking[key] === undefined || booking[key] === null || typeof booking[key] === "number";
-
-  return (
-    typeof booking.id === "string" &&
-    typeof booking.guest_id === "string" &&
-    typeof booking.room_id === "string" &&
-    typeof booking.status === "string" &&
-    typeof booking.created_at === "string" &&
-    optionalString("property_id") &&
-    optionalString("check_in_date") &&
-    optionalString("check_out_date") &&
-    optionalNumber("num_guests") &&
-    optionalString("special_requests") &&
-    optionalNumber("total_price") &&
-    optionalNumber("num_nights") &&
-    optionalString("spc_code") &&
-    optionalString("checked_in_at") &&
-    optionalString("updated_at") &&
-    optionalString("guest_name") &&
-    optionalString("guest_email") &&
-    optionalString("room_title") &&
-    optionalString("property_name")
-  );
-}
-
-export async function createBookingReservation(
-  payload: BookingReservationPayload,
-): Promise<BookingCreationResponse> {
-  const res = await api.post<unknown>("/bookings/", payload);
-  const response =
-    typeof res.data === "object" &&
-    res.data !== null &&
-    "data" in res.data &&
-    typeof res.data.data === "object" &&
-    res.data.data !== null
-      ? res.data.data
-      : res.data;
-
-  const booking =
-    typeof response === "object" && response !== null && !Array.isArray(response)
-      ? (response as Record<string, unknown>)
-      : {};
-  const id = typeof booking.id === "string" && booking.id.trim() ? booking.id : null;
-  const spcCode = booking.spc_code;
-  const status = booking.status;
-
-  return {
-    id,
-    spc_code: typeof spcCode === "string" && spcCode.trim() ? spcCode : null,
-    status: typeof status === "string" ? status : null,
-  };
-}
-
-export async function fetchMyBookings() {
-  let res: AxiosResponse<unknown>;
-  try {
-    res = await api.get<unknown>("/bookings/mine");
-  } catch (error) {
-    if (
-      axios.isAxiosError(error) &&
-      [401, 403, 404].includes(error.response?.status ?? 0)
-    ) {
-      return [];
-    }
-    throw error;
-  }
-
-  if (res.data == null) {
-    return [];
-  }
-
-  const data =
-    Array.isArray(res.data)
-      ? res.data
-      : typeof res.data === "object" &&
-          "data" in res.data &&
-          Array.isArray(res.data.data)
-        ? res.data.data
-        : null;
-
-  if (!data || !data.every(isApiBooking)) {
-    throw new Error("The booking history response was not a valid booking list.");
-  }
-  return data;
+  check_in: string;
+  check_out: string;
+  guests_count: number;
+  total_amount: number;
+  payment_method: string;
+}) {
+  const res = await api.post("/bookings/", payload);
+  return res.data;
 }
 
 export async function cancelBookingReservation(bookingId: string) {

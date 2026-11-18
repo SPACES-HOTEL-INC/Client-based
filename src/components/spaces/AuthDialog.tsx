@@ -43,7 +43,7 @@ export function AuthDialog({ open, onOpenChange }: { open: boolean; onOpenChange
     try {
       if (mode === "signup") {
         // Register standard FastAPI / Backend user payload
-        await api.post("/auth/register", {
+        await api.post("/api/v1/auth/register", {
           email,
           password,
           full_name: firstName,
@@ -53,7 +53,7 @@ export function AuthDialog({ open, onOpenChange }: { open: boolean; onOpenChange
       }
 
       // Login request (FastAPI OAuth2 standard uses form data or JSON with username/email)
-      const loginRes = await api.post("/auth/login", {
+      const loginRes = await api.post("/api/v1/auth/login", {
         username: email,
         email,
         password,

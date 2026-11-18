@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 
 export type Currency = "NGN" | "USD";
 export const USD_RATE = 1600;
@@ -19,7 +19,7 @@ export type Booking = {
   subtotal?: number;
   serviceFee?: number;
   cautionFee?: number;
-  status: "active" | "pending" | "past" | "cancelled" | "unknown";
+  status: "active" | "pending" | "past" | "cancelled";
   method: string;
 };
 
@@ -33,7 +33,6 @@ type Ctx = {
   signIn: (firstName: string, email: string) => void;
   signOut: () => void;
   addBooking: (b: Booking) => void;
-  replaceBookings: (bookings: Booking[]) => void;
   updateBookingStatus: (ref: string, status: Booking["status"]) => void;
   toggleFavorite: (id: string) => void;
 };
@@ -74,15 +73,6 @@ export function SpaceaeonProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const replaceBookings = useCallback((next: Booking[]) => {
-    setBookings(next);
-    try {
-      localStorage.setItem("Spaceaeon.bookings", JSON.stringify(next));
-    } catch {
-      /* ignore */
-    }
-  }, []);
-
   const value = useMemo<Ctx>(
     () => ({
       user,
@@ -110,7 +100,6 @@ export function SpaceaeonProvider({ children }: { children: ReactNode }) {
           return next;
         });
       },
-      replaceBookings,
       updateBookingStatus: (ref, status) => {
         setBookings((prev) => {
           const next = prev.map((booking) =>
@@ -128,7 +117,7 @@ export function SpaceaeonProvider({ children }: { children: ReactNode }) {
         });
       },
     }),
-    [user, currency, bookings, favorites, hydrated, replaceBookings],
+    [user, currency, bookings, favorites, hydrated],
   );
 
   return <SpaceaeonContext.Provider value={value}>{children}</SpaceaeonContext.Provider>;

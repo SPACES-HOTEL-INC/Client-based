@@ -94,33 +94,30 @@ export function BookingDialog({
     setLoading(true);
 
     try {
+      const fallbackReference = makeRef();
       const responseData = await createBookingReservation({
-        property_id: property.id,
+        space_id: property.id,
         room_id: room.id,
-        check_in_date: checkIn,
-        check_out_date: checkOut,
-        num_guests: guests,
-        special_requests: "",
-        total_price: total,
+        check_in: checkIn,
+        check_out: checkOut,
+        guests_count: guests,
+        total_amount: total,
+        payment_method: "bank_transfer",
       });
 
-      const bookingReference = responseData.spc_code || makeRef();
-      const bookingStatus =
-        responseData.status === "confirmed" || responseData.status === "active"
-          ? "active"
-          : responseData.status === "cancelled"
-            ? "cancelled"
-            : "pending";
-      const bookingStatusLabel =
-        bookingStatus === "active"
-          ? "Confirmed"
-          : bookingStatus === "cancelled"
-            ? "Cancelled"
-            : "Pending";
+      const bookingData = responseData?.data || responseData;
+      const responseReference =
+        bookingData?.reference || bookingData?.booking_reference || bookingData?.id;
+      const backendId = bookingData?.id ?? bookingData?._id ?? bookingData?.booking_id;
+      const referenceCode =
+        typeof responseReference === "string"
+          ? responseReference.match(/^(?:SPC\s*-\s*)?([A-Z0-9]{6})$/i)?.[1]
+          : null;
+      const bookingRef = referenceCode ? `SPC - ${referenceCode.toUpperCase()}` : fallbackReference;
 
       addBooking({
-        backendId: responseData.id ?? undefined,
-        ref: bookingReference,
+        ...(backendId != null ? { backendId: String(backendId) } : {}),
+        ref: bookingRef,
         propertyId: property.id,
         propertyTitle: property.title,
         image: property.images[0] ?? "",
@@ -132,11 +129,11 @@ export function BookingDialog({
         subtotal,
         serviceFee,
         cautionFee: caution,
-        status: bookingStatus,
-        method: "Not specified",
+        status: "active",
+        method: "Bank transfer",
       });
 
-      setReference(bookingReference);
+      setReference(bookingRef);
       setStep("done");
     } catch (error) {
       console.error("Booking creation failed:", error);
@@ -182,7 +179,7 @@ export function BookingDialog({
       <DialogContent className="max-h-[90vh] max-w-lg overflow-y-auto rounded-3xl">
         <DialogHeader className="text-left">
           <DialogTitle className="font-display text-xl">
-            {step === "done" ? "Booking request submitted" : property.title}
+            {step === "done" ? "Booking successful" : property.title}
           </DialogTitle>
           {step !== "done" && <p className="text-sm text-muted-foreground">{room.name}</p>}
         </DialogHeader>
@@ -317,7 +314,7 @@ export function BookingDialog({
               {loading ? (
                 <Loader2 className="size-5 animate-spin" />
               ) : (
-                `Submit booking · ${formatMoney(total, currency)}`
+                `Pay Now · ${formatMoney(total, currency)}`
               )}
             </Button>
           </div>
@@ -340,10 +337,11 @@ export function BookingDialog({
               <Row label="Dates" value={`${checkIn} → ${checkOut}`} />
               <Row label="Nights" value={String(nights)} />
               <Row label="Guests" value={String(guests)} />
+              <Row label="Payment method" value="Bank transfer" />
               <Row label="Total" value={formatMoney(total, currency)} />
             </div>
             <Badge variant="secondary" className="rounded-full">
-              {bookingStatusLabel}
+              Active booking
             </Badge>
             <Button
               type="button"
