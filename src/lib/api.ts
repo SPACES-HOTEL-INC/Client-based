@@ -399,7 +399,16 @@ export async function createBookingReservation(payload: BookingReservationPayloa
 }
 
 export async function fetchMyBookings() {
-  const res = await api.get<unknown>("/bookings/mine");
+  let res: AxiosResponse<unknown>;
+  try {
+    res = await api.get<unknown>("/bookings/mine");
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 404) {
+      return [];
+    }
+    throw error;
+  }
+
   if (res.data == null) {
     return [];
   }

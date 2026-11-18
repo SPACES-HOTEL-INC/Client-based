@@ -103,7 +103,9 @@ function BookingsPage() {
         const apiBookings = await fetchMyBookings();
         const propertyIds = [...new Set(apiBookings.map((booking) => booking.property_id))];
         const propertyEntries = await Promise.all(
-          propertyIds.map(async (propertyId) => [propertyId, await fetchProperty(propertyId)] as const),
+          propertyIds.map(
+            async (propertyId) => [propertyId, await fetchProperty(propertyId)] as const,
+          ),
         );
         if (!mounted) return;
 
@@ -159,9 +161,18 @@ function BookingsPage() {
   }
 
   const buckets: { active: Booking[]; pending: Booking[]; past: Booking[] } = {
-    active: bookings.filter((booking) => booking.status === "active"),
-    pending: bookings.filter((booking) => booking.status === "pending"),
-    past: bookings.filter((booking) => booking.status === "past" || booking.status === "cancelled"),
+    active:
+      historyLoading || historyError
+        ? []
+        : bookings.filter((booking) => booking.status === "active"),
+    pending:
+      historyLoading || historyError
+        ? []
+        : bookings.filter((booking) => booking.status === "pending"),
+    past:
+      historyLoading || historyError
+        ? []
+        : bookings.filter((booking) => booking.status === "past" || booking.status === "cancelled"),
   };
 
   const handleCancel = async () => {
@@ -193,7 +204,12 @@ function BookingsPage() {
       {historyError && (
         <div className="mt-4 flex items-center justify-between gap-4 rounded-xl border border-destructive/30 bg-destructive/5 p-4 text-sm">
           <p>Could not load your bookings. Please try again.</p>
-          <Button type="button" variant="outline" size="sm" onClick={() => setReloadKey((key) => key + 1)}>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => setReloadKey((key) => key + 1)}
+          >
             Retry
           </Button>
         </div>
@@ -202,13 +218,13 @@ function BookingsPage() {
       <Tabs value={tab} onValueChange={setTab} className="mt-4">
         <TabsList className="grid w-full grid-cols-3 rounded-full">
           <TabsTrigger value="active" className="rounded-full">
-            Active {buckets.active.length ? `(${buckets.active.length})` : ""}
+            Active {buckets.active.length > 0 ? `(${buckets.active.length})` : ""}
           </TabsTrigger>
           <TabsTrigger value="pending" className="rounded-full">
-            Pending {buckets.pending.length ? `(${buckets.pending.length})` : ""}
+            Pending {buckets.pending.length > 0 ? `(${buckets.pending.length})` : ""}
           </TabsTrigger>
           <TabsTrigger value="past" className="rounded-full">
-            Past
+            Past {buckets.past.length > 0 ? `(${buckets.past.length})` : ""}
           </TabsTrigger>
         </TabsList>
 
@@ -216,8 +232,7 @@ function BookingsPage() {
           <TabsContent key={key} value={key} className="mt-5 space-y-4">
             {historyLoading ? (
               <div className="h-32 animate-pulse rounded-3xl bg-muted" />
-            ) : historyError ? null : (
-            buckets[key].length === 0 ? (
+            ) : historyError ? null : buckets[key].length === 0 ? (
               <EmptyState label={key} />
             ) : (
               buckets[key].map((booking) => (
@@ -228,7 +243,7 @@ function BookingsPage() {
                   onCancel={() => setCancelTarget(booking)}
                 />
               ))
-            ))}
+            )}
           </TabsContent>
         ))}
       </Tabs>
