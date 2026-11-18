@@ -72,106 +72,59 @@ function HostDashboardPage() {
       try {
         setLoading(true);
 
-        // API Requests with Fallback
-        const [statsRes, bookingsRes, propsRes] = await Promise.allSettled([
-          api.get("/api/v1/host/stats"),
-          api.get("/api/v1/host/bookings"),
-          api.get("/api/v1/host/Spaceaeon"),
+        const [bookingsRes, propsRes] = await Promise.allSettled([
+          api.get("/bookings/host-bookings"),
+          api.get("/properties/mine"),
         ]);
 
         if (!mounted) return;
 
-        // 1. Process Stats
-        if (statsRes.status === "fulfilled" && statsRes.value?.data) {
-          const d = statsRes.value.data.data || statsRes.value.data;
-          setStats({
-            totalEarnings: d.total_earnings ?? d.totalEarnings ?? 450000,
-            activeListings: d.active_listings ?? d.activeListings ?? 3,
-            totalBookings: d.total_bookings ?? d.totalBookings ?? 14,
-            occupancyRate: d.occupancy_rate ?? d.occupancyRate ?? 82,
-          });
-        } else {
-          setStats({ totalEarnings: 450000, activeListings: 3, totalBookings: 14, occupancyRate: 82 });
-        }
-
-        // 2. Process Bookings
+        // 1. Process Bookings
+        let hostBookings: HostBooking[] = [];
         if (bookingsRes.status === "fulfilled" && bookingsRes.value?.data) {
           const rawBookings = bookingsRes.value.data.data || bookingsRes.value.data;
           if (Array.isArray(rawBookings)) {
-            setBookings(
-              rawBookings.map((b: any) => ({
-                id: String(b.id),
-                ref: b.reference || b.ref || "REF-101",
-                guestName: b.guest_name || b.guestName || "Guest User",
-                propertyTitle: b.property_title || b.space_name || "Luxury Apartment",
-                checkIn: b.check_in || "2026-10-01",
-                checkOut: b.check_out || "2026-10-05",
-                totalAmount: b.total_amount || b.price || 120000,
-                status: b.status || "pending",
-              }))
-            );
+            hostBookings = rawBookings.map((b: any) => ({
+              id: String(b.id),
+              ref: b.reference || b.ref || "",
+              guestName: b.guest_name || b.guestName || "Guest",
+              propertyTitle: b.property_title || b.space_name || "Hosted Space",
+              checkIn: b.check_in || "",
+              checkOut: b.check_out || "",
+              totalAmount: b.total_amount || b.price || 0,
+              status: b.status || "pending",
+            }));
           }
-        } else {
-          setBookings([
-            {
-              id: "1",
-              ref: "REF-7821",
-              guestName: "Chidi Okafor",
-              propertyTitle: "Penthouse Suite Victoria Island",
-              checkIn: "2026-10-02",
-              checkOut: "2026-10-06",
-              totalAmount: 220000,
-              status: "pending",
-            },
-            {
-              id: "2",
-              ref: "REF-4412",
-              guestName: "Aminu Bello",
-              propertyTitle: "Studio Apartment Lekki Phase 1",
-              checkIn: "2026-10-10",
-              checkOut: "2026-10-12",
-              totalAmount: 95000,
-              status: "confirmed",
-            },
-          ]);
         }
+        setBookings(hostBookings);
 
-        // 3. Process Host Properties
+        // 2. Process Host Properties
+        let hostProperties: HostProperty[] = [];
         if (propsRes.status === "fulfilled" && propsRes.value?.data) {
           const rawProps = propsRes.value.data.data || propsRes.value.data;
           if (Array.isArray(rawProps)) {
-            setProperties(
-              rawProps.map((p: any) => ({
-                id: String(p.id),
-                title: p.title || p.name || "Hosted Space",
-                city: p.city || "Lagos",
-                price: p.price || p.price_per_night || 50000,
-                type: normalizePropertyType(p.property_type ?? p.type),
-                status: p.is_active ? "active" : "unlisted",
-                image: p.image_url || p.images?.[0] || "https://images.unsplash.com/photo-1566073771259-6a8506099945",
-              }))
-            );
+            hostProperties = rawProps.map((p: any) => ({
+              id: String(p.id),
+              title: p.title || p.name || "Hosted Space",
+              city: p.city || "Lagos",
+              price: p.price || p.price_per_night || 0,
+              type: normalizePropertyType(p.property_type ?? p.type),
+              status: p.is_active ? "active" : "unlisted",
+              image: p.image_url || p.images?.[0] || "",
+            }));
           }
-        } else {
-          setProperties([
-            {
-              id: "101",
-              title: "Penthouse Suite Victoria Island",
-              city: "Lagos",
-              price: 85000,
-              status: "active",
-              image: "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&q=80&w=600",
-            },
-            {
-              id: "102",
-              title: "Studio Apartment Lekki Phase 1",
-              city: "Lagos",
-              price: 45000,
-              status: "active",
-              image: "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&q=80&w=600",
-            },
-          ]);
         }
+        setProperties(hostProperties);
+        setStats({
+          totalEarnings: hostBookings
+            .filter((booking) => booking.status === "confirmed")
+            .reduce((sum, booking) => sum + booking.totalAmount, 0),
+          activeListings: hostProperties.filter((property) => property.status === "active").length,
+          totalBookings: hostBookings.length,
+          occupancyRate: hostProperties.length
+            ? Math.round((hostProperties.filter((property) => property.status === "active").length / hostProperties.length) * 100)
+            : 0,
+        });
       } catch (err) {
         console.error("Failed to load host dashboard:", err);
       } finally {
@@ -186,15 +139,19 @@ function HostDashboardPage() {
   }, []);
 
   const handleUpdateBookingStatus = async (bookingId: string, newStatus: "confirmed" | "cancelled") => {
+    if (newStatus === "confirmed") {
+      toast.error("The backend does not currently expose a booking confirmation action.");
+      return;
+    }
+
     try {
-      await api.patch(`/api/v1/host/bookings/${bookingId}`, { status: newStatus });
-      toast.success(`Booking ${newStatus} successfully`);
-    } catch (e) {
-      toast.info(`Updated status to ${newStatus}`);
-    } finally {
+      await api.delete(`/bookings/${encodeURIComponent(bookingId)}`);
+      toast.success("Booking cancelled successfully");
       setBookings((prev) =>
-        prev.map((b) => (b.id === bookingId ? { ...b, status: newStatus } : b))
+        prev.map((b) => (b.id === bookingId ? { ...b, status: "cancelled" } : b))
       );
+    } catch (e) {
+      toast.error("Could not cancel this booking.");
     }
   };
 
