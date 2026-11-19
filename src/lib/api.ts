@@ -70,7 +70,7 @@ function mapProperty(b: BackendProperty, rooms: FrontRoom[]): FrontProperty {
   const amenities = b.amenities ?? [];
   const facilities = [{ group: "Amenities", items: Array.isArray(amenities) ? amenities : [] }];
   const coords = { x: 0, y: 0 };
-  
+
   const hotel_name = b.hotel_name ?? title;
   const avg_rating = rating;
   const total_reviews = reviews;
@@ -343,16 +343,58 @@ export async function submitPropertyReview(payload: {
   return res.data;
 }
 
+type BookingReservationResponse = {
+  id: string;
+  spc_code?: string | null;
+};
+
 export async function createBookingReservation(payload: {
-  space_id: string;
   room_id: string;
-  check_in: string;
-  check_out: string;
-  guests_count: number;
-  total_amount: number;
-  payment_method: string;
+  property_id: string;
+  check_in_date: string;
+  check_out_date: string;
+  num_guests: number;
+  total_price: number;
 }) {
-  const res = await api.post("/bookings/", payload);
+  const res = await api.post<BookingReservationResponse>("/bookings/", payload);
+  return res.data;
+}
+
+export type PaymentMethod = "card" | "bank_transfer";
+
+export type PaymentInitiationResponse = {
+  booking_id: string;
+  amount: number;
+  currency: string | null;
+  payment_method: string;
+  id: string;
+  status: "pending" | "success" | "failed" | "refunded";
+  transaction_ref: string | null;
+  gateway_response: Record<string, unknown> | null;
+  paid_at: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export async function initiatePayment(payload: {
+  booking_id: string;
+  amount: number;
+  currency: "NGN";
+  payment_method: PaymentMethod;
+}) {
+  const res = await api.post<PaymentInitiationResponse>("/payments/initiate", payload);
+  return res.data;
+}
+
+export async function fetchMyPayments() {
+  const res = await api.get<PaymentInitiationResponse[]>("/payments/mine");
+  return res.data;
+}
+
+export async function fetchPayment(paymentId: string) {
+  const res = await api.get<PaymentInitiationResponse>(
+    `/payments/${encodeURIComponent(paymentId)}`,
+  );
   return res.data;
 }
 
