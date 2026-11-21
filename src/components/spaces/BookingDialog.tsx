@@ -16,7 +16,6 @@ import {
 import { Input } from "@/components/ui/input";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import type { Property, Room } from "@/lib/data";
 import { formatMoney, makeRef, nightsBetween, useSpaceaeon } from "@/lib/spaces-store";
 import { toast } from "sonner";
@@ -87,7 +86,7 @@ export function BookingDialog({
   const [reference, setReference] = useState("");
   const [paymentReference, setPaymentReference] = useState("");
   const [bookingId, setBookingId] = useState<string | null>(null);
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("bank_transfer");
+  const paymentMethod: PaymentMethod = "bank_transfer";
   const [paymentStatus, setPaymentStatus] = useState<"pending" | "success">("pending");
 
   useEffect(() => {
@@ -110,7 +109,6 @@ export function BookingDialog({
     setReference("");
     setPaymentReference("");
     setBookingId(null);
-    setPaymentMethod("bank_transfer");
     setPaymentStatus("pending");
   };
 
@@ -375,46 +373,6 @@ export function BookingDialog({
                 <span>Total</span>
                 <span>{formatMoney(total, currency)}</span>
               </div>
-            </section>
-
-            <section className="space-y-3">
-              <p className="text-sm font-medium">Payment method</p>
-              <RadioGroup
-                value={paymentMethod}
-                onValueChange={(value) => {
-                  if (value === "card" || value === "bank_transfer") setPaymentMethod(value);
-                }}
-                className="grid grid-cols-2 gap-3"
-              >
-                <label
-                  htmlFor="payment-card"
-                  className={`flex cursor-pointer items-center gap-3 rounded-xl border p-3 text-sm ${
-                    paymentMethod === "card" ? "border-primary bg-primary/5" : "border-border"
-                  }`}
-                >
-                  <RadioGroupItem
-                    id="payment-card"
-                    value="card"
-                    disabled={loading || bookingId !== null}
-                  />
-                  Card
-                </label>
-                <label
-                  htmlFor="payment-bank-transfer"
-                  className={`flex cursor-pointer items-center gap-3 rounded-xl border p-3 text-sm ${
-                    paymentMethod === "bank_transfer"
-                      ? "border-primary bg-primary/5"
-                      : "border-border"
-                  }`}
-                >
-                  <RadioGroupItem
-                    id="payment-bank-transfer"
-                    value="bank_transfer"
-                    disabled={loading || bookingId !== null}
-                  />
-                  Bank transfer
-                </label>
-              </RadioGroup>
             </section>
 
             <Button

@@ -3,24 +3,12 @@ import { Heart, MapPin, Star, Users } from "lucide-react";
 import { useEffect, useState } from "react";
 import { normalizePropertyType, type Property } from "@/lib/data";
 import { formatMoney, useSpaceaeon } from "@/lib/spaces-store";
-import { useAuth } from "@/hooks/useAuth";
-import { SignInRequiredModal } from "@/components/spaces/SignInRequiredModal";
 import { cn } from "@/lib/utils";
 
-export function PropertyCard({
-  property,
-  linkToSearch = false,
-  requireSignIn = false,
-}: {
-  property: Property | any;
-  linkToSearch?: boolean;
-  requireSignIn?: boolean;
-}) {
+export function PropertyCard({ property }: { property: Property | any }) {
   const { currency, favorites, toggleFavorite } = useSpaceaeon();
-  const { user, loading: authLoading } = useAuth();
   const [index, setIndex] = useState(0);
   const [isImageHovered, setIsImageHovered] = useState(false);
-  const [authModalOpen, setAuthModalOpen] = useState(false);
 
   // Support both `Property` shape and raw `room` payloads (room mapped to property-like object)
   const isRoom = property && property.price_per_night != null;
@@ -65,18 +53,9 @@ export function PropertyCard({
   const capacity = property?.capacity ?? 1;
 
   const saved = favorites.includes(id);
-  const propertyLink = linkToSearch
-    ? { to: "/search" as const }
-    : { to: "/property/$id" as const, params: { id } };
-  const handlePropertyClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
-    if (requireSignIn && !authLoading && (!user || !user.email)) {
-      e.preventDefault();
-      setAuthModalOpen(true);
-    }
-  };
+  const propertyLink = { to: "/property/$id" as const, params: { id } };
 
   return (
-    <>
     <article className="card-elevated group overflow-hidden">
         <div
           className="relative aspect-[4/3] overflow-hidden"
@@ -85,7 +64,6 @@ export function PropertyCard({
         >
           <Link
             {...propertyLink}
-            onClick={handlePropertyClick}
             aria-label={`View details for ${displayTitle}`}
             className="block size-full"
           >
@@ -153,7 +131,6 @@ export function PropertyCard({
         <div className="space-y-2 p-4">
           <Link
             {...propertyLink}
-            onClick={handlePropertyClick}
             className="line-clamp-1 font-display text-base font-semibold hover:text-primary"
           >
             {displayTitle}
@@ -176,7 +153,6 @@ export function PropertyCard({
             </span>
             <Link
               {...propertyLink}
-              onClick={handlePropertyClick}
               className="text-xs font-semibold text-primary"
             >
               View details
@@ -184,8 +160,6 @@ export function PropertyCard({
           </div>
         </div>
     </article>
-    <SignInRequiredModal isOpen={authModalOpen} onClose={() => setAuthModalOpen(false)} />
-    </>
   );
 }
 

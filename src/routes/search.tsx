@@ -62,30 +62,14 @@ function SearchPage() {
   const [minRating, setMinRating] = useState(0);
   const [amenities, setAmenities] = useState<string[]>([]);
   
-  const [debouncedFilters, setDebouncedFilters] = useState(() => ({
-    query: initialSearchParams.q ?? "",
-    price: [initialSearchParams.maxPrice ?? MAX_PRICE] as number[],
-    types: type ? [type] : initialSearchParams.pt ? [initialSearchParams.pt] : ([] as string[]),
-  }));
   const [view, setView] = useState<"grid" | "map">("grid");
-
-  useEffect(() => {
-    const handler = setTimeout(() => {
-      setDebouncedFilters({ query, price, types });
-    }, 350);
-    return () => clearTimeout(handler);
-  }, [query, price, types]);
 
   useEffect(() => {
     let mounted = true;
     (async () => {
       setLoading(true);
       try {
-        const fetchedProperties = await searchRooms({
-          city: debouncedFilters.query || undefined,
-          max_price: debouncedFilters.price?.[0],
-          limit: 100,
-        });
+        const fetchedProperties = await searchRooms({ limit: 100 });
         if (!mounted) return;
         setProperties(fetchedProperties);
       } catch (e) {
@@ -99,19 +83,34 @@ function SearchPage() {
     return () => {
       mounted = false;
     };
-  }, [debouncedFilters]);
+  }, []);
 
   useEffect(() => {
     if (type) setTypes([type]);
   }, [type]);
 
   const results = useMemo(
-    () =>
-      properties.filter((p: any) => {
-        const q = query.trim().toLowerCase();
-        const title = (p.title ?? "").toString().toLowerCase();
-        const location = (p.location ?? "").toString().toLowerCase();
-        const matchQuery = !q || title.includes(q) || location.includes(q);
+    () => {
+      const normalizedQuery = query.trim().toLowerCase();
+
+      return properties.filter((p: any) => {
+        const matchQuery =
+          !normalizedQuery ||
+          [
+            p.type,
+            p.property_type,
+            p.title,
+            p.name,
+            p.hotel_name,
+            p.city,
+            p.state,
+            p.address,
+            p.location,
+          ].some(
+            (value) =>
+              typeof value === "string" &&
+              value.trim().toLowerCase().includes(normalizedQuery),
+          );
 
         const pType = normalizePropertyType(p.type ?? p.property_type);
         const matchType =
@@ -127,7 +126,8 @@ function SearchPage() {
         const matchAmenities = amenities.every((a) => pAmenities.includes(a));
 
         return matchQuery && matchType && matchPrice && matchRating && matchAmenities;
-      }),
+      });
+    },
     [query, types, price, minRating, amenities, properties],
   );
 
@@ -353,7 +353,7 @@ function SearchPage() {
           ) : (
             <div className="grid gap-4 sm:grid-cols-2">
               {results.map((p) => (
-                <PropertyCard key={p.id} property={p} requireSignIn />
+                <PropertyCard key={p.id} property={p} />
               ))}
             </div>
           )}

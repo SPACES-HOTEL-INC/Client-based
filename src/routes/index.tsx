@@ -158,7 +158,7 @@ function HomePage() {
                   key={p.property_id ?? p.id}
                   className="w-72 shrink-0 snap-start md:w-96"
                 >
-                  <PropertyCard property={p} linkToSearch />
+                  <PropertyCard property={p} />
                 </div>
               ))
             )}
@@ -177,7 +177,7 @@ function HomePage() {
                 </div>
               </div>
             ) : (
-              (trending ?? []).map((p) => <PropertyCard key={p.id} property={p} linkToSearch />)
+              (trending ?? []).map((p) => <PropertyCard key={p.id} property={p} />)
             )}
           </div>
         </section>
