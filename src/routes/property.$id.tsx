@@ -1,4 +1,4 @@
-import { createFileRoute, Link, notFound } from "@tanstack/react-router";
+import { createFileRoute, notFound, useNavigate, useRouter } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import {
   ArrowLeft,
@@ -382,6 +382,8 @@ function RoomOptionCard({
 
 function PropertyPage() {
   const { property } = Route.useLoaderData();
+  const navigate = useNavigate();
+  const router = useRouter();
   const { currency, favorites, toggleFavorite } = useSpaceaeon();
   const { user, loading: authLoading } = useAuth();
   const [selected, setSelected] = useState<Room | null>(null);
@@ -471,13 +473,20 @@ function PropertyPage() {
           )}
         </div>
 
-        <Link
-          to="/search"
+        <button
+          type="button"
+          onClick={() => {
+            if (router.history.canGoBack()) {
+              router.history.back();
+            } else {
+              navigate({ to: "/search" });
+            }
+          }}
           aria-label="Back to search"
           className="absolute left-4 top-4 grid size-10 place-items-center rounded-full bg-card/90 backdrop-blur"
         >
           <ArrowLeft className="size-5" />
-        </Link>
+        </button>
         <button
           type="button"
           aria-label="Save"
