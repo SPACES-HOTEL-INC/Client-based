@@ -3,7 +3,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, CalendarDays, CheckCircle2, Clock3, Loader2, Minus, Plus } from "lucide-react";
-import { Input } from "@/components/ui/input";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import type { Property, Room } from "@/lib/data";
@@ -29,16 +28,13 @@ const formatDateLabel = (value: string) =>
     parseISODate(value),
   );
 
-const formatDateInput = (value: string) => {
-  const digits = value.replace(/\D/g, "").slice(0, 8);
-  if (digits.length <= 2) return digits;
-  if (digits.length <= 4) return `${digits.slice(0, 2)}/${digits.slice(2)}`;
-  return `${digits.slice(0, 2)}/${digits.slice(2, 4)}/${digits.slice(4)}`;
-};
-
-const formatDateDMY = (value: string) => {
+const getDateSegments = (value: string) => {
   const date = parseISODate(value);
-  return `${String(date.getDate()).padStart(2, "0")}/${String(date.getMonth() + 1).padStart(2, "0")}/${date.getFullYear()}`;
+  return {
+    day: String(date.getDate()).padStart(2, "0"),
+    month: String(date.getMonth() + 1).padStart(2, "0"),
+    year: String(date.getFullYear()),
+  };
 };
 
 const parseDateInput = (value: string): string | null => {
@@ -502,7 +498,7 @@ function DateStepper({
 }) {
   const date = parseISODate(value);
   const minimumDate = parseISODate(minDate);
-  const [dateInput, setDateInput] = useState(() => formatDateDMY(value));
+  const [dateSegments, setDateSegments] = useState(() => getDateSegments(value));
   const [dateInputValid, setDateInputValid] = useState(true);
   const [calendarOpen, setCalendarOpen] = useState(false);
   const [displayMonth, setDisplayMonth] = useState(
@@ -510,11 +506,28 @@ function DateStepper({
   );
 
   useEffect(() => {
-    setDateInput(formatDateDMY(value));
+    setDateSegments(getDateSegments(value));
     setDateInputValid(true);
     const selectedDate = parseISODate(value);
     setDisplayMonth(new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1));
   }, [value]);
+
+  const updateDateSegment = (segment: keyof typeof dateSegments, inputValue: string) => {
+    const maxLength = segment === "year" ? 4 : 2;
+    const nextSegments = {
+      ...dateSegments,
+      [segment]: inputValue.replace(/\D/g, "").slice(0, maxLength),
+    };
+    const nextDate = parseDateInput(
+      `${nextSegments.day}/${nextSegments.month}/${nextSegments.year}`,
+    );
+    const isValid = nextDate !== null && nextDate >= minDate;
+
+    setDateSegments(nextSegments);
+    setDateInputValid(isValid);
+    onValidityChange(isValid);
+    if (isValid && nextDate) onChange(nextDate);
+  };
 
   const endMonth = new Date(
     Math.max(new Date().getFullYear() + 10, minimumDate.getFullYear()),
@@ -525,31 +538,62 @@ function DateStepper({
 
   return (
     <div className="space-y-2">
-      <label htmlFor={inputId} className="block text-sm font-medium">
+      <span id={`${inputId}-label`} className="block text-sm font-medium">
         {label}
-      </label>
+      </span>
       <div className="flex items-center gap-2">
-        <Input
-          id={inputId}
-          type="text"
-          inputMode="numeric"
-          autoComplete="off"
-          maxLength={10}
-          placeholder="dd/mm/yyyy"
-          value={dateInput}
+        <div
+          role="group"
+          aria-labelledby={`${inputId}-label`}
           aria-invalid={!dateInputValid}
           aria-describedby={!dateInputValid ? `${inputId}-error` : undefined}
-          onChange={(event) => {
-            const nextInput = formatDateInput(event.target.value);
-            const nextDate = parseDateInput(nextInput);
-            const isValid = nextDate !== null && nextDate >= minDate;
-            setDateInput(nextInput);
-            setDateInputValid(isValid);
-            onValidityChange(isValid);
-            if (isValid && nextDate) onChange(nextDate);
-          }}
-          className="h-11 rounded-lg"
-        />
+          className="flex h-11 min-w-0 flex-1 items-center rounded-lg border border-input bg-background px-2 focus-within:border-ring focus-within:ring-[3px] focus-within:ring-ring/50"
+        >
+          <input
+            type="text"
+            inputMode="numeric"
+            autoComplete="off"
+            maxLength={2}
+            placeholder="dd"
+            value={dateSegments.day}
+            aria-label={`${label} day`}
+            aria-invalid={!dateInputValid}
+            aria-describedby={!dateInputValid ? `${inputId}-error` : undefined}
+            onFocus={(event) => event.currentTarget.select()}
+            onChange={(event) => updateDateSegment("day", event.target.value)}
+            className="w-8 bg-transparent text-center outline-none placeholder:text-muted-foreground"
+          />
+          <span aria-hidden="true">/</span>
+          <input
+            type="text"
+            inputMode="numeric"
+            autoComplete="off"
+            maxLength={2}
+            placeholder="mm"
+            value={dateSegments.month}
+            aria-label={`${label} month`}
+            aria-invalid={!dateInputValid}
+            aria-describedby={!dateInputValid ? `${inputId}-error` : undefined}
+            onFocus={(event) => event.currentTarget.select()}
+            onChange={(event) => updateDateSegment("month", event.target.value)}
+            className="w-8 bg-transparent text-center outline-none placeholder:text-muted-foreground"
+          />
+          <span aria-hidden="true">/</span>
+          <input
+            type="text"
+            inputMode="numeric"
+            autoComplete="off"
+            maxLength={4}
+            placeholder="yyyy"
+            value={dateSegments.year}
+            aria-label={`${label} year`}
+            aria-invalid={!dateInputValid}
+            aria-describedby={!dateInputValid ? `${inputId}-error` : undefined}
+            onFocus={(event) => event.currentTarget.select()}
+            onChange={(event) => updateDateSegment("year", event.target.value)}
+            className="w-14 bg-transparent text-center outline-none placeholder:text-muted-foreground"
+          />
+        </div>
         <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
           <PopoverTrigger asChild>
             <Button
