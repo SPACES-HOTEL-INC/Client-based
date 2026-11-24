@@ -555,22 +555,24 @@ function PropertyPage() {
                 <Users className="size-4 text-muted-foreground" /> up to {property.capacity} guests
               </span>
             </div>
+          </section>
 
-            <div className="card-elevated flex items-center justify-between gap-4 rounded-2xl p-4">
-              <div className="flex min-w-0 items-center gap-4">
-                <span className="grid size-12 shrink-0 place-items-center rounded-full bg-primary font-display text-lg font-bold text-primary-foreground">
-                  {managedBy.charAt(0)}
-                </span>
-                <div className="min-w-0">
-                  <p className="text-sm text-muted-foreground">Managed by</p>
-                  <p className="truncate font-display text-base font-bold">{managedBy}</p>
-                </div>
-              </div>
-              <span className="flex shrink-0 items-center gap-1.5 rounded-full bg-success/10 px-3 py-1.5 text-sm font-semibold text-success">
-                <ShieldCheck className="size-4" /> Verified
-              </span>
+          <section>
+            <h2 className="mb-3 font-display text-lg font-semibold">Available rooms & options</h2>
+            <div className="space-y-4">
+              {property.rooms.map((room) => (
+                <RoomOptionCard
+                  key={room.id}
+                  room={room}
+                  fallbackImage={property.images.find((image) => typeof image === "string" && image.trim()) ?? ""}
+                  currency={currency}
+                  onSelect={() => handleBookingAttempt(room)}
+                />
+              ))}
             </div>
+          </section>
 
+          <section>
             <p className="text-sm leading-relaxed text-muted-foreground">{property.description}</p>
           </section>
 
@@ -592,22 +594,24 @@ function PropertyPage() {
             </section>
           )}
 
-          <ReviewsSection propertyId={property.id} rating={property.rating} count={property.reviews} />
-
           <section>
-            <h2 className="mb-3 font-display text-lg font-semibold">Available rooms & options</h2>
-            <div className="space-y-4">
-              {property.rooms.map((room) => (
-                <RoomOptionCard
-                  key={room.id}
-                  room={room}
-                  fallbackImage={property.images.find((image) => typeof image === "string" && image.trim()) ?? ""}
-                  currency={currency}
-                  onSelect={() => handleBookingAttempt(room)}
-                />
-              ))}
+            <div className="card-elevated flex items-center justify-between gap-4 rounded-2xl p-4">
+              <div className="flex min-w-0 items-center gap-4">
+                <span className="grid size-12 shrink-0 place-items-center rounded-full bg-primary font-display text-lg font-bold text-primary-foreground">
+                  {managedBy.charAt(0)}
+                </span>
+                <div className="min-w-0">
+                  <p className="text-sm text-muted-foreground">Managed by</p>
+                  <p className="truncate font-display text-base font-bold">{managedBy}</p>
+                </div>
+              </div>
+              <span className="flex shrink-0 items-center gap-1.5 rounded-full bg-success/10 px-3 py-1.5 text-sm font-semibold text-success">
+                <ShieldCheck className="size-4" /> Verified
+              </span>
             </div>
           </section>
+
+          <ReviewsSection propertyId={property.id} rating={property.rating} count={property.reviews} />
         </div>
 
         <aside className="hidden w-80 shrink-0 lg:block">
