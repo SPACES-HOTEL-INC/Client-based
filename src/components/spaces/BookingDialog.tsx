@@ -2,17 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import {
-  ArrowLeft,
-  CalendarDays,
-  CheckCircle2,
-  Clock3,
-  ChevronDown,
-  ChevronUp,
-  Loader2,
-  Minus,
-  Plus,
-} from "lucide-react";
+import { ArrowLeft, CalendarDays, CheckCircle2, Clock3, Loader2, Minus, Plus } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -38,6 +28,33 @@ const formatDateLabel = (value: string) =>
   new Intl.DateTimeFormat("en", { month: "short", day: "numeric", year: "numeric" }).format(
     parseISODate(value),
   );
+
+const formatDateInput = (value: string) => {
+  const digits = value.replace(/\D/g, "").slice(0, 8);
+  if (digits.length <= 2) return digits;
+  if (digits.length <= 4) return `${digits.slice(0, 2)}/${digits.slice(2)}`;
+  return `${digits.slice(0, 2)}/${digits.slice(2, 4)}/${digits.slice(4)}`;
+};
+
+const formatDateDMY = (value: string) => {
+  const date = parseISODate(value);
+  return `${String(date.getDate()).padStart(2, "0")}/${String(date.getMonth() + 1).padStart(2, "0")}/${date.getFullYear()}`;
+};
+
+const parseDateInput = (value: string): string | null => {
+  const match = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(value);
+  if (!match) return null;
+
+  const day = Number(match[1]);
+  const month = Number(match[2]);
+  const year = Number(match[3]);
+  const date = new Date(year, month - 1, day);
+  if (date.getFullYear() !== year || date.getMonth() !== month - 1 || date.getDate() !== day) {
+    return null;
+  }
+
+  return formatISODate(date);
+};
 
 function findCheckoutUrl(value: unknown): string | null {
   if (!value || typeof value !== "object" || Array.isArray(value)) return null;
@@ -81,6 +98,7 @@ export function BookingDialog({
   const [step, setStep] = useState<Step>("dates");
   const [checkIn, setCheckIn] = useState(today);
   const [checkOut, setCheckOut] = useState(() => addDays(today(), 1));
+  const [dateInputsValid, setDateInputsValid] = useState({ checkIn: true, checkOut: true });
   const [guests, setGuests] = useState(2);
   const [loading, setLoading] = useState(false);
   const [reference, setReference] = useState("");
@@ -94,6 +112,7 @@ export function BookingDialog({
     const defaultCheckIn = today();
     setCheckIn(defaultCheckIn);
     setCheckOut(addDays(defaultCheckIn, 1));
+    setDateInputsValid({ checkIn: true, checkOut: true });
   }, [open]);
 
   const nights = useMemo(() => nightsBetween(checkIn, checkOut), [checkIn, checkOut]);
@@ -115,12 +134,20 @@ export function BookingDialog({
   const updateCheckIn = (date: string) => {
     const nextCheckIn = date < today() ? today() : date;
     setCheckIn(nextCheckIn);
-    if (checkOut <= nextCheckIn) setCheckOut(addDays(nextCheckIn, 1));
+    if (checkOut <= nextCheckIn) {
+      setCheckOut(addDays(nextCheckIn, 1));
+      setDateInputsValid((current) =>
+        current.checkOut ? current : { ...current, checkOut: true },
+      );
+    }
   };
 
   const updateCheckOut = (date: string) => {
     setCheckOut(date < minimumCheckOut ? minimumCheckOut : date);
   };
+
+  const canContinueDates =
+    dateInputsValid.checkIn && dateInputsValid.checkOut && checkIn >= today() && checkOut > checkIn;
 
   const pay = async () => {
     if (loading) return;
@@ -276,17 +303,27 @@ export function BookingDialog({
           <div className="space-y-5">
             <section className="space-y-3 rounded-2xl border border-border bg-card p-4">
               <DateStepper
-                label="Check-in"
+                label="Check In"
                 value={checkIn}
                 minDate={today()}
                 onChange={updateCheckIn}
+                onValidityChange={(isValid) =>
+                  setDateInputsValid((current) =>
+                    current.checkIn === isValid ? current : { ...current, checkIn: isValid },
+                  )
+                }
               />
               <div className="border-t border-border" />
               <DateStepper
-                label="Check-out"
+                label="Check Out"
                 value={checkOut}
                 minDate={minimumCheckOut}
                 onChange={updateCheckOut}
+                onValidityChange={(isValid) =>
+                  setDateInputsValid((current) =>
+                    current.checkOut === isValid ? current : { ...current, checkOut: isValid },
+                  )
+                }
               />
             </section>
 
@@ -330,7 +367,10 @@ export function BookingDialog({
             <Button
               type="button"
               className="h-12 w-full rounded-xl text-base"
-              onClick={() => setStep("summary")}
+              disabled={!canContinueDates}
+              onClick={() => {
+                if (canContinueDates) setStep("summary");
+              }}
             >
               Continue · {formatMoney(total, currency)}
             </Button>
@@ -452,172 +492,120 @@ function DateStepper({
   value,
   minDate,
   onChange,
+  onValidityChange,
 }: {
   label: string;
   value: string;
   minDate: string;
   onChange: (date: string) => void;
+  onValidityChange: (isValid: boolean) => void;
 }) {
   const date = parseISODate(value);
   const minimumDate = parseISODate(minDate);
-  const month = date.getMonth() + 1;
-  const year = date.getFullYear();
-  const [monthInput, setMonthInput] = useState(String(month).padStart(2, "0"));
-  const [yearInput, setYearInput] = useState(String(year));
+  const [dateInput, setDateInput] = useState(() => formatDateDMY(value));
+  const [dateInputValid, setDateInputValid] = useState(true);
   const [calendarOpen, setCalendarOpen] = useState(false);
   const [displayMonth, setDisplayMonth] = useState(
     new Date(date.getFullYear(), date.getMonth(), 1),
   );
 
   useEffect(() => {
-    setMonthInput(String(month).padStart(2, "0"));
-    setYearInput(String(year));
-    setDisplayMonth(new Date(year, month - 1, 1));
-  }, [month, year]);
+    setDateInput(formatDateDMY(value));
+    setDateInputValid(true);
+    const selectedDate = parseISODate(value);
+    setDisplayMonth(new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1));
+  }, [value]);
 
-  const normalizeDate = (nextMonth: number, nextYear: number) => {
-    const lastDay = new Date(nextYear, nextMonth, 0).getDate();
-    const nextDate = formatISODate(
-      new Date(nextYear, nextMonth - 1, Math.min(date.getDate(), lastDay)),
-    );
-    onChange(nextDate < minDate ? minDate : nextDate);
-  };
-
-  const commitMonth = () => {
-    const parsedMonth = Number(monthInput);
-    if (!Number.isInteger(parsedMonth) || parsedMonth < 1 || parsedMonth > 12) {
-      setMonthInput(String(month).padStart(2, "0"));
-      return;
-    }
-    normalizeDate(parsedMonth, year);
-  };
-
-  const commitYear = () => {
-    const parsedYear = Number(yearInput);
-    const minYear = minimumDate.getFullYear();
-    const maxYear = new Date().getFullYear() + 10;
-    if (!Number.isInteger(parsedYear) || parsedYear < minYear || parsedYear > maxYear) {
-      setYearInput(String(year));
-      return;
-    }
-    normalizeDate(month, parsedYear);
-  };
+  const endMonth = new Date(
+    Math.max(new Date().getFullYear() + 10, minimumDate.getFullYear()),
+    11,
+    1,
+  );
+  const inputId = label.toLowerCase().replace(/\s+/g, "-");
 
   return (
-    <div className="space-y-3">
-      <div className="flex items-center justify-between gap-3">
-        <div className="min-w-0">
-          <p className="text-xs font-medium text-muted-foreground">{label}</p>
-          <p className="mt-1 truncate font-display text-lg font-semibold">
-            {formatDateLabel(value)}
-          </p>
-        </div>
-        <div className="flex shrink-0 items-center gap-2">
-          <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
-            <PopoverTrigger asChild>
-              <Button
-                type="button"
-                size="icon"
-                variant="outline"
-                className="size-9 rounded-lg"
-                aria-label={`Choose ${label.toLowerCase()} date from calendar`}
-              >
-                <CalendarDays className="size-4" />
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent
-              align="end"
-              side="bottom"
-              className="w-auto rounded-2xl border-border p-2 shadow-xl"
-            >
-              <div className="px-3 pt-2">
-                <p className="text-sm font-semibold">Choose {label.toLowerCase()}</p>
-                <p className="text-xs text-muted-foreground">
-                  Select a date on or after {formatDateLabel(minDate)}.
-                </p>
-              </div>
-              <Calendar
-                mode="single"
-                selected={date}
-                month={displayMonth}
-                onMonthChange={setDisplayMonth}
-                onSelect={(nextDate) => {
-                  if (nextDate) {
-                    onChange(formatISODate(nextDate < minimumDate ? minimumDate : nextDate));
-                    setCalendarOpen(false);
-                  }
-                }}
-                disabled={{ before: minimumDate }}
-                startMonth={minimumDate}
-                endMonth={new Date(new Date().getFullYear() + 10, 11, 1)}
-                className="p-2 [--cell-size:2.5rem]"
-              />
-            </PopoverContent>
-          </Popover>
-          <div className="flex flex-col gap-1">
+    <div className="space-y-2">
+      <label htmlFor={inputId} className="block text-sm font-medium">
+        {label}
+      </label>
+      <div className="flex items-center gap-2">
+        <Input
+          id={inputId}
+          type="text"
+          inputMode="numeric"
+          autoComplete="off"
+          maxLength={10}
+          placeholder="dd/mm/yyyy"
+          value={dateInput}
+          aria-invalid={!dateInputValid}
+          aria-describedby={!dateInputValid ? `${inputId}-error` : undefined}
+          onChange={(event) => {
+            const nextInput = formatDateInput(event.target.value);
+            const nextDate = parseDateInput(nextInput);
+            const isValid = nextDate !== null && nextDate >= minDate;
+            setDateInput(nextInput);
+            setDateInputValid(isValid);
+            onValidityChange(isValid);
+            if (isValid && nextDate) onChange(nextDate);
+          }}
+          className="h-11 rounded-lg"
+        />
+        <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
+          <PopoverTrigger asChild>
             <Button
               type="button"
               size="icon"
               variant="outline"
-              className="size-8 rounded-lg"
-              aria-label={`Advance ${label.toLowerCase()} by one day`}
-              onClick={() => onChange(addDays(value, 1))}
+              className="size-11 shrink-0 rounded-lg"
+              aria-label={`Choose ${label.toLowerCase()} date from calendar`}
             >
-              <ChevronUp className="size-4" />
+              <CalendarDays className="size-4" />
             </Button>
-            <Button
-              type="button"
-              size="icon"
-              variant="outline"
-              className="size-8 rounded-lg"
-              aria-label={`Move ${label.toLowerCase()} back by one day`}
-              disabled={value <= minDate}
-              onClick={() => onChange(addDays(value, -1))}
-            >
-              <ChevronDown className="size-4" />
-            </Button>
-          </div>
-        </div>
+          </PopoverTrigger>
+          <PopoverContent
+            align="end"
+            side="bottom"
+            className="w-auto rounded-2xl border-border p-2 shadow-xl"
+          >
+            <div className="px-3 pt-2">
+              <p className="text-sm font-semibold">Choose {label.toLowerCase()}</p>
+              <p className="text-xs text-muted-foreground">
+                Select a date on or after {formatDateLabel(minDate)}.
+              </p>
+            </div>
+            <Calendar
+              mode="single"
+              selected={date}
+              month={displayMonth}
+              onMonthChange={setDisplayMonth}
+              onSelect={(nextDate) => {
+                if (nextDate && nextDate >= minimumDate) {
+                  const nextValue = formatISODate(nextDate);
+                  onChange(nextValue);
+                  onValidityChange(true);
+                  setDateInputValid(true);
+                  setCalendarOpen(false);
+                }
+              }}
+              disabled={{ before: minimumDate }}
+              startMonth={new Date(minimumDate.getFullYear(), minimumDate.getMonth(), 1)}
+              endMonth={endMonth}
+              captionLayout="dropdown"
+              weekStartsOn={1}
+              formatters={{
+                formatWeekdayName: (weekday) =>
+                  new Intl.DateTimeFormat("en", { weekday: "short" }).format(weekday).slice(0, 2),
+              }}
+              className="p-2 [--cell-size:2.5rem]"
+            />
+          </PopoverContent>
+        </Popover>
       </div>
-
-      <div className="grid grid-cols-2 gap-3 border-t border-border pt-3">
-        <label className="space-y-1">
-          <span className="block text-xs text-muted-foreground">Month (1–12)</span>
-          <Input
-            type="text"
-            inputMode="numeric"
-            aria-label={`${label} month`}
-            value={monthInput}
-            maxLength={2}
-            onChange={(event) => {
-              if (/^\d{0,2}$/.test(event.target.value)) setMonthInput(event.target.value);
-            }}
-            onBlur={commitMonth}
-            onKeyDown={(event) => {
-              if (event.key === "Enter") event.currentTarget.blur();
-            }}
-            className="h-9 rounded-lg"
-          />
-        </label>
-        <label className="space-y-1">
-          <span className="block text-xs text-muted-foreground">Year</span>
-          <Input
-            type="text"
-            inputMode="numeric"
-            aria-label={`${label} year`}
-            value={yearInput}
-            maxLength={4}
-            onChange={(event) => {
-              if (/^\d{0,4}$/.test(event.target.value)) setYearInput(event.target.value);
-            }}
-            onBlur={commitYear}
-            onKeyDown={(event) => {
-              if (event.key === "Enter") event.currentTarget.blur();
-            }}
-            className="h-9 rounded-lg"
-          />
-        </label>
-      </div>
+      {!dateInputValid && (
+        <p id={`${inputId}-error`} className="text-xs text-destructive" role="alert">
+          Enter a valid date in dd/mm/yyyy format on or after {formatDateLabel(minDate)}.
+        </p>
+      )}
     </div>
   );
 }
