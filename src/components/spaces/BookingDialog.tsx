@@ -1,14 +1,13 @@
 import { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "@tanstack/react-router";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, CalendarDays, CheckCircle2, Clock3, Loader2, Minus, Plus } from "lucide-react";
+import { ArrowLeft, CalendarDays, Loader2, Minus, Plus } from "lucide-react";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import type { Property, Room } from "@/lib/data";
-import { formatMoney, makeRef, nightsBetween, useSpaceaeon } from "@/lib/spaces-store";
+import { formatMoney, nightsBetween, useSpaceaeon, type PaymentDraft } from "@/lib/spaces-store";
 import { toast } from "sonner";
-import { createBookingReservation, initiatePayment, type PaymentMethod } from "@/lib/api";
 
 const formatISODate = (date: Date) =>
   `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
@@ -52,32 +51,7 @@ const parseDateInput = (value: string): string | null => {
   return formatISODate(date);
 };
 
-function findCheckoutUrl(value: unknown): string | null {
-  if (!value || typeof value !== "object" || Array.isArray(value)) return null;
-
-  const entries = Object.entries(value as Record<string, unknown>);
-  const urlKeys = new Set(["url", "checkouturl", "authorizationurl", "paymenturl", "redirecturl"]);
-
-  for (const [key, candidate] of entries) {
-    if (urlKeys.has(key.toLowerCase().replace(/[-_]/g, "")) && typeof candidate === "string") {
-      try {
-        const url = new URL(candidate);
-        if (url.protocol === "https:" && !url.username && !url.password) return url.toString();
-      } catch {
-        continue;
-      }
-    }
-  }
-
-  for (const [, nested] of entries) {
-    const url = findCheckoutUrl(nested);
-    if (url) return url;
-  }
-
-  return null;
-}
-
-type Step = "dates" | "summary" | "done";
+type Step = "dates" | "summary";
 
 export function BookingDialog({
   property,
@@ -90,18 +64,14 @@ export function BookingDialog({
   open: boolean;
   onOpenChange: (v: boolean) => void;
 }) {
-  const { currency, addBooking, updateBookingStatus, user } = useSpaceaeon();
+  const { currency, user } = useSpaceaeon();
+  const navigate = useNavigate();
   const [step, setStep] = useState<Step>("dates");
   const [checkIn, setCheckIn] = useState(today);
   const [checkOut, setCheckOut] = useState(() => addDays(today(), 1));
   const [dateInputsValid, setDateInputsValid] = useState({ checkIn: true, checkOut: true });
   const [guests, setGuests] = useState(2);
   const [loading, setLoading] = useState(false);
-  const [reference, setReference] = useState("");
-  const [paymentReference, setPaymentReference] = useState("");
-  const [bookingId, setBookingId] = useState<string | null>(null);
-  const paymentMethod: PaymentMethod = "bank_transfer";
-  const [paymentStatus, setPaymentStatus] = useState<"pending" | "success">("pending");
 
   useEffect(() => {
     if (!open) return;
@@ -121,10 +91,6 @@ export function BookingDialog({
   const reset = () => {
     setStep("dates");
     setLoading(false);
-    setReference("");
-    setPaymentReference("");
-    setBookingId(null);
-    setPaymentStatus("pending");
   };
 
   const updateCheckIn = (date: string) => {
@@ -150,108 +116,28 @@ export function BookingDialog({
     setLoading(true);
 
     try {
-      let activeBookingId = bookingId;
-      let bookingRef = reference;
-
-      if (!activeBookingId) {
-        const bookingData = await createBookingReservation({
-          room_id: room.id,
-          property_id: property.id,
-          check_in_date: checkIn,
-          check_out_date: checkOut,
-          num_guests: guests,
-          total_price: total,
-        });
-        const backendId = bookingData.id;
-        if (!backendId.trim()) {
-          throw new Error(
-            "The booking was created without an ID, so payment could not be started.",
-          );
-        }
-
-        const fallbackReference = makeRef();
-        const responseReference = bookingData.spc_code ?? bookingData.id;
-        const rawReference = typeof responseReference === "string" ? responseReference.trim() : "";
-        const referenceCode = rawReference.match(/^(?:SPC\s*-\s*)?([A-Z0-9]{6})$/i)?.[1];
-        bookingRef = referenceCode
-          ? `SPC - ${referenceCode.toUpperCase()}`
-          : rawReference || fallbackReference;
-        activeBookingId = backendId;
-
-        setBookingId(activeBookingId);
-        setReference(bookingRef);
-        addBooking({
-          backendId: activeBookingId,
-          ref: bookingRef,
-          propertyId: property.id,
-          propertyTitle: property.title,
-          image: property.images[0] ?? "",
-          roomName: room.name,
-          checkIn,
-          checkOut,
-          guests,
-          total,
-          subtotal,
-          serviceFee,
-          cautionFee: caution,
-          status: "pending",
-          method: paymentMethod === "card" ? "Card" : "Bank transfer",
-        });
-      }
-
-      const paymentData = await initiatePayment({
-        booking_id: activeBookingId,
-        amount: total,
-        currency: "NGN",
-        payment_method: paymentMethod,
-      });
-
-      if (paymentData.status === "failed" || paymentData.status === "refunded") {
-        throw new Error("The payment could not be started. Please try again.");
-      }
-
-      setPaymentReference(paymentData.transaction_ref ?? "");
-      setPaymentStatus(paymentData.status === "success" ? "success" : "pending");
-      if (paymentData.status === "success") updateBookingStatus(bookingRef, "active");
-
-      if (paymentData.status === "pending") {
-        const checkoutUrl = findCheckoutUrl(paymentData.gateway_response);
-        if (checkoutUrl) {
-          window.location.assign(checkoutUrl);
-          return;
-        }
-      }
-
-      setStep("done");
+      const reference = `PAY-${crypto.randomUUID()}`;
+      const draft: PaymentDraft = {
+        reference,
+        propertyId: property.id,
+        propertyTitle: property.title,
+        image: property.images[0] ?? "",
+        roomId: room.id,
+        roomName: room.name,
+        checkIn,
+        checkOut,
+        guests,
+        total,
+        subtotal,
+        serviceFee,
+        cautionFee: caution,
+      };
+      sessionStorage.setItem(`Spaceaeon.payment.${reference}`, JSON.stringify(draft));
+      onOpenChange(false);
+      await navigate({ to: "/payment", search: { reference } });
     } catch (error) {
-      console.error("Booking creation or payment initiation failed:", error);
-      const responseData =
-        typeof error === "object" && error !== null && "response" in error ? error.response : null;
-      const status =
-        typeof responseData === "object" &&
-        responseData !== null &&
-        "status" in responseData &&
-        typeof responseData.status === "number"
-          ? responseData.status
-          : null;
-      const errorBody =
-        typeof responseData === "object" && responseData !== null && "data" in responseData
-          ? responseData.data
-          : null;
-      const message =
-        typeof errorBody === "object" && errorBody !== null
-          ? "detail" in errorBody && typeof errorBody.detail === "string"
-            ? errorBody.detail
-            : "message" in errorBody && typeof errorBody.message === "string"
-              ? errorBody.message
-              : null
-          : null;
-      const localError = responseData === null && error instanceof Error ? error.message : null;
-      toast.error(
-        status === 401
-          ? "Your session has expired. Please sign in again before booking."
-          : message || localError || "Could not submit your booking. Please try again.",
-      );
+      console.error("Could not open the payment page:", error);
+      toast.error(error instanceof Error ? error.message : "Could not open the payment page.");
     } finally {
       setLoading(false);
     }
@@ -267,33 +153,25 @@ export function BookingDialog({
     >
       <DialogContent className="max-h-[90vh] max-w-lg overflow-y-auto rounded-3xl">
         <DialogHeader className="text-left">
-          <DialogTitle className="font-display text-xl">
-            {step === "done"
-              ? paymentStatus === "success"
-                ? "Booking confirmed"
-                : "Payment pending"
-              : property.title}
-          </DialogTitle>
-          {step !== "done" && <p className="text-sm text-muted-foreground">{room.name}</p>}
+          <DialogTitle className="font-display text-xl">{property.title}</DialogTitle>
+          <p className="text-sm text-muted-foreground">{room.name}</p>
         </DialogHeader>
 
-        {step !== "done" && (
-          <div className="flex items-center justify-between">
-            <Button
-              type="button"
-              variant="ghost"
-              className="-ml-2"
-              disabled={loading}
-              onClick={() => (step === "dates" ? onOpenChange(false) : setStep("dates"))}
-            >
-              <ArrowLeft className="size-4" />
-              {step === "dates" ? "Back to property" : "Back to dates"}
-            </Button>
-            <p className="text-xs font-medium text-muted-foreground">
-              Step {step === "dates" ? "1" : "2"} of 2
-            </p>
-          </div>
-        )}
+        <div className="flex items-center justify-between">
+          <Button
+            type="button"
+            variant="ghost"
+            className="-ml-2"
+            disabled={loading}
+            onClick={() => (step === "dates" ? onOpenChange(false) : setStep("dates"))}
+          >
+            <ArrowLeft className="size-4" />
+            {step === "dates" ? "Back to property" : "Back to dates"}
+          </Button>
+          <p className="text-xs font-medium text-muted-foreground">
+            Step {step === "dates" ? "1" : "2"} of 2
+          </p>
+        </div>
 
         {step === "dates" && (
           <div className="space-y-5">
@@ -422,59 +300,6 @@ export function BookingDialog({
               ) : (
                 `Pay Now · ${formatMoney(total, currency)}`
               )}
-            </Button>
-          </div>
-        )}
-
-        {step === "done" && (
-          <div className="space-y-5 py-2 text-center">
-            {paymentStatus === "success" ? (
-              <CheckCircle2 className="mx-auto size-14 text-teal" />
-            ) : (
-              <Clock3 className="mx-auto size-14 text-amber-600" />
-            )}
-            <div>
-              <p className="font-display text-lg font-semibold">{property.title}</p>
-              <p className="text-sm text-muted-foreground">{room.name}</p>
-            </div>
-            <div className="rounded-2xl bg-secondary p-4">
-              <p className="text-xs uppercase tracking-wide text-muted-foreground">
-                Booking reference
-              </p>
-              <p className="font-display text-2xl font-bold tracking-wider">{reference}</p>
-            </div>
-            {paymentReference && (
-              <div className="rounded-xl border border-border p-3 text-left">
-                <p className="text-xs text-muted-foreground">Payment reference</p>
-                <p className="mt-1 break-all font-mono text-sm font-medium">{paymentReference}</p>
-              </div>
-            )}
-            {paymentStatus === "pending" && (
-              <p role="status" className="rounded-xl bg-secondary px-4 py-3 text-left text-sm">
-                Payment is pending, but the gateway did not return a checkout link. Please contact
-                support with{" "}
-                {paymentReference ? "your payment reference." : "your booking reference."}
-              </p>
-            )}
-            <div className="space-y-2 text-left text-sm">
-              <Row label="Dates" value={`${checkIn} → ${checkOut}`} />
-              <Row label="Nights" value={String(nights)} />
-              <Row label="Guests" value={String(guests)} />
-              <Row
-                label="Payment method"
-                value={paymentMethod === "card" ? "Card" : "Bank transfer"}
-              />
-              <Row label="Total" value={formatMoney(total, currency)} />
-            </div>
-            <Badge variant="secondary" className="rounded-full">
-              {paymentStatus === "success" ? "Confirmed booking" : "Pending payment"}
-            </Badge>
-            <Button
-              type="button"
-              className="h-12 w-full rounded-xl"
-              onClick={() => onOpenChange(false)}
-            >
-              Done
             </Button>
           </div>
         )}

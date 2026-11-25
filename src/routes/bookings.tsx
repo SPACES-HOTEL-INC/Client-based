@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useState, type ReactNode } from "react";
-import { CalendarDays, Clock3, Loader2, Ticket, Users, XCircle } from "lucide-react";
+import { useState } from "react";
+import { CalendarDays, Loader2, Ticket, Users, XCircle } from "lucide-react";
 import { toast } from "sonner";
 import {
   AlertDialog,
@@ -57,6 +57,11 @@ function formatBookingDate(value: string) {
     day: "numeric",
     year: "numeric",
   }).format(new Date(`${value}T00:00:00`));
+}
+
+function formatReceiptDate(value: string) {
+  const date = new Date(`${value}T00:00:00`);
+  return `${String(date.getDate()).padStart(2, "0")}-${String(date.getMonth() + 1).padStart(2, "0")}-${date.getFullYear()}`;
 }
 
 function BookingsPage() {
@@ -158,9 +163,9 @@ function BookingsPage() {
         {selectedBooking && (
           <DialogContent className="max-h-[90vh] max-w-lg overflow-y-auto rounded-3xl">
             <DialogHeader className="pr-7 text-left">
-              <DialogTitle className="font-display text-xl">Booking ticket</DialogTitle>
+              <DialogTitle className="font-display text-xl">Platform Booking Receipt</DialogTitle>
               <DialogDescription>
-                Reservation details for {selectedBooking.propertyTitle}.
+                Payment receipt and reservation details for {selectedBooking.propertyTitle}.
               </DialogDescription>
             </DialogHeader>
 
@@ -183,34 +188,24 @@ function BookingsPage() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <TicketDetail
-                  icon={<CalendarDays className="size-4" />}
-                  label="Check-in"
-                  value={formatBookingDate(selectedBooking.checkIn)}
-                />
-                <TicketDetail
-                  icon={<CalendarDays className="size-4" />}
-                  label="Check-out"
-                  value={formatBookingDate(selectedBooking.checkOut)}
-                />
-                <TicketDetail
-                  icon={<Clock3 className="size-4" />}
-                  label="Duration"
-                  value={`${nightsBetween(selectedBooking.checkIn, selectedBooking.checkOut)} night${nightsBetween(selectedBooking.checkIn, selectedBooking.checkOut) === 1 ? "" : "s"}`}
-                />
-                <TicketDetail
-                  icon={<Users className="size-4" />}
-                  label="Guests"
-                  value={`${selectedBooking.guests} guest${selectedBooking.guests === 1 ? "" : "s"}`}
-                />
+              <div className="space-y-3 rounded-2xl border border-dashed border-border p-4">
+                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  BOOKING REFERENCE
+                </p>
+                <p className="font-display text-xl font-bold">
+                  {selectedBooking.receiptCode || selectedBooking.ref}
+                </p>
               </div>
 
-              <div className="flex items-center justify-between rounded-2xl border border-dashed border-border px-4 py-3">
-                <span className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <Ticket className="size-4" /> Reference code
-                </span>
-                <span className="font-mono text-sm font-semibold">{selectedBooking.ref}</span>
+              <div className="space-y-3 text-sm">
+                <ReceiptRow label="Check-In" value={formatReceiptDate(selectedBooking.checkIn)} />
+                <ReceiptRow label="Check-Out" value={formatReceiptDate(selectedBooking.checkOut)} />
+                <ReceiptRow
+                  label="Nights"
+                  value={String(nightsBetween(selectedBooking.checkIn, selectedBooking.checkOut))}
+                />
+                <ReceiptRow label="Guests" value={String(selectedBooking.guests)} />
+                <ReceiptRow label="Payment method" value={selectedBooking.method} />
               </div>
 
               <section className="space-y-3 rounded-2xl border border-border p-4">
@@ -264,6 +259,14 @@ function BookingsPage() {
                   Cancel Booking
                 </Button>
               )}
+
+              <Button
+                type="button"
+                className="w-full rounded-xl"
+                onClick={() => setSelectedBooking(null)}
+              >
+                Done
+              </Button>
             </div>
           </DialogContent>
         )}
@@ -374,14 +377,11 @@ function BookingCard({
   );
 }
 
-function TicketDetail({ icon, label, value }: { icon: ReactNode; label: string; value: string }) {
+function ReceiptRow({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-2xl bg-muted/50 p-3">
-      <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
-        {icon}
-        {label}
-      </p>
-      <p className="mt-1 text-sm font-medium">{value}</p>
+    <div className="flex items-center justify-between gap-4">
+      <span className="text-muted-foreground">{label}</span>
+      <span className="text-right font-medium">{value}</span>
     </div>
   );
 }

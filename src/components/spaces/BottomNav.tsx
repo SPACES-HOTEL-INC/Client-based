@@ -20,6 +20,7 @@ export function BottomNav() {
 
   // Hide the navigation bar on auth-related pages including password reset routes
   const hiddenRoutes = [
+    "/payment",
     "/login",
     "/signup",
     "/register",

@@ -7,6 +7,7 @@ export type User = { firstName: string; email: string; guest: boolean };
 
 export type Booking = {
   backendId?: string;
+  receiptCode?: string;
   ref: string;
   propertyId: string;
   propertyTitle: string;
@@ -21,6 +22,28 @@ export type Booking = {
   cautionFee?: number;
   status: "active" | "pending" | "past" | "cancelled";
   method: string;
+};
+
+export type PaymentDraft = {
+  reference: string;
+  propertyId: string;
+  propertyTitle: string;
+  image: string;
+  roomId: string;
+  roomName: string;
+  checkIn: string;
+  checkOut: string;
+  guests: number;
+  total: number;
+  subtotal: number;
+  serviceFee: number;
+  cautionFee: number;
+  bookingId?: string;
+  receiptCode?: string;
+  paymentId?: string;
+  paymentReference?: string;
+  paymentMethod?: "card" | "bank_transfer";
+  gatewayResponse?: Record<string, unknown> | null;
 };
 
 type Ctx = {
@@ -95,7 +118,7 @@ export function SpaceaeonProvider({ children }: { children: ReactNode }) {
       },
       addBooking: (b) => {
         setBookings((prev) => {
-          const next = [b, ...prev];
+          const next = [b, ...prev.filter((booking) => booking.ref !== b.ref)];
           persist("Spaceaeon.bookings", next);
           return next;
         });

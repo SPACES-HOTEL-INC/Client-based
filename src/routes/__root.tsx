@@ -4,6 +4,7 @@ import {
   Link,
   createRootRouteWithContext,
   useRouter,
+  useLocation,
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
@@ -133,13 +134,15 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  const location = useLocation();
+  const isPaymentPage = location.pathname === "/payment";
 
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <SpaceaeonProvider>
           <Splash />
-          <div className="min-h-screen pb-24 md:pb-28">
+          <div className={isPaymentPage ? "min-h-screen" : "min-h-screen pb-24 md:pb-28"}>
             <Outlet />
           </div>
           <BottomNav />

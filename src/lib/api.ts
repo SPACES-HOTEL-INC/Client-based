@@ -346,6 +346,7 @@ export async function submitPropertyReview(payload: {
 type BookingReservationResponse = {
   id: string;
   spc_code?: string | null;
+  receipt_code?: string | null;
 };
 
 export async function createBookingReservation(payload: {
