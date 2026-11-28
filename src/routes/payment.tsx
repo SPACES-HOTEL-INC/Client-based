@@ -4,9 +4,9 @@ import { Check, Copy, CreditCard, Loader2, ShieldCheck, X } from "lucide-react";
 import { toast } from "sonner";
 import {
   cancelBookingReservation,
-  createBookingReservation,
   fetchPayment,
   initiatePayment,
+  verifyPayment as verifyPaymentWithGateway,
   type PaymentInitiationResponse,
   type PaymentMethod,
 } from "@/lib/api";
@@ -53,7 +53,7 @@ function findValue(value: unknown, keys: Set<string>): string | null {
 function findCheckoutUrl(value: unknown): string | null {
   const candidate = findValue(
     value,
-    new Set(["url", "checkouturl", "authorizationurl", "paymenturl", "redirecturl"]),
+    new Set(["url", "link", "checkouturl", "authorizationurl", "paymenturl", "redirecturl"]),
   );
   if (!candidate) return null;
 
@@ -77,6 +77,89 @@ function persistDraft(draft: PaymentDraft) {
   sessionStorage.setItem(`Spaceaeon.payment.${draft.reference}`, JSON.stringify(draft));
 }
 
+function clearPaymentAttempt(draft: PaymentDraft): PaymentDraft {
+  const next = { ...draft };
+  delete next.paymentId;
+  delete next.paymentReference;
+  delete next.paymentStatus;
+  delete next.paymentMethod;
+  next.gatewayResponse = null;
+  return next;
+}
+
+function isSuccessfulStatus(status: string) {
+  return ["success", "successful", "paid", "completed"].includes(status.toLowerCase());
+}
+
+function isFailedStatus(status: string) {
+  return [
+    "failed",
+    "failure",
+    "cancelled",
+    "canceled",
+    "cancel",
+    "rejected",
+    "expired",
+    "refunded",
+  ].includes(status.toLowerCase());
+}
+
+function isAlreadyCancelledError(error: unknown) {
+  if (!error || typeof error !== "object" || !("response" in error)) return false;
+  const response = error.response;
+  if (!response || typeof response !== "object" || !("status" in response)) return false;
+  if (response.status === 404) return true;
+  if (response.status !== 409 || !("data" in response)) return false;
+
+  const data = response.data;
+  if (!data || typeof data !== "object") return false;
+  const message =
+    "detail" in data && typeof data.detail === "string"
+      ? data.detail
+      : "message" in data && typeof data.message === "string"
+        ? data.message
+        : "";
+  return /already\s+(been\s+)?cancel(l)?ed/i.test(message);
+}
+
+function readDraft(reference: string, txRef: string | null) {
+  if (reference) {
+    const raw = sessionStorage.getItem(`Spaceaeon.payment.${reference}`);
+    if (raw) return JSON.parse(raw) as PaymentDraft;
+  }
+
+  const activeReference = sessionStorage.getItem("Spaceaeon.payment.active");
+  const callbackReference = txRef || reference;
+  const possibleKeys = Object.keys(sessionStorage).filter((key) =>
+    key.startsWith("Spaceaeon.payment."),
+  );
+  if (callbackReference) {
+    for (const key of possibleKeys) {
+      if (key === "Spaceaeon.payment.active") continue;
+      const raw = sessionStorage.getItem(key);
+      if (!raw) continue;
+      const candidate = JSON.parse(raw) as PaymentDraft;
+      if (
+        candidate.paymentReference === callbackReference ||
+        candidate.reference === callbackReference
+      ) {
+        return candidate;
+      }
+    }
+  }
+
+  for (const key of possibleKeys) {
+    if (key === "Spaceaeon.payment.active") continue;
+    const raw = sessionStorage.getItem(key);
+    if (!raw) continue;
+    const candidate = JSON.parse(raw) as PaymentDraft;
+    if (candidate.reference === activeReference) {
+      return candidate;
+    }
+  }
+  return null;
+}
+
 function PaymentPage() {
   const { reference } = Route.useSearch();
   const navigate = useNavigate();
@@ -89,23 +172,15 @@ function PaymentPage() {
   const autoVerifyStarted = useRef(false);
 
   useEffect(() => {
-    if (!reference) {
-      setLoadingDraft(false);
-      setError(
-        "This payment session is missing its reference. Return to the property page to try again.",
-      );
-      return;
-    }
-
     try {
-      const rawDraft = sessionStorage.getItem(`Spaceaeon.payment.${reference}`);
-      if (!rawDraft) {
+      const callback = new URLSearchParams(window.location.search);
+      const storedDraft = readDraft(reference, callback.get("tx_ref"));
+      if (!storedDraft) {
         setError("This payment session has expired. Return to the property page to start again.");
         return;
       }
 
-      const storedDraft = JSON.parse(rawDraft) as PaymentDraft;
-      if (storedDraft.reference !== reference || !storedDraft.propertyId || !storedDraft.roomId) {
+      if (!storedDraft.bookingId || !storedDraft.propertyId || !storedDraft.roomId) {
         throw new Error("The saved payment details are invalid.");
       }
       setDraft(storedDraft);
@@ -119,7 +194,7 @@ function PaymentPage() {
 
   const finishPayment = useCallback(
     async (paymentDraft: PaymentDraft, payment: PaymentInitiationResponse) => {
-      if (payment.status !== "success" || !paymentDraft.bookingId) return false;
+      if (!isSuccessfulStatus(payment.status) || !paymentDraft.bookingId) return false;
 
       const receiptCode = paymentDraft.receiptCode || makeRef();
       addBooking({
@@ -132,6 +207,7 @@ function PaymentPage() {
         roomName: paymentDraft.roomName,
         checkIn: paymentDraft.checkIn,
         checkOut: paymentDraft.checkOut,
+        numNights: paymentDraft.numNights,
         guests: paymentDraft.guests,
         total: paymentDraft.total,
         subtotal: paymentDraft.subtotal,
@@ -141,6 +217,7 @@ function PaymentPage() {
         method: paymentDraft.paymentMethod === "card" ? "Card" : "Bank transfer",
       });
       sessionStorage.removeItem(`Spaceaeon.payment.${paymentDraft.reference}`);
+      sessionStorage.removeItem("Spaceaeon.payment.active");
       toast.success("Payment confirmed. Your booking receipt is ready in My Bookings.");
       await navigate({ to: "/bookings", replace: true });
       return true;
@@ -156,16 +233,33 @@ function PaymentPage() {
 
       try {
         let payment: PaymentInitiationResponse | null = null;
+        const callback = new URLSearchParams(window.location.search);
+        const transactionId = callback.get("transaction_id");
+        const callbackTxRef = callback.get("tx_ref");
+        if (callbackTxRef && draft.paymentReference && callbackTxRef !== draft.paymentReference) {
+          throw new Error("The returned payment reference does not match this booking.");
+        }
+
         const attempts = automatic ? 4 : 1;
         for (let attempt = 0; attempt < attempts; attempt++) {
-          payment = await fetchPayment(draft.paymentId);
-          if (payment.status !== "pending" || attempt === attempts - 1) break;
+          payment =
+            attempt === 0 && transactionId
+              ? await verifyPaymentWithGateway(draft.paymentId, transactionId)
+              : await fetchPayment(draft.paymentId);
+          const updatedDraft = { ...draft, paymentStatus: payment.status };
+          persistDraft(updatedDraft);
+          setDraft(updatedDraft);
+          if (
+            !["pending", "processing"].includes(payment.status.toLowerCase()) ||
+            attempt === attempts - 1
+          )
+            break;
           await new Promise((resolve) => window.setTimeout(resolve, 1500));
         }
 
-        if (payment?.status === "success") {
+        if (payment && isSuccessfulStatus(payment.status)) {
           await finishPayment(draft, payment);
-        } else if (payment?.status === "failed" || payment?.status === "refunded") {
+        } else if (payment && isFailedStatus(payment.status)) {
           setError("Flutterwave did not confirm this payment. You can try again or cancel.");
         } else {
           toast.message("Payment is not confirmed yet. Please check again shortly.");
@@ -199,14 +293,17 @@ function PaymentPage() {
     try {
       let activeDraft = draft;
 
-      if (activeDraft.paymentId) {
-        if (activeDraft.paymentMethod !== method) {
-          setError(
-            "A payment is already in progress. Verify it or cancel before choosing another method.",
-          );
+      if (activeDraft.paymentId && activeDraft.paymentMethod === method) {
+        const currentPayment = await fetchPayment(activeDraft.paymentId);
+        if (isSuccessfulStatus(currentPayment.status)) {
+          await finishPayment(activeDraft, currentPayment);
           return;
         }
-        if (method === "card") {
+        if (isFailedStatus(currentPayment.status)) {
+          activeDraft = clearPaymentAttempt(activeDraft);
+          persistDraft(activeDraft);
+          setDraft(activeDraft);
+        } else if (method === "card") {
           const checkoutUrl = findCheckoutUrl(activeDraft.gatewayResponse);
           if (checkoutUrl) {
             window.location.assign(checkoutUrl);
@@ -215,31 +312,19 @@ function PaymentPage() {
           setError(
             "Flutterwave did not provide a card checkout link. Verify the payment or cancel.",
           );
+          return;
+        } else {
+          setError("This transfer is still awaiting payment. Verify its status before retrying.");
+          return;
+        }
+      } else if (activeDraft.paymentId) {
+        if (activeDraft.paymentMethod !== method) {
+          setError(
+            "A payment is already in progress. Verify it or cancel before choosing another method.",
+          );
+          return;
         }
         return;
-      }
-
-      if (!activeDraft.bookingId) {
-        const booking = await createBookingReservation({
-          room_id: activeDraft.roomId,
-          property_id: activeDraft.propertyId,
-          check_in_date: activeDraft.checkIn,
-          check_out_date: activeDraft.checkOut,
-          num_guests: activeDraft.guests,
-          total_price: activeDraft.total,
-        });
-        if (!booking.id?.trim()) {
-          throw new Error("The reservation could not be created. Please try again.");
-        }
-
-        const backendReceipt = booking.receipt_code?.trim() || booking.spc_code?.trim();
-        activeDraft = {
-          ...activeDraft,
-          bookingId: booking.id,
-          receiptCode: backendReceipt || makeRef(),
-        };
-        persistDraft(activeDraft);
-        setDraft(activeDraft);
       }
 
       const bookingId = activeDraft.bookingId;
@@ -253,7 +338,7 @@ function PaymentPage() {
         currency: "NGN",
         payment_method: method,
       });
-      if (payment.status === "failed" || payment.status === "refunded") {
+      if (isFailedStatus(payment.status)) {
         throw new Error("Flutterwave could not start this payment. Please try again.");
       }
 
@@ -261,13 +346,14 @@ function PaymentPage() {
         ...activeDraft,
         paymentId: payment.id,
         paymentReference: payment.transaction_ref || activeDraft.reference,
+        paymentStatus: payment.status,
         paymentMethod: method,
         gatewayResponse: payment.gateway_response,
       };
       persistDraft(activeDraft);
       setDraft(activeDraft);
 
-      if (payment.status === "success") {
+      if (isSuccessfulStatus(payment.status)) {
         await finishPayment(activeDraft, payment);
         return;
       }
@@ -300,8 +386,15 @@ function PaymentPage() {
     setError("");
 
     try {
-      if (draft?.bookingId) await cancelBookingReservation(draft.bookingId);
+      if (draft?.bookingId) {
+        try {
+          await cancelBookingReservation(draft.bookingId);
+        } catch (deleteError) {
+          if (!isAlreadyCancelledError(deleteError)) throw deleteError;
+        }
+      }
       if (draft) sessionStorage.removeItem(`Spaceaeon.payment.${draft.reference}`);
+      sessionStorage.removeItem("Spaceaeon.payment.active");
       if (draft?.propertyId) {
         await navigate({
           to: "/property/$id",
@@ -545,6 +638,22 @@ function PaymentPage() {
               {error}
             </p>
           )}
+          {draft?.paymentId &&
+            draft.paymentMethod &&
+            draft.paymentStatus &&
+            isFailedStatus(draft.paymentStatus) && (
+              <Button
+                type="button"
+                className="w-full rounded-xl"
+                disabled={busy}
+                onClick={() => {
+                  if (draft.paymentMethod) void beginPayment(draft.paymentMethod);
+                }}
+              >
+                {busy && <Loader2 className="size-4 animate-spin" />}
+                Retry Payment
+              </Button>
+            )}
         </section>
 
         <aside className="h-fit rounded-2xl border border-slate-200 bg-slate-50 p-5">
@@ -558,15 +667,19 @@ function PaymentPage() {
                 <p className="font-semibold">{draft.propertyTitle}</p>
                 <p className="mt-1 text-sm text-slate-600">{draft.roomName}</p>
               </div>
+              <div className="space-y-1 text-sm">
+                <PaymentDetail label="Guest" value={draft.customerName || "Guest"} />
+                <PaymentDetail label="Email" value={draft.customerEmail || "—"} />
+              </div>
               <div className="space-y-2 border-y border-slate-200 py-4 text-sm">
                 <PaymentDetail label="Check-in" value={formatShortDate(draft.checkIn)} />
                 <PaymentDetail label="Check-out" value={formatShortDate(draft.checkOut)} />
-                <PaymentDetail
-                  label="Nights"
-                  value={String(nightsBetween(draft.checkIn, draft.checkOut))}
-                />
+                <PaymentDetail label="Nights" value={String(draft.numNights)} />
                 <PaymentDetail label="Guests" value={String(draft.guests)} />
-                <PaymentDetail label="Booking reference" value={draft.reference} />
+                <PaymentDetail
+                  label="Booking reference"
+                  value={draft.receiptCode || draft.reference}
+                />
               </div>
               <div className="flex items-center justify-between font-semibold">
                 <span>Total</span>

@@ -347,6 +347,8 @@ type BookingReservationResponse = {
   id: string;
   spc_code?: string | null;
   receipt_code?: string | null;
+  num_nights?: number | null;
+  total_price?: number | null;
 };
 
 export async function createBookingReservation(payload: {
@@ -355,6 +357,7 @@ export async function createBookingReservation(payload: {
   check_in_date: string;
   check_out_date: string;
   num_guests: number;
+  special_requests: string;
   total_price: number;
 }) {
   const res = await api.post<BookingReservationResponse>("/bookings/", payload);
@@ -369,7 +372,7 @@ export type PaymentInitiationResponse = {
   currency: string | null;
   payment_method: string;
   id: string;
-  status: "pending" | "success" | "failed" | "refunded";
+  status: string;
   transaction_ref: string | null;
   gateway_response: Record<string, unknown> | null;
   paid_at: string | null;
@@ -395,6 +398,15 @@ export async function fetchMyPayments() {
 export async function fetchPayment(paymentId: string) {
   const res = await api.get<PaymentInitiationResponse>(
     `/payments/${encodeURIComponent(paymentId)}`,
+  );
+  return res.data;
+}
+
+export async function verifyPayment(paymentId: string, transactionId: string) {
+  const res = await api.post<PaymentInitiationResponse>(
+    `/payments/${encodeURIComponent(paymentId)}/verify`,
+    null,
+    { params: { transaction_id: transactionId } },
   );
   return res.data;
 }

@@ -15,6 +15,7 @@ export type Booking = {
   roomName: string;
   checkIn: string;
   checkOut: string;
+  numNights?: number;
   guests: number;
   total: number; // NGN
   subtotal?: number;
@@ -33,15 +34,19 @@ export type PaymentDraft = {
   roomName: string;
   checkIn: string;
   checkOut: string;
+  numNights: number;
   guests: number;
   total: number;
   subtotal: number;
   serviceFee: number;
   cautionFee: number;
+  customerName: string;
+  customerEmail: string;
   bookingId?: string;
   receiptCode?: string;
   paymentId?: string;
   paymentReference?: string;
+  paymentStatus?: string;
   paymentMethod?: "card" | "bank_transfer";
   gatewayResponse?: Record<string, unknown> | null;
 };

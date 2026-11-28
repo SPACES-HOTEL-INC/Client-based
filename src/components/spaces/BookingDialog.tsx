@@ -8,6 +8,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import type { Property, Room } from "@/lib/data";
 import { formatMoney, nightsBetween, useSpaceaeon, type PaymentDraft } from "@/lib/spaces-store";
 import { toast } from "sonner";
+import { createBookingReservation } from "@/lib/api";
 
 const formatISODate = (date: Date) =>
   `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
@@ -116,7 +117,23 @@ export function BookingDialog({
     setLoading(true);
 
     try {
+      const booking = await createBookingReservation({
+        room_id: room.id,
+        property_id: property.id,
+        check_in_date: checkIn,
+        check_out_date: checkOut,
+        num_guests: guests,
+        special_requests: "",
+        total_price: total,
+      });
+      if (!booking.id?.trim()) {
+        throw new Error("The reservation could not be created. Please try again.");
+      }
+
+      const backendReference = booking.spc_code?.trim() || "";
       const reference = `PAY-${crypto.randomUUID()}`;
+      const bookingTotal = Number(booking.total_price);
+      const bookingNights = Number(booking.num_nights);
       const draft: PaymentDraft = {
         reference,
         propertyId: property.id,
@@ -126,13 +143,19 @@ export function BookingDialog({
         roomName: room.name,
         checkIn,
         checkOut,
+        numNights: Number.isFinite(bookingNights) && bookingNights > 0 ? bookingNights : nights,
         guests,
-        total,
+        total: Number.isFinite(bookingTotal) && bookingTotal >= 0 ? bookingTotal : total,
         subtotal,
         serviceFee,
         cautionFee: caution,
+        customerName: user.firstName,
+        customerEmail: user.email,
+        bookingId: booking.id,
+        ...(backendReference ? { receiptCode: backendReference } : {}),
       };
       sessionStorage.setItem(`Spaceaeon.payment.${reference}`, JSON.stringify(draft));
+      sessionStorage.setItem("Spaceaeon.payment.active", reference);
       onOpenChange(false);
       await navigate({ to: "/payment", search: { reference } });
     } catch (error) {

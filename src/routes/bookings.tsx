@@ -202,7 +202,7 @@ function BookingsPage() {
                 <ReceiptRow label="Check-Out" value={formatReceiptDate(selectedBooking.checkOut)} />
                 <ReceiptRow
                   label="Nights"
-                  value={String(nightsBetween(selectedBooking.checkIn, selectedBooking.checkOut))}
+                  value={String(selectedBooking.numNights ?? nightsBetween(selectedBooking.checkIn, selectedBooking.checkOut))}
                 />
                 <ReceiptRow label="Guests" value={String(selectedBooking.guests)} />
                 <ReceiptRow label="Payment method" value={selectedBooking.method} />
@@ -344,7 +344,7 @@ function BookingCard({
           </div>
           <p className="truncate text-xs text-muted-foreground">{booking.roomName}</p>
           <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
-            <CalendarDays className="size-3.5" /> {booking.checkIn} → {booking.checkOut}
+            <CalendarDays className="size-3.5" /> {formatReceiptDate(booking.checkIn)} – {formatReceiptDate(booking.checkOut)}
           </p>
           <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
             <Users className="size-3.5" /> {booking.guests} guest{booking.guests > 1 ? "s" : ""}
